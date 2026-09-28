@@ -35,6 +35,18 @@ When using a method, cite its specific source; distinguish paper evidence from
 software instructions and current venue/safety requirements.
 
 
+## Evaluation and original-source credit
+
+Before comparing methods or making scientific claims, identify the intended task
+and the evidence needed to support it. Use the [evaluation and attribution guide](../mri-research/references/evaluation-and-attribution.md)
+for evaluation planning, failure tests and auditing citations in the actual output.
+Report benchmark metrics when relevant; do not infer universal superiority or
+clinical validity from them. Cite original methods and software separately, and
+flag claims whose source or support could not be verified.
+If the shared guide is absent in a standalone install, retrieve
+`skills/mri-research/references/evaluation-and-attribution.md` from the
+[official repository](https://github.com/KeWang0622/mri-research-skill).
+
 ## Project research memory
 
 For project experiments, read `.mri-research/INDEX.md` when present and retrieve
@@ -108,9 +120,11 @@ bart pics -l1 -r 0.01 kspace sens img     # l1-wavelet regularized
   Nyquist-ghost / phase correction first, then the Cartesian path above;
   geometric distortion is corrected downstream (topup/FUGUE).
 
-**3. Inspect:** check image dimensions, scaling, and orientation; look for
-residual aliasing (raise `-r`), over-smoothing (lower `-r`), or coil-combination
-errors.
+**3. Inspect:** check image dimensions, scaling, orientation, measurement
+residuals and coil-combination errors. Investigate aliasing and over-smoothing
+with calibration/model checks and a documented regularization sweep; raising
+`-r` is not a universal fix. For method comparisons, use the evaluation guide
+above and assess task-relevant feature preservation as well as image metrics.
 
 ## Runnable helper
 

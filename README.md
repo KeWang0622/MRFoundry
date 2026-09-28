@@ -172,6 +172,7 @@ The hub links to primary papers, courses, datasets and software across MRI. It s
 
 - **Established implementations.** Use the scientific tool's official setup and examples; do not replace missing dependencies with an improvised simulator or solver.
 - **Evidence before claims.** Execution, data consistency, image quality and scientific validity need different checks. Researcher judgment remains essential.
+- **Evaluation and attribution.** [Practical guidance](skills/mri-research/references/evaluation-and-attribution.md) connects claims to task-specific evidence, distinguishes reproduction from independent validation, and checks original-source credit in outputs. These are agent instructions, not guarantees of compliance.
 - **Checked references.** CI checks structure, version consistency, links and upstream availability; scheduled checks flag archival and drift. Passing CI does not validate scientific conclusions, and some hosts block automated link checks.
 - **Appropriate use.** Image-reading material is research orientation, not clinical diagnosis. Scanner operation needs local validation. External software and datasets retain their own licenses and access requirements.
 

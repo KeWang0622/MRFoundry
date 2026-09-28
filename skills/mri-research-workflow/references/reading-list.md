@@ -7,6 +7,15 @@ publisher records; full text may require library access. Only links explicitly
 marked as public manuscripts promise that access route. Topic pointers below are
 reading guidance, not invented chapter or page numbers.
 
+## Evaluation philosophy
+
+Haldar JP. **The “State of the Art” in MR Image Reconstruction? Knowledge, Culture, and What We Leave Behind in An Era of Big Data and Machine Learning.** Magnetic Resonance in Medicine, 2026;96:7–12. [DOI](https://doi.org/10.1002/mrm.70377).
+
+**Use it for:** Critical perspective on reconstruction evaluation and scientific
+practice. The project's [operational guide](../../mri-research/references/evaluation-and-attribution.md)
+turns these concerns into workflow decisions; it is not a protocol validated by
+the editorial's author.
+
 ## Reproducible neuroimaging
 
 Nichols TE, et al. **Best practices in data analysis and sharing in neuroimaging using MRI.** Nature Neuroscience, 2017;20:299–303. [DOI](https://doi.org/10.1038/nn.4500).

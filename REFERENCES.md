@@ -21,6 +21,9 @@ the cited edition or journal issue; online-first dates may differ. Publisher
 access restrictions do not imply an invalid citation. We link to books and
 papers rather than redistribute copyrighted copies.
 
+For evaluating claims and auditing original-source credit, use the
+[evaluation and attribution guide](skills/mri-research/references/evaluation-and-attribution.md).
+
 For deeper browsing: [method bibliography](skills/mri-research/references/recon-methods.md),
 [foundations and courses](skills/mri-research/references/foundations.md),
 [sequence guide](skills/mri-research/references/sequences-and-trajectories.md), and
