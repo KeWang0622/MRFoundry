@@ -102,10 +102,16 @@ Start with **mri-research** for orientation, **mri-research-workflow** for a stu
 | [MRI research](skills/mri-research/SKILL.md) | Physics, references, cross-domain questions and image-level analysis | Courses, papers, BIDS, FSL, FreeSurfer |
 | [Research workflow](skills/mri-research-workflow/SKILL.md) | Question → study design → experiments → manuscript | Literature, baselines, metrics, venue guidance |
 | [Reconstruction](skills/mri-reconstruction/SKILL.md) | Raw k-space, coil maps, parallel imaging, compressed sensing, non-Cartesian recon | BART, SigPy, ISMRMRD |
-| [Sequence design](skills/pulse-sequence-design/SKILL.md) | RF/gradient events, trajectories, timing and simulation | Pulseq/PyPulseq, KomaMRI, vendor references |
+| [Sequence design](skills/pulse-sequence-design/SKILL.md) | GRE, SE/FSE, EPI, diffusion preparation, DENSE and simulation | Pulseq/PyPulseq, KomaMRI, vendor references |
 | [Deep-learning reconstruction](skills/deep-learning-recon/SKILL.md) | Trained, unrolled, self-supervised and diffusion-based recon | DIRECT, ATOMMIC, fastMRI |
-| [Diffusion MRI](skills/diffusion-mri/SKILL.md) | DWI preprocessing, models, fiber orientations and tractography | MRtrix3, DIPY, FSL, QSIPrep |
+| [Diffusion MRI](skills/diffusion-mri/SKILL.md) | DWI/DTI, ADC/FA/MD, preprocessing, fiber orientations and tractography | MRtrix3, DIPY, FSL, QSIPrep |
 | [Hardware](skills/mri-hardware/SKILL.md) | Coils, gradients, low-field systems, shimming and safety orientation | MaRCoS, OCRA, EM and shim tools |
+
+### Explore the expanded guides
+
+- **[DWI and DTI](skills/diffusion-mri/references/dwi-dti.md):** from diffusion-weighted volumes and gradient tables to tensor maps, quality checks and interpretation.
+- **[Sequence families, EPI and DENSE](skills/mri-research/references/sequences-and-trajectories.md#sequence-families-contrast-encoding-and-readout):** what each measures, what to validate, and which established examples/tools to use.
+- **[Journals, conferences and paper summaries](skills/mri-research/references/publishing.md):** MRM, MICCAI, ISMRM, CVPR and related venues; contribution fit and a reproducible literature-digest workflow.
 
 ## Research memory
 

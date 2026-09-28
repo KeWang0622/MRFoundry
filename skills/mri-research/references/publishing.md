@@ -9,18 +9,48 @@ Note: several publisher pages (Wiley, Elsevier, RSNA, MIT Press) block automated
 fetching but open normally in a browser — they are not login-gated. If a link
 appears to fail programmatically, it's the bot-block, not a dead URL.
 
-## Where MRI work tends to go
+## Venue summary: journals, conferences and meeting abstracts
 
-- **MR-methods & physics** → *Magnetic Resonance in Medicine* (MRM) — the ISMRM
-  flagship and the default home for reconstruction, acquisition, and pulse-
-  sequence methods.
-- **Computational / ML imaging** → *IEEE Transactions on Medical Imaging* (TMI)
-  and *Medical Image Analysis* (MedIA).
-- **Neuroimaging** → *NeuroImage* and *Imaging Neuroscience*.
-- **Clinical / applications** → *JMRI*, *Radiology*, *Radiology: AI*.
-- **Preprint first** → arXiv (eess.IV, physics.med-ph, cs.CV) is standard for
-  recon/ML work; check each journal's preprint policy (most MR journals allow
-  it).
+**MRM is a journal; MICCAI and CVPR are conferences; ISMRM is a society whose
+annual meeting publishes abstracts.** Label the publication type when reviewing
+or comparing evidence. The following is a fit guide, not a ranking or an
+acceptance guarantee. Select by the claim and audience, not just prestige.
+
+| Venue | Publication type / audience | When to consider it | Evidence to emphasize |
+|---|---|---|---|
+| **MRM — Magnetic Resonance in Medicine** | Journal; MR methods, physics and engineering | Acquisition, reconstruction, diffusion or quantitative MR methods | Physical assumptions, technical validation, reproducibility and limitations |
+| **JMRI** | Journal; clinical MR applications | Diagnostic or clinical-use studies | Study design, cohorts, reference standards and clinical relevance |
+| **IEEE TMI** | Journal; medical imaging methodology | Reconstruction, learning and image-analysis advances | Methodological contribution, strong comparisons and broad validation |
+| **Medical Image Analysis (MedIA)** | Journal; computational medical imaging | Substantial analysis/learning methods | Technical depth, meaningful medical tasks and generalization |
+| **MICCAI** | Conference proceedings; medical image computing and computer-assisted intervention | New methods tied to medical imaging or intervention | Clear contribution, medical relevance, baselines and robust evaluation |
+| **ISMRM annual meeting** | Meeting abstracts and presentations; MR community | Communicating a focused MR result and obtaining specialist feedback | One clear question, methods, quantitative results and supported conclusion |
+| **CVPR / ICCV / ECCV** | Conference proceedings; computer vision | MRI work with a substantive vision-method contribution | Explain what generalizes beyond an application-specific pipeline; compare fairly |
+| **NeurIPS / ICLR / ICML** | Conference proceedings; ML | MRI motivates a substantive learning or inference contribution | Method or theory, controlled experiments and reproducibility |
+| **NeuroImage / Imaging Neuroscience** | Journals; neuroimaging | Brain imaging methods or neuroscience findings, including dMRI | Acquisition/preprocessing transparency, statistics and interpretation |
+| **NMR in Biomedicine / MAGMA** | Journals; biomedical MR and MR methods | Diffusion, spectroscopy, quantitative MR or technical studies | Measurement validity, experimental controls and biomedical context |
+
+For example, a better EPI distortion method may fit MRM; a new medical-image
+learning method may fit MICCAI/TMI/MedIA; a general vision method demonstrated on
+MRI may fit CVPR. These are editorial judgments to check against the venue's
+current scope and related accepted work, not rules inferred from the modality.
+An ISMRM abstract and a later full article are different evidence records;
+link them without counting them as independent studies.
+
+Official starting points:
+- [ISMRM journals](https://www.ismrm.org/journals/) and
+  [abstract submission](https://www.ismrm.org/abstract-submission-and-review/).
+- [MICCAI Society](https://www.miccai.org/) and the
+  [2026 paper guidelines](https://conferences.miccai.org/2026/en/PAPER-SUBMISSION-GUIDELINES.html).
+- [CVPR](https://cvpr.thecvf.com/), [CVF open-access proceedings](https://openaccess.thecvf.com/)
+  and [2026 author guidelines](https://cvpr.thecvf.com/Conferences/2026/AuthorGuidelines).
+- [NeurIPS](https://neurips.cc/), [ICLR](https://iclr.cc/), [ICML](https://icml.cc/).
+
+Before a submission, reopen the **target year and track** instructions and record
+the date checked. Verify scope, template, page/word limits, anonymity, deadlines
+and time zone, supplementary material, code/data policies, prior-publication and
+concurrent-submission rules. Do not reuse a past year's limits or assume that
+CVPR and NeurIPS use the same template. The linked 2026 pages are dated examples,
+not evergreen instructions for the next cycle.
 
 ## Journal author guidelines (and LaTeX support)
 
@@ -90,8 +120,8 @@ Increasingly expected — and often required — especially for ML/quantitative 
 
 - **ISMRM Annual Meeting** — the field's main conference; abstracts are the
   primary way MR methods are first presented:
-  https://www.ismrm.org/abstract-submission-and-review/ (current call:
-  https://www.ismrm.org/26m/call/).
+  https://www.ismrm.org/abstract-submission-and-review/ (choose the target year from the official site;
+  https://www.ismrm.org/26m/call/ is the 2026 archive).
 
 ## Practical notes
 
@@ -102,3 +132,37 @@ Increasingly expected — and often required — especially for ML/quantitative 
   and satisfies reproducibility policies.
 - **Cite primary methods** from [`recon-methods.md`](recon-methods.md) and tools from [`tools.md`](tools.md)
   correctly; many MR toolboxes request a specific citation.
+
+
+## Summarize a journal issue or conference topic
+
+Use this when asked for “recent MRM diffusion papers,” “MICCAI reconstruction
+highlights,” or a cross-venue digest. This is an on-demand literature workflow;
+it does not imply automatic monitoring or an exhaustive survey.
+
+1. **Set scope:** topic, venues, date window and publication types. If unspecified,
+   state the chosen scope. Distinguish online publication date, issue year and
+   conference year. Search official journal tables of contents/proceedings, then
+   use the [literature-access guide](literature-access.md) for discovery APIs.
+2. **Verify each record:** title, authors, venue/year, DOI or proceedings URL,
+   abstract/full-text access, and linked code/data. Do not invent missing values.
+   Deduplicate preprint, abstract and journal versions; retain their relationship.
+3. **Read proportionally:** label summaries based only on an abstract. Extract
+   method, cohort/data, acquisition, baselines, metrics and limitations from the
+   paper when accessible. Separate the authors' claims from your assessment.
+4. **Synthesize across papers:** group by problem (e.g., EPI distortion,
+   diffusion modeling, reconstruction), compare evidence and tradeoffs, then
+   identify what to reproduce or read next. Do not compare numbers across
+   incompatible datasets or treat missing code as proof the work is invalid.
+
+A reusable evidence table:
+
+| Paper / primary link | Type and version | Question and method | Data / baselines | Main finding | Limits / access | Next action |
+|---|---|---|---|---|---|---|
+| Verified citation | Journal, proceedings, abstract or preprint | What changed and why | Protocol/cohort and comparison | Quantitative result with context | Caveats; abstract-only if applicable | Read, reproduce, compare or defer |
+
+For DWI/DTI papers, capture shells/directions, resolution, correction pipeline,
+model, gradient handling and confounds. For EPI/DENSE papers, capture readout or
+encoding parameters, correction/tracking, validation reference and motion effects.
+End with a short synthesis and search date; store evidence-linked project notes
+only when they belong to the user's research project.

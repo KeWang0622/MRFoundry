@@ -160,3 +160,77 @@ Modern scans lean on these acquisition-side methods; recon-side acceleration
 - *"Analyze the trajectory in this dataset"* → read the ISMRMRD header /
   trajectory arrays; if absent, reconstruct the nominal trajectory from the
   gradient description or sequence parameters.
+
+## Sequence families: contrast, encoding and readout
+
+These labels describe different parts of an acquisition and can be combined.
+DWI is diffusion weighting; DTI is a fitted model; EPI is a readout; DENSE encodes
+tissue displacement. Choose the contrast/measurement first, then its readout.
+
+| Family | Typical purpose | What to check |
+|---|---|---|
+| Spoiled GRE | T1-weighted/dynamic imaging; flexible Cartesian, radial or spiral sampling | RF/gradient spoiling, steady state, TE/TR and off-resonance |
+| SE / FSE (TSE) | Spin-echo contrast and efficient T2-weighted imaging | Refocusing train, effective TE, stimulated echoes, blurring and RF load |
+| Inversion recovery | T1 weighting or suppression, including FLAIR/STIR | Inversion efficiency, TI, tissue relaxation and readout effects |
+| bSSFP | High signal efficiency, often cine imaging | Balanced gradients, transient state, off-resonance banding and phase cycling |
+| GE-EPI / SE-EPI | Fast BOLD or diffusion readout | Echo spacing, distortion, odd/even echo phase and signal loss |
+| Diffusion-prepared SE-EPI | Direction- and b-dependent water diffusion contrast | Full gradient encoding, TE, motion and diffusion metadata |
+| DENSE | Phase-based tissue displacement and derived strain, often cardiac | Encoding directions/frequency, phase reference, unwrapping and tracking |
+| Phase-contrast MRI | Velocity encoding, including flow imaging | VENC, phase offsets, aliasing and velocity directions |
+
+Start from established [Pulseq tutorials](https://pulseq.github.io/tutorials.html)
+or the tool's upstream examples rather than inventing a sequence implementation.
+
+### EPI and diffusion-weighted EPI
+
+Alternating readout gradients and phase-encoding blips traverse many k-space lines
+within an echo train. Short acquisition windows help speed, but low bandwidth in
+the phase-encoding direction makes off-resonance distortion important. SE-EPI and
+GE-EPI have different contrast; neither makes distortion disappear.
+
+Use the upstream [diffusion EPI example](https://pulseq.github.io/writeEpiDiffusionRS.html)
+as a starting point, with scanner-specific limits revalidated. Check actual ADC
+sample coordinates, readout polarity, echo spacing, TE, partial Fourier and any
+SMS/in-plane acceleration. Ramp sampling needs regridding when present;
+odd/even phase mismatch needs ghost correction. EPI normally targets a Cartesian
+grid; it is not automatically a radial/spiral NUFFT problem. Multi-shot diffusion
+also needs a strategy for shot-to-shot phase variation.
+
+Diffusion preparation sets the b-value/b-matrix, not the EPI readout alone. For
+ideal rectangular pulsed-gradient spin echo, `b = (γ G δ)² (Δ − δ/3)` with γ in
+rad/s/T gives b in s/m²; divide by 10⁶ for s/mm². Real waveforms need the full
+encoding history, including refocusing sign changes and imaging-gradient cross
+terms. Preserve directions and b-values with exported images; connect to the
+[diffusion guide](../../diffusion-mri/references/dwi-dti.md).
+
+### DENSE: displacement encoding with stimulated echoes
+
+DENSE stores a position-dependent phase and decodes after tissue motion, making
+phase sensitive to displacement. With encoding frequency `kₑ` in cycles/mm,
+the displacement contribution is `Δφ = 2π kₑ · u` under the chosen sign convention.
+Reference/background phase must be accounted for. This is distinct from DWI
+attenuation and phase-contrast velocity encoding.
+
+A useful analysis needs encoding directions, frequency/units, reference data,
+cardiac timing, magnitude and phase images. Inspect magnitude SNR and phase wraps,
+then unwrap and track tissue before deriving strain. Through-plane motion and
+segmentation/tracking errors can bias 2D results; do not equate raw phase with a
+strain map. Higher encoding frequency increases displacement sensitivity but
+also phase wrapping for a given displacement.
+
+Use [DENSEanalysis](https://denseanalysis.com/) and its
+[upstream repository](https://github.com/denseanalysis/denseanalysis) for established
+analysis. Its published setup is legacy MATLAB: check the chosen release's MATLAB,
+toolbox and MEX compatibility and run an upstream example; do not promise a modern
+Python equivalent or build an improvised strain solver when setup fails.
+Foundational reading: [Aletras et al., DENSE](https://pmc.ncbi.nlm.nih.gov/articles/PMC2887318/)
+and the phase-unwrapping/tracking paper cited by DENSEanalysis.
+
+### Match simulation to the phenomenon
+
+A static-spin Bloch test can verify timing/contrast but cannot by itself validate
+diffusion attenuation or DENSE tissue motion. Verify that the established
+simulator supports the required diffusion or prescribed-motion model, with an
+upstream example and known reference case. If unsupported, explicitly limit the
+result to the tested physics and select a supported implementation. A sequence
+file passing timing checks is not evidence that the intended biomarker is valid.
