@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Add a central paper/textbook index and annotated, skill-local reading lists for all seven skills.
+
 - Expand DWI/DTI guidance, EPI and DENSE sequence references, and journal/conference selection and literature summaries (MRM, MICCAI, ISMRM, CVPR and related venues).
 
 - Add project-local `.mri-research/` memory: scoped preferences, environments, evidence-linked lessons and experiment logs, with a non-overwriting initializer and optional CLAUDE.md/AGENTS.md entrypoints.
