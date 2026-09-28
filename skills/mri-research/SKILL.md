@@ -23,6 +23,15 @@ metadata:
 # MRI Research Hub
 
 
+## Papers and textbooks
+
+See the [annotated reading list](references/reading-list.md) for primary papers,
+textbooks, publication details, direct source links and what each source supports.
+Use the [repo-wide reference index](../../REFERENCES.md) to navigate across skills.
+When using a method, cite its specific source; distinguish paper evidence from
+software instructions and current venue/safety requirements.
+
+
 ## Project research memory
 
 For project experiments, read `.mri-research/INDEX.md` when present and retrieve

@@ -16,7 +16,7 @@
 </div>
 
 <p align="center">
-<a href="#quick-start">Quick start</a> · <a href="#how-it-works">Workflow</a> · <a href="#choose-your-skills">Skills</a> · <a href="#research-memory">Research memory</a> · <a href="https://kewang0622.github.io/slides/mri-research/">Interactive tutorial</a> · <a href="#contributing">Contribute</a>
+<a href="#quick-start">Quick start</a> · <a href="#how-it-works">Workflow</a> · <a href="#choose-your-skills">Skills</a> · <a href="REFERENCES.md">Papers &amp; textbooks</a> · <a href="#research-memory">Research memory</a> · <a href="https://kewang0622.github.io/slides/mri-research/">Interactive tutorial</a> · <a href="#contributing">Contribute</a>
 </p>
 
 Coding agents can write MRI code, but choosing the right signal model, data convention, tool and validation takes domain knowledge. **mri-research** gives your agent curated guidance and primary references across MRI physics, acquisition, reconstruction, analysis and publishing.
@@ -142,6 +142,10 @@ A lesson should change a concrete decision in the next task, then be checked aga
 These are example requests, not prerecorded successful runs. Results depend on the agent, tool access, data and validation.
 
 ## Reference library
+
+**[Papers and textbooks by skill →](REFERENCES.md)** — all seven skills have an
+annotated reading list with full citations, direct source links and the topic
+each reference supports.
 
 The hub links to primary papers, courses, datasets and software across MRI. It summarizes when a resource is useful rather than redistributing it.
 
