@@ -7,11 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Expand DWI/DTI guidance, EPI and DENSE sequence references, and journal/conference selection and literature summaries (MRM, MICCAI, ISMRM, CVPR and related venues).
+
 - Add project-local `.mri-research/` memory: scoped preferences, environments, evidence-linked lessons and experiment logs, with a non-overwriting initializer and optional CLAUDE.md/AGENTS.md entrypoints.
 
 - All seven skills now own official tool discovery, dependency installation and smoke testing; add a shared setup guide and require established scientific implementations instead of homemade substitutes.
 
-- Add the interactive MRI research presentation as a standalone HTML deck, with online and local viewing links in the README.
+- Link to the hosted interactive MRI research presentation; generated deck HTML is kept outside this skills repository.
 
 ### Changed
 - Compact README header with a transparent mascot beside the wordmark, replacing the large black-background image.

@@ -8,7 +8,7 @@ description: >-
   Siemens (IDEA/ICE), GE (EPIC/Orchestra), and Philips (Paradise). Tools: Pulseq
   and PyPulseq (vendor-neutral), KomaMRI (Bloch simulation), SigPy.RF (RF design).
   Triggers: pulse sequence, Pulseq, PyPulseq, gradient waveform, slew rate, PNS,
-  k-space trajectory, spiral/radial/EPI, RF pulse, SLR, multiband/SMS, IDEA,
+  k-space trajectory, spiral/radial/EPI, diffusion encoding, DENSE, RF pulse, SLR, multiband/SMS, IDEA,
   EPIC, Orchestra, `.seq`. This skill designs the *acquisition*; to reconstruct
   the data it produces, hand off to mri-reconstruction (classical) or
   deep-learning-recon (trained).
@@ -71,6 +71,15 @@ Cartesian (simple, robust), radial (motion-robust, golden-angle for dynamics),
 spiral (efficient but off-resonance-sensitive), EPI (fast, distortion-prone),
 3D / stack-of-stars / cones. Non-Cartesian needs an accurate trajectory for
 reconstruction (NUFFT).
+
+## EPI, diffusion preparation and DENSE
+
+Read the hub’s [sequence families and detailed guide](../mri-research/references/sequences-and-trajectories.md#sequence-families-contrast-encoding-and-readout)
+for GRE, SE/FSE, inversion recovery, bSSFP, EPI and DENSE. Keep contrast,
+readout and fitted models distinct. Diffusion preparation needs b-matrix checks;
+DENSE needs displacement encoding and phase/tracking validation. Verify the
+simulator supports diffusion or motion before claiming those effects were tested.
+For DWI/DTI fitting and QC, use `diffusion-mri`.
 
 ## RF pulse design
 

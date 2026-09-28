@@ -71,20 +71,18 @@ retrieve that reference from the official `KeWang0622/mri-research-skill` reposi
 6. **Submit & revise.** Follow venue mechanics (blind review, rebuttal,
    camera-ready, or journal revision cycles); post a preprint and release code.
 
-## Choose the venue (it changes everything)
+## Choose the venue and summarize related work
 
-| | **CVPR / NeurIPS** (CS-ML) | **MICCAI** (medical imaging) | **MRM** (MR journal) |
-|---|---|---|---|
-| Format | IEEE/CVF, ~8 pp + refs | Springer LNCS, ~8–10 pp | Wiley, MRM LaTeX class, ~5000 words |
-| Template | [cvpr-org/author-kit](https://github.com/cvpr-org/author-kit) | [LNCS guidelines](https://www.springer.com/gp/computer-science/lncs/conference-proceedings-guidelines) | [MRM class](https://onlinelibrary.wiley.com/journal/15222594/la_tex_class_file) |
-| Review | double-blind + rebuttal | double-blind + rebuttal | single-blind, revision cycles |
-| Emphasis | novelty, SOTA, benchmarks | method + clinical relevance | rigor, validation, physics, reproducibility |
-| Code | expected (release on GitHub + a Zenodo DOI; index it on [Hugging Face Papers](https://huggingface.co/papers), which took over from the retired Papers with Code) | encouraged | [ISMRM RRSG](https://ismrm.github.io/rrsg/) |
-| Cadence | annual deadline (check the CFP) | annual (spring) | rolling |
+Use the [venue and literature-digest guide](../mri-research/references/publishing.md)
+for MRM, JMRI, TMI, MedIA, MICCAI, ISMRM, CVPR and related venues. Distinguish
+journal articles, conference papers, meeting abstracts and preprints. Match the
+scientific contribution to the audience; recheck the target year/track's official
+instructions before selecting a template, limits or submission schedule.
 
-CVPR/NeurIPS reward a novel method beating strong baselines; MRM rewards
-careful, reproducible, physically-sound work with validation. Frame the same
-result differently for each.
+For a journal/conference summary, state the topic and date window; verify primary
+records; deduplicate versions; compare methods, data, findings and limitations.
+Label abstract-only summaries and separate reported claims from your assessment.
+Give a synthesis and useful next experiments, not just a list of titles.
 
 ## Writing the paper (section by section)
 

@@ -18,7 +18,7 @@ metadata:
 
 # Diffusion MRI
 
-You are a diffusion-MRI scientist. Diffusion data is EPI-based and artifact-prone,
+You are a diffusion-MRI scientist. Diffusion data is often EPI-based and artifact-prone,
 so preprocessing quality dominates results — respect the pipeline order.
 
 
@@ -45,6 +45,13 @@ Read the [tool setup guide](../mri-research/references/tool-setup.md) when insta
 repairing, or choosing an execution environment. If the hub is not installed,
 retrieve that reference from the official `KeWang0622/mri-research-skill` repository.
 
+## DWI, DTI and acquisition choices
+
+Read [DWI and DTI](references/dwi-dti.md) for the measurement/model distinction,
+gradient and BIDS metadata checks, tensor fitting, QC and interpretation limits.
+DWI is acquired data; DTI is one model of it. EPI is a readout, and DENSE is
+tissue-displacement imaging, not a diffusion-tensor technique.
+
 ## Typical pipeline
 
 1. **Convert & organize** — DICOM→NIfTI with `dcm2niix` (keeps `.bval`/`.bvec`);
@@ -54,14 +61,15 @@ retrieve that reference from the official `KeWang0622/mri-research-skill` reposi
    Patch2Self (self-supervised).
 3. **Gibbs ringing removal** — MRtrix3 `mrdegibbs`.
 4. **Distortion + eddy + motion** — FSL **`topup`** (reversed phase-encode pairs)
-   then **`eddy`**: https://fsl.fmrib.ox.ac.uk/fsl/docs/#/diffusion/eddy .
+   then **`eddy`** (retain its rotated b-vectors): https://fsl.fmrib.ox.ac.uk/fsl/docs/#/diffusion/eddy .
 5. **Mask / bias field** — brain mask; N4 bias correction (ANTs).
 6. **Model fitting** (below).
 7. **Tractography / bundles** (below).
 
 Prefer a validated turnkey pipeline when possible: **QSIPrep**
 (https://github.com/PennLINC/qsiprep) — BIDS-native diffusion preprocessing +
-reconstruction workflows.
+QC. Downstream diffusion modeling and tractography use **QSIRecon**
+(https://qsirecon.readthedocs.io/); this is distinct from raw k-space reconstruction.
 
 ## Models
 
@@ -86,7 +94,8 @@ reconstruction workflows.
 - Always keep the **`.bval`/`.bvec`** with the data; check b-vector orientation
   vs. image axes (a flipped bvec silently ruins tractography).
 - For `topup` you need **reversed phase-encode** (blip-up/blip-down) acquisitions
-  or a fieldmap.
+  with suitable metadata. A conventional fieldmap requires a separate
+  fieldmap-based route; it is not a replacement image passed directly to `topup`.
 - Multi-shell (multiple b-values) enables DKI/NODDI/multi-tissue CSD.
 
 ## Hand-offs
@@ -94,7 +103,8 @@ reconstruction workflows.
 - This skill starts from **reconstructed DWI volumes**. If the user has raw
   k-space (twix/ISMRMRD/`.cfl`) and no images yet, `mri-reconstruction` gets them
   there first — including the EPI-specific caveat that EPI is Cartesian and needs
-  ramp-sampling regridding plus Nyquist-ghost correction, not a NUFFT.
+  regridding when ramp-sampled plus Nyquist-ghost correction; a
+  NUFFT alone does not address these effects.
 - **Non-diffusion image analysis** (fMRI/GLM, FreeSurfer, registration, BIDS
   plumbing) belongs to the `mri-research` hub.
 - **Designing the diffusion acquisition** itself (b-value/direction schemes,
