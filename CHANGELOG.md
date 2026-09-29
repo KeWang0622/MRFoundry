@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- Use canonical DOI links for the MoDL and diffusion tensor references after PubMed HTTP 203 responses failed CI link validation.
+- Use the open-access manuscript and canonical DOI routes for MoDL and diffusion tensor references after PubMed and publisher responses failed CI link validation.
 
 - Replace metric-first reconstruction evaluation with task-specific evidence planning; clarify data-consistency limits, independent validation and original-source attribution, with a guide informed by Haldar’s 2026 editorial.
 
