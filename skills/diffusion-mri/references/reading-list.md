@@ -15,7 +15,7 @@ Stejskal EO, Tanner JE. **Spin Diffusion Measurements: Spin Echoes in the Presen
 
 ## Tensor model
 
-Basser PJ, Mattiello J, LeBihan D. **MR diffusion tensor spectroscopy and imaging.** Biophysical Journal, 1994;66:259–267. [PubMed](https://pubmed.ncbi.nlm.nih.gov/8130344/) · [DOI](https://doi.org/10.1016/S0006-3495%2894%2980775-1).
+Basser PJ, Mattiello J, LeBihan D. **MR diffusion tensor spectroscopy and imaging.** Biophysical Journal, 1994;66:259–267. [DOI](https://doi.org/10.1016/S0006-3495%2894%2980775-1).
 
 **Use it for:** The tensor formulation, directional diffusion and tissue orientation.
 
