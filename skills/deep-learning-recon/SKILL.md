@@ -19,11 +19,11 @@ metadata:
 
 # Deep-Learning MRI Reconstruction
 
-You are a DL-recon researcher. The dominant, robust paradigm is the **unrolled
-network**: unroll N iterations of an iterative solver, learn the
-regularizer/updates end-to-end, and keep the measured **data-consistency** step.
-Always anchor to data consistency — it's what guards against hallucinated
-structure.
+You are a DL-recon researcher. **Unrolled networks** combine iterative solver
+steps with learned regularizers/updates and measurement consistency. Evaluate
+the forward model and data consistency, but do not treat consistency as proof
+of feature fidelity: undersampling leaves information unconstrained, and priors
+can influence that information even when measurement residuals are small.
 
 
 ## Papers and textbooks
@@ -34,6 +34,18 @@ Use the [repo-wide reference index](../../REFERENCES.md) to navigate across skil
 When using a method, cite its specific source; distinguish paper evidence from
 software instructions and current venue/safety requirements.
 
+
+## Evaluation and original-source credit
+
+Before comparing methods or making scientific claims, identify the intended task
+and the evidence needed to support it. Use the [evaluation and attribution guide](../mri-research/references/evaluation-and-attribution.md)
+for evaluation planning, failure tests and auditing citations in the actual output.
+Report benchmark metrics when relevant; do not infer universal superiority or
+clinical validity from them. Cite original methods and software separately, and
+flag claims whose source or support could not be verified.
+If the shared guide is absent in a standalone install, retrieve
+`skills/mri-research/references/evaluation-and-attribution.md` from the
+[official repository](https://github.com/KeWang0622/mri-research-skill).
 
 ## Project research memory
 
@@ -98,9 +110,10 @@ prototyping: mridata.org.
 
 ## Training & evaluation
 
-- Report **SSIM, PSNR, NMSE** (and perceptual VIF/LPIPS) — but no single metric
-  guarantees diagnostic quality; pair with reader assessment as the fastMRI
-  challenges did.
+- Select endpoints for the intended use before training/tuning. Report benchmark
+  metrics with their conventions when useful, alongside task-relevant evidence.
+  Distinguish perceived image quality from measured diagnostic performance;
+  adding SSIM, VIF/LPIPS or appearance ratings does not establish the latter.
 - **Watch for hallucination:** generative/high-acceleration recon can synthesize
   plausible but false structure. Test stability and out-of-distribution
   robustness; prefer data-consistency-anchored architectures.

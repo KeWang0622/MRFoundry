@@ -34,6 +34,18 @@ When using a method, cite its specific source; distinguish paper evidence from
 software instructions and current venue/safety requirements.
 
 
+## Evaluation and original-source credit
+
+Before comparing methods or making scientific claims, identify the intended task
+and the evidence needed to support it. Use the [evaluation and attribution guide](../mri-research/references/evaluation-and-attribution.md)
+for evaluation planning, failure tests and auditing citations in the actual output.
+Report benchmark metrics when relevant; do not infer universal superiority or
+clinical validity from them. Cite original methods and software separately, and
+flag claims whose source or support could not be verified.
+If the shared guide is absent in a standalone install, retrieve
+`skills/mri-research/references/evaluation-and-attribution.md` from the
+[official repository](https://github.com/KeWang0622/mri-research-skill).
+
 ## Project research memory
 
 For project experiments, read `.mri-research/INDEX.md` when present and retrieve
@@ -63,19 +75,22 @@ retrieve that reference from the official `KeWang0622/mri-research-skill` reposi
    Semantic Scholar, OpenAlex, PubMed, or a paper-search MCP). State the gap and a
    single crisp claim/hypothesis. Choose the venue now (see table).
 2. **Design.** Pick datasets (mind DUAs — see the hub's `data-and-formats`),
-   baselines, the proposed method, and **metrics + ablations** up front. Write a
-   short protocol (what would falsify the claim?). Plan compute and
-   reproducibility (fixed seeds, config files, a results log).
+   baselines, the proposed method, task-specific endpoints and ablations up front. Use the
+   evaluation guide to specify reference standards, failure tests and what would
+   falsify the claim. Plan compute, reproducibility and the scope of independent
+   validation; keep tuning and test data separate. Record seeds, configurations
+   and run logs.
 3. **Run.** Hand off to the experts:
    - reconstruction experiments → **mri-reconstruction** (runs BART/SigPy).
    - training / DL recon → **deep-learning-recon**.
    - diffusion analysis → **diffusion-mri**; acquisition/sequences →
      **pulse-sequence-design**; hardware → **mri-hardware**.
    Track every run (config, seed, data split, metric).
-4. **Analyze.** Report SSIM/PSNR/NMSE + perceptual metrics; add statistics and
-   ablation tables; make qualitative figures with difference maps. Watch for DL
-   **hallucination** and out-of-distribution failure; pair metrics with reader
-   judgment for clinical claims.
+4. **Analyze.** Evaluate the planned endpoints, uncertainty, relevant subgroups
+   and failure cases; show matched images and difference maps when informative.
+   Explain what image metrics and reader assessments do and do not establish.
+   Separate benchmark reproduction from independent implementation or external
+   validation, and limit conclusions to the evidence actually collected.
 5. **Write.** Draft section by section (below), in the venue's LaTeX template.
 6. **Submit & revise.** Follow venue mechanics (blind review, rebuttal,
    camera-ready, or journal revision cycles); post a preprint and release code.

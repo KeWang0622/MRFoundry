@@ -258,20 +258,14 @@ Thermal-noise denoising can act like extra acceleration (higher effective SNR):
 
 ## Evaluation & image-quality metrics
 
-How to judge a reconstruction — and the pitfalls:
+Start with the intended use and the evidence needed for the claim. See the
+[evaluation and attribution guide](evaluation-and-attribution.md) for a planning
+template, task-specific examples, failure tests and original-source credit.
 
-- **Fidelity metrics:** SSIM (Wang Z, et al. *IEEE Trans Image Process*
-  2004;13(4):600–612, doi:10.1109/TIP.2003.819861), plus PSNR, NMSE, and
-  perceptual metrics (VIF, LPIPS). Report several — no single number guarantees
-  diagnostic quality.
-- **Reader studies matter.** SSIM/PSNR can miss clinically-relevant errors, which
-  is why the fastMRI challenges paired metrics with radiologist reads.
-- **Beware DL hallucination.** Learned/generative recon can synthesize
-  realistic-looking but false structure at high acceleration; test for
-  stability, evaluate out-of-distribution, and prefer data-consistency-anchored
-  methods. (The public fastMRI leaderboard was retired in 2023; test sets are now
-  self-evaluated — download from https://fastmri.med.nyu.edu and compute metrics
-  locally.)
+SSIM (Wang Z, et al. *IEEE Trans Image Process* 2004;13(4):600–612,
+doi:10.1109/TIP.2003.819861), PSNR and NMSE/NRMSE can support benchmark comparisons
+when conventions are explicit. Keep their interpretation tied to that purpose;
+perceptual scores or attractive images are not substitutes for task validation.
 
 ## Related recon-adjacent methods
 

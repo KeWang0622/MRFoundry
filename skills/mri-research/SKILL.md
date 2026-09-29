@@ -32,6 +32,15 @@ When using a method, cite its specific source; distinguish paper evidence from
 software instructions and current venue/safety requirements.
 
 
+## Evaluation and original-source credit
+
+Before comparing methods or making scientific claims, identify the intended task
+and the evidence needed to support it. Use the [evaluation and attribution guide](references/evaluation-and-attribution.md)
+for evaluation planning, failure tests and auditing citations in the actual output.
+Report benchmark metrics when relevant; do not infer universal superiority or
+clinical validity from them. Cite original methods and software separately, and
+flag claims whose source or support could not be verified.
+
 ## Project research memory
 
 For project experiments, read `.mri-research/INDEX.md` when present and retrieve
