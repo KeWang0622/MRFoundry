@@ -15,7 +15,7 @@ Hammernik K, et al. **Learning a variational network for reconstruction of accel
 
 ## Model-based learning
 
-Aggarwal HK, Mani MP, Jacob M. **MoDL: Model-Based Deep Learning Architecture for Inverse Problems.** IEEE Transactions on Medical Imaging, 2019;38:394–405. [PubMed / publisher links](https://pubmed.ncbi.nlm.nih.gov/30106719/) · [Public author manuscript](https://pmc.ncbi.nlm.nih.gov/articles/PMC6760673/). DOI: `10.1109/TMI.2018.2865356`.
+Aggarwal HK, Mani MP, Jacob M. **MoDL: Model-Based Deep Learning Architecture for Inverse Problems.** IEEE Transactions on Medical Imaging, 2019;38:394–405. [DOI](https://doi.org/10.1109/TMI.2018.2865356) · [Public author manuscript](https://pmc.ncbi.nlm.nih.gov/articles/PMC6760673/).
 
 **Use it for:** Learned priors coupled to a physics-based data-consistency step.
 
