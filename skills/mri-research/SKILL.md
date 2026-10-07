@@ -17,7 +17,7 @@ description: >-
   papers, and datasets rather than bundling them.
 metadata:
   author: Ke Wang
-  version: "0.7.0"
+  version: "0.8.0"
 ---
 
 # MRI Research Hub
@@ -27,7 +27,7 @@ metadata:
 
 See the [annotated reading list](references/reading-list.md) for primary papers,
 textbooks, publication details, direct source links and what each source supports.
-Use the [repo-wide reference index](../../REFERENCES.md) to navigate across skills.
+Use the [repo-wide reference index](https://github.com/KeWang0622/mri-research-skill/blob/main/REFERENCES.md) to navigate across skills.
 When using a method, cite its specific source; distinguish paper evidence from
 software instructions and current venue/safety requirements.
 
@@ -158,7 +158,7 @@ what you need):
 |---|---|
 | MR physics, k-space intuition, contrast, where to *learn* (courses, handbooks, free books) | [`references/foundations.md`](references/foundations.md) |
 | Designing/programming pulse sequences and k-space trajectories, RF pulse design, simulation | [`references/sequences-and-trajectories.md`](references/sequences-and-trajectories.md) |
-| DWI/DTI, ADC/FA/MD, gradients, diffusion preprocessing and model QC | [Diffusion skill and its DWI/DTI guide](../diffusion-mri/SKILL.md) |
+| DWI/DTI, ADC/FA/MD, gradients, diffusion preprocessing and model QC | [Diffusion skill and its DWI/DTI guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/diffusion-mri/SKILL.md) |
 | MRI hardware: low-field, open-source consoles, coils, gradients, safety | [`references/hardware.md`](references/hardware.md) |
 | Which reconstruction method/paper applies + the landmark reading list (parallel imaging → CS → low-rank → DL → diffusion → fingerprinting) | [`references/recon-methods.md`](references/recon-methods.md) |
 | Which reconstruction *software* to use and how (BART, SigPy, MIRT.jl, MRIReco.jl, torchkbnufft, DIRECT, Gadgetron) | [`references/tools.md`](references/tools.md) |

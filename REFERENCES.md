@@ -13,7 +13,7 @@ when it is installed on its own.
 | [Diffusion MRI](skills/diffusion-mri/SKILL.md) | [Reading list](skills/diffusion-mri/references/reading-list.md) | Stejskal–Tanner, Basser DTI and diffusion preprocessing |
 | [Sequence design](skills/pulse-sequence-design/SKILL.md) | [Reading list](skills/pulse-sequence-design/references/reading-list.md) | Sequence handbook, EPI, DENSE and Pulseq |
 | [Hardware](skills/mri-hardware/SKILL.md) | [Reading list](skills/mri-hardware/references/reading-list.md) | Fields, gradients, RF and phased-array receive coils |
-| [Research workflow](skills/mri-research-workflow/SKILL.md) | [Reading list](skills/mri-research-workflow/references/reading-list.md) | COBIDAS, CLAIM and physical grounding of methods |
+| [Research workflow](skills/mri-research-workflow/SKILL.md) | [Reading list](skills/mri-research-workflow/references/reading-list.md) | COBIDAS, CLAIM, physical grounding and [venue-specific writing](skills/mri-research-workflow/references/paper-writing.md) |
 
 Each entry includes authors, full title, year/edition, journal or publisher,
 a DOI or publisher link, and the topic it supports. Bibliographic years refer to

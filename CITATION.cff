@@ -22,8 +22,8 @@ type: software
 authors:
   - family-names: Wang
     given-names: Ke
-version: 0.7.0
-date-released: "2026-09-22"
+version: 0.8.0
+date-released: "2026-10-07"
 license: MIT
 repository-code: "https://github.com/KeWang0622/mri-research-skill"
 url: "https://github.com/KeWang0622/mri-research-skill"

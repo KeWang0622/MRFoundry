@@ -105,8 +105,8 @@ not evergreen instructions for the next cycle.
 Increasingly expected — and often required — especially for ML/quantitative work:
 
 - **COBIDAS** (OHBM) — best-practice reporting for (f)MRI studies:
-  https://www.humanbrainmapping.org/COBIDAS/ (2016 MRI report PDF:
-  https://www.humanbrainmapping.org/files/2016/COBIDASreport.pdf).
+  [committee announcement](https://cobidas.wordpress.com/) and
+  [2016 report](https://doi.org/10.1101/054262).
 - **CLAIM** — Checklist for Artificial Intelligence in Medical Imaging (RSNA):
   https://pubs.rsna.org/page/ai/claim (2024 update: doi:10.1148/ryai.240300).
 - **TRIPOD+AI** — reporting for clinical prediction models using AI:
