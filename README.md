@@ -198,7 +198,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md) an
 ## Updates
 
 - **On main:** agent-owned application setup and project research memory across all seven skills.
-- **[v0.8.0](https://github.com/KeWang0622/mri-research-skill/releases/tag/v0.8.0):** venue-specific paper writing, evidence-linked project memory, diffusion/sequence guidance and annotated references.
+- **[v0.8.0](CHANGELOG.md):** venue-specific paper writing, evidence-linked project memory, diffusion/sequence guidance and annotated references.
 - **[v0.7.0](https://github.com/KeWang0622/mri-research-skill/releases/tag/v0.7.0):** updated BART upstream guidance, reconstruction caveats and upstream monitoring.
 - [Full changelog](CHANGELOG.md) · [Releases](https://github.com/KeWang0622/mri-research-skill/releases)
 
