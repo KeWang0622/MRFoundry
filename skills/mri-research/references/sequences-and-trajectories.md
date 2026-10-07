@@ -113,7 +113,7 @@ adiabatic, multiband, and parallel-transmit/pTx pulses).
 - **Gradient & trajectory optimization:** **GrOpt**
   (https://github.com/mloecher/gropt) for time-optimal gradient-waveform design,
   and Lustig's **minTimeGradient / tOptGrad**
-  (https://people.eecs.berkeley.edu/~mlustig/Software.html) for time-optimal
+  (https://people.eecs.berkeley.edu/~mlustig/software/tOptGrad_V0.2.tar.gz) for time-optimal
   gradients along an arbitrary k-space path. Validate against PNS with
   **safe_pns_prediction**
   (https://github.com/filip-szczepankiewicz/safe_pns_prediction).

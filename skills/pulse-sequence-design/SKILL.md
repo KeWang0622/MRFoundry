@@ -124,7 +124,7 @@ Product SMS sequences from CMRR: https://www.cmrr.umn.edu/multiband/
 
 - **Time-optimal gradients:** **GrOpt** (https://github.com/mloecher/gropt) and
   Lustig's **minTimeGradient**
-  (https://people.eecs.berkeley.edu/~mlustig/Software.html); validate PNS with
+  (https://people.eecs.berkeley.edu/~mlustig/software/tOptGrad_V0.2.tar.gz); validate PNS with
   **safe_pns_prediction** (https://github.com/filip-szczepankiewicz/safe_pns_prediction).
 - **GIRF (gradient impulse response):** **MRI-gradient/GIRF**
   (https://github.com/MRI-gradient/GIRF); Julia spiral recon with correction:

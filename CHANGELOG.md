@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.8.0] — 2026-10-07
 
+- Replace failing software-index and COBIDAS site links with the upstream gradient archive and committee/report sources.
+
 - Add evidence-first paper-writing guides for MICCAI, MRM, JMRI and IEEE TMI, with official policy sources, a paper-plan template, reviewer-response template and a clearly labeled illustrative diffusion study.
 - Make cross-skill and repository-index links usable from standalone skill installations by linking to canonical repository paths.
 
