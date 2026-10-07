@@ -14,7 +14,7 @@ description: >-
   deep-learning-recon (trained).
 metadata:
   author: Ke Wang
-  version: "0.7.0"
+  version: "0.8.0"
 ---
 
 # Pulse Sequence & Trajectory Design
@@ -28,7 +28,7 @@ integration.
 
 See the [annotated reading list](references/reading-list.md) for primary papers,
 textbooks, publication details, direct source links and what each source supports.
-Use the [repo-wide reference index](../../REFERENCES.md) to navigate across skills.
+Use the [repo-wide reference index](https://github.com/KeWang0622/mri-research-skill/blob/main/REFERENCES.md) to navigate across skills.
 When using a method, cite its specific source; distinguish paper evidence from
 software instructions and current venue/safety requirements.
 
@@ -39,7 +39,7 @@ For project experiments, read `.mri-research/INDEX.md` when present and retrieve
 only relevant preferences, environment notes and evidence-linked lessons. After
 meaningful runs or corrections, record outcomes, failures, limitations and next
 steps; revise scoped lessons without erasing history. Keep user preferences
-separate from scientific findings. Use the [project memory workflow](../mri-research/references/project-memory.md)
+separate from scientific findings. Use the [project memory workflow](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/project-memory.md)
 to initialize the folder or connect project `CLAUDE.md` / `AGENTS.md`. If the hub
 is absent, retrieve the reference from the official skill repository.
 
@@ -52,7 +52,7 @@ upstream example, then execute the user's workflow. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
-Read the [tool setup guide](../mri-research/references/tool-setup.md) when installing,
+Read the [tool setup guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/tool-setup.md) when installing,
 repairing, or choosing an execution environment. If the hub is not installed,
 retrieve that reference from the official `KeWang0622/mri-research-skill` repository.
 
@@ -83,7 +83,7 @@ reconstruction (NUFFT).
 
 ## EPI, diffusion preparation and DENSE
 
-Read the hub’s [sequence families and detailed guide](../mri-research/references/sequences-and-trajectories.md#sequence-families-contrast-encoding-and-readout)
+Read the hub’s [sequence families and detailed guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/sequences-and-trajectories.md#sequence-families-contrast-encoding-and-readout)
 for GRE, SE/FSE, inversion recovery, bSSFP, EPI and DENSE. Keep contrast,
 readout and fitted models distinct. Diffusion preparation needs b-matrix checks;
 DENSE needs displacement encoding and phase/tracking validation. Verify the

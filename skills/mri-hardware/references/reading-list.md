@@ -1,6 +1,6 @@
 # Papers and textbooks — mri-hardware
 
-[Skill instructions](../SKILL.md) · [All skill reading lists](../../../REFERENCES.md)
+[Skill instructions](../SKILL.md) · [All skill reading lists](https://github.com/KeWang0622/mri-research-skill/blob/main/REFERENCES.md)
 
 A starter reading list, organized by the decision it supports. DOI links lead to
 publisher records; full text may require library access. Only links explicitly
@@ -27,7 +27,7 @@ Bernstein MA, King KF, Zhou XJ. **Handbook of MRI Pulse Sequences.** Academic Pr
 
 ## Practical references and software
 
-[Hardware projects and documentation](../../mri-research/references/hardware.md). For operational safety, use the current official ACR manual linked from the skill and local requirements; historical papers are not operating instructions.
+[Hardware projects and documentation](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/hardware.md). For operational safety, use the current official ACR manual linked from the skill and local requirements; historical papers are not operating instructions.
 
 Software documentation explains installation and APIs; it does not replace the
 method paper. The curated reading list is not a source for every statement in the

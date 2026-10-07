@@ -11,7 +11,7 @@
 
 **MRI research guidance for your coding agent — from the question to the paper.**
 
-[![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/mri-research-skill/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/mri-research-skill/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/mri-research-skill?style=flat-square&labelColor=000000)](LICENSE) ![Version](https://img.shields.io/badge/version-0.7.0-1f6feb?style=flat-square&labelColor=000000) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/mri-research-skill?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/mri-research-skill)
+[![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/mri-research-skill/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/mri-research-skill/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/mri-research-skill?style=flat-square&labelColor=000000)](LICENSE) ![Version](https://img.shields.io/badge/version-0.8.0-1f6feb?style=flat-square&labelColor=000000) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/mri-research-skill?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/mri-research-skill)
 
 </div>
 
@@ -130,6 +130,19 @@ A lesson should change a concrete decision in the next task, then be checked aga
 
 [Set up project memory →](skills/mri-research/references/project-memory.md) · [How agents set up scientific tools →](skills/mri-research/references/tool-setup.md)
 
+## Write an MRI paper
+
+The [paper-writing guide](skills/mri-research-workflow/references/paper-writing.md)
+connects **claims → experiment evidence → figures → manuscript → reviewer responses**,
+with distinct guidance for **MICCAI, MRM, JMRI and IEEE TMI** and links to official
+instructions. Start with an editable [paper plan](skills/mri-research-workflow/assets/paper-plan.md).
+
+> “Use my experiment records to plan an MRM paper. Map each claim to evidence,
+> propose the figures, and flag missing analyses before drafting the abstract.”
+
+The included diffusion study is an illustrative planning example, not reported
+experimental results. The agent should never fill missing evidence with plausible numbers.
+
 ## Try a research question
 
 | Your request | Knowledge the agent needs to combine |
@@ -185,6 +198,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md) an
 ## Updates
 
 - **On main:** agent-owned application setup and project research memory across all seven skills.
+- **[v0.8.0](https://github.com/KeWang0622/mri-research-skill/releases/tag/v0.8.0):** venue-specific paper writing, evidence-linked project memory, diffusion/sequence guidance and annotated references.
 - **[v0.7.0](https://github.com/KeWang0622/mri-research-skill/releases/tag/v0.7.0):** updated BART upstream guidance, reconstruction caveats and upstream monitoring.
 - [Full changelog](CHANGELOG.md) · [Releases](https://github.com/KeWang0622/mri-research-skill/releases)
 
@@ -212,7 +226,7 @@ If this helps your research or tooling, please cite it (GitHub's
   author  = {Wang, Ke},
   title   = {mri-research: A curated knowledge hub for MRI research},
   year    = {2026},
-  version = {0.7.0},
+  version = {0.8.0},
   url     = {https://github.com/KeWang0622/mri-research-skill}
 }
 ```
