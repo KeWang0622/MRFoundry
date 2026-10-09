@@ -1,5 +1,7 @@
 # MRI image analysis & processing
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Use this once you have **images** (not raw k-space): organizing, converting,
 registering, segmenting, and analyzing MR data. This is the "after
 reconstruction" half of MRI research — structural, functional, and diffusion
@@ -71,7 +73,7 @@ segmentation, stats). Choose by ecosystem and modality:
 ## Diffusion MRI (dMRI)
 
 For DWI/DTI inputs, gradient conventions, fitting and QC, read the
-[diffusion guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/diffusion-mri/references/dwi-dti.md) and use the
+[diffusion guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/diffusion-mri/references/dwi-dti.md) and use the
 `diffusion-mri` skill.
 
 - **MRtrix3** — https://github.com/MRtrix3/mrtrix3 — advanced diffusion modeling

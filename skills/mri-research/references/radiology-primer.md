@@ -1,5 +1,7 @@
 # Reading MR image contrast — background orientation only
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 **Scope and safety.** This primer exists so you can follow *research*
 conversations about MR image contrast (e.g., "train on T2-FLAIR," "the lesion
 is bright on DWI"). It is **not** clinical or diagnostic guidance. Do not use it

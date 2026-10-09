@@ -1,5 +1,7 @@
 # Research memory that improves through use
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Each project can keep `.mri-research/` as its small, durable research notebook.
 Use it to carry findings and the researcher's working preferences across tasks
 and agents. This is an explicit read → experiment → record → reassess loop,
@@ -13,7 +15,7 @@ directory or an unrelated checkout. For a new research project, initialize it
 when local project-file creation is within the task:
 
 ```bash
-python3 <mri-research-skill-path>/scripts/init_research_memory.py --project-root <project-root>
+python3 <path-to-installed-mri-research>/scripts/init_research_memory.py --project-root <project-root>
 ```
 
 The initializer uses only Python's standard library, preserves existing files,
@@ -76,7 +78,7 @@ The notebook is plain Markdown and belongs to the researcher. When requested,
 append the small managed entrypoint to project `CLAUDE.md` and `AGENTS.md`:
 
 ```bash
-python3 <mri-research-skill-path>/scripts/init_research_memory.py --project-root <project-root> --link-agent-files
+python3 <path-to-installed-mri-research>/scripts/init_research_memory.py --project-root <project-root> --link-agent-files
 ```
 
 This preserves existing content and is idempotent. It does not modify global

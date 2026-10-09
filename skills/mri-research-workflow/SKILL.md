@@ -17,7 +17,7 @@ metadata:
   version: "0.8.0"
 ---
 
-# MRI Research Workflow (idea → paper)
+# MRFoundry: MRI Research Workflow (idea → paper)
 
 You are a research-project shepherd and writing partner. Take the project through
 the stages below, doing the work with the user, and hand off domain steps to the
@@ -29,7 +29,7 @@ format.
 
 See the [annotated reading list](references/reading-list.md) for primary papers,
 textbooks, publication details, direct source links and what each source supports.
-Use the [repo-wide reference index](https://github.com/KeWang0622/mri-research-skill/blob/main/REFERENCES.md) to navigate across skills.
+Use the [repo-wide reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md) to navigate across skills.
 When using a method, cite its specific source; distinguish paper evidence from
 software instructions and current venue/safety requirements.
 
@@ -37,14 +37,14 @@ software instructions and current venue/safety requirements.
 ## Evaluation and original-source credit
 
 Before comparing methods or making scientific claims, identify the intended task
-and the evidence needed to support it. Use the [evaluation and attribution guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/evaluation-and-attribution.md)
+and the evidence needed to support it. Use the [evaluation and attribution guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/evaluation-and-attribution.md)
 for evaluation planning, failure tests and auditing citations in the actual output.
 Report benchmark metrics when relevant; do not infer universal superiority or
 clinical validity from them. Cite original methods and software separately, and
 flag claims whose source or support could not be verified.
 If the shared guide is absent in a standalone install, retrieve
 `skills/mri-research/references/evaluation-and-attribution.md` from the
-[official repository](https://github.com/KeWang0622/mri-research-skill).
+[official repository](https://github.com/KeWang0622/MRFoundry).
 
 ## Project research memory
 
@@ -52,7 +52,7 @@ For project experiments, read `.mri-research/INDEX.md` when present and retrieve
 only relevant preferences, environment notes and evidence-linked lessons. After
 meaningful runs or corrections, record outcomes, failures, limitations and next
 steps; revise scoped lessons without erasing history. Keep user preferences
-separate from scientific findings. Use the [project memory workflow](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/project-memory.md)
+separate from scientific findings. Use the [project memory workflow](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/project-memory.md)
 to initialize the folder or connect project `CLAUDE.md` / `AGENTS.md`. If the hub
 is absent, retrieve the reference from the official skill repository.
 
@@ -65,9 +65,9 @@ upstream example, then execute the user's workflow. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
-Read the [tool setup guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/tool-setup.md) when installing,
+Read the [tool setup guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/tool-setup.md) when installing,
 repairing, or choosing an execution environment. If the hub is not installed,
-retrieve that reference from the official `KeWang0622/mri-research-skill` repository.
+retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 
 ## The flow
 
@@ -99,7 +99,7 @@ retrieve that reference from the official `KeWang0622/mri-research-skill` reposi
 
 ## Choose the venue and summarize related work
 
-Use the [venue and literature-digest guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/publishing.md)
+Use the [venue and literature-digest guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/publishing.md)
 for MRM, JMRI, TMI, MedIA, MICCAI, ISMRM, CVPR and related venues. Distinguish
 journal articles, conference papers, meeting abstracts and preprints. Match the
 scientific contribution to the audience; recheck the target year/track's official
@@ -124,9 +124,9 @@ claim to its analysis, and make unsupported text an explicit placeholder.
 
 - Manuscript logistics (journals, LaTeX classes, reporting standards, abstracts):
   hub `publishing` —
-  https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/publishing.md
+  https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/publishing.md
 - Finding/monitoring literature: hub `literature-access` —
-  https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/literature-access.md
+  https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/literature-access.md
 - Preprints: arXiv (eess.IV / physics.med-ph / cs.CV). Reviews on OpenReview for
   some venues.
 

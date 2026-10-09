@@ -1,6 +1,6 @@
 # Papers and textbooks — pulse-sequence-design
 
-[Skill instructions](../SKILL.md) · [All skill reading lists](https://github.com/KeWang0622/mri-research-skill/blob/main/REFERENCES.md)
+[Skill instructions](../SKILL.md) · [MRFoundry reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
 A starter reading list, organized by the decision it supports. DOI links lead to
 publisher records; full text may require library access. Only links explicitly
@@ -33,7 +33,7 @@ Layton KJ, et al. **Pulseq: A rapid and hardware-independent pulse sequence prot
 
 ## Practical references and software
 
-[Sequence families, EPI and DENSE guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/sequences-and-trajectories.md) · [Pulseq examples](https://pulseq.github.io/tutorials.html)
+[Sequence families, EPI and DENSE guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/sequences-and-trajectories.md) · [Pulseq examples](https://pulseq.github.io/tutorials.html)
 
 Software documentation explains installation and APIs; it does not replace the
 method paper. The curated reading list is not a source for every statement in the

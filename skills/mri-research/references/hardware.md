@@ -1,5 +1,7 @@
 # MRI hardware & the open-hardware community
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Use this when the user asks about MRI hardware — magnets, gradients, RF coils,
 consoles/spectrometers — or about building/using low-field and open-source
 systems. This is an orientation + pointers file; hardware work is deeply

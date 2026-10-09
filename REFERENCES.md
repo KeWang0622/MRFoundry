@@ -1,4 +1,6 @@
-# Papers and textbooks by skill
+# MRFoundry references
+
+Papers and textbooks for the seven MRFoundry skills.
 
 Find the source behind a method, then follow the practical guide to use it.
 Every skill includes a local **Papers and textbooks** section and an annotated

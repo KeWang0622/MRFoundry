@@ -1,9 +1,14 @@
-# Changelog
+# MRFoundry changelog
 
 All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## Unreleased
+
+### Changed
+- Rebrand the collection as **MRFoundry**, with a compact native-text README header, updated repository/install/citation links, and the renamed interactive tutorial. Existing skill identifiers and `.mri-research/` project-memory paths stay compatible.
 
 ## [0.8.0] — 2026-10-07
 
@@ -271,7 +276,7 @@ hub, and switched distribution to the open `skills` CLI (`npx skills add`).
 - `SKILL.md` reframed around the full MRI pipeline (physics → acquisition →
   reconstruction → analysis → quantification) with an expanded routing table.
 - Repository restructured to the `skills` layout (`skills/mri-research/`) so it
-  installs with `npx skills add KeWang0622/mri-research-skill`.
+  installs with `npx skills add KeWang0622/MRFoundry`.
 - README rewritten: MRI-first framing, `npx skills` install, working badges.
 
 ## [0.1.0] — 2026-09-19
@@ -306,11 +311,11 @@ Initial public release.
 - Project scaffolding: `README.md`, `LICENSE` (MIT), `CITATION.cff`,
   `CONTRIBUTING.md`, `.gitignore`.
 
-[0.7.0]: https://github.com/KeWang0622/mri-research-skill/releases/tag/v0.7.0
-[0.6.0]: https://github.com/KeWang0622/mri-research-skill/releases/tag/v0.6.0
-[0.5.1]: https://github.com/KeWang0622/mri-research-skill/releases/tag/v0.5.1
-[0.5.0]: https://github.com/KeWang0622/mri-research-skill/releases/tag/v0.5.0
-[0.4.0]: https://github.com/KeWang0622/mri-research-skill/releases/tag/v0.4.0
-[0.3.0]: https://github.com/KeWang0622/mri-research-skill/releases/tag/v0.3.0
-[0.2.0]: https://github.com/KeWang0622/mri-research-skill/releases/tag/v0.2.0
-[0.1.0]: https://github.com/KeWang0622/mri-research-skill/releases/tag/v0.1.0
+[0.7.0]: https://github.com/KeWang0622/MRFoundry/releases/tag/v0.7.0
+[0.6.0]: https://github.com/KeWang0622/MRFoundry/releases/tag/v0.6.0
+[0.5.1]: https://github.com/KeWang0622/MRFoundry/releases/tag/v0.5.1
+[0.5.0]: https://github.com/KeWang0622/MRFoundry/releases/tag/v0.5.0
+[0.4.0]: https://github.com/KeWang0622/MRFoundry/releases/tag/v0.4.0
+[0.3.0]: https://github.com/KeWang0622/MRFoundry/releases/tag/v0.3.0
+[0.2.0]: https://github.com/KeWang0622/MRFoundry/releases/tag/v0.2.0
+[0.1.0]: https://github.com/KeWang0622/MRFoundry/releases/tag/v0.1.0

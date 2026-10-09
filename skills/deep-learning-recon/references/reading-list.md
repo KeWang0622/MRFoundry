@@ -1,6 +1,6 @@
 # Papers and textbooks — deep-learning-recon
 
-[Skill instructions](../SKILL.md) · [All skill reading lists](https://github.com/KeWang0622/mri-research-skill/blob/main/REFERENCES.md)
+[Skill instructions](../SKILL.md) · [MRFoundry reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
 A starter reading list, organized by the decision it supports. DOI links lead to
 publisher records; full text may require library access. Only links explicitly
@@ -33,7 +33,7 @@ Chung H, Ye JC. **Score-based diffusion models for accelerated MRI.** Medical Im
 
 ## Practical references and software
 
-[Additional DL methods and implementations](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/recon-methods.md)
+[Additional DL methods and implementations](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/recon-methods.md)
 
 Software documentation explains installation and APIs; it does not replace the
 method paper. The curated reading list is not a source for every statement in the

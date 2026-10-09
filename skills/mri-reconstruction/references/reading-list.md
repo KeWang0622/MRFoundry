@@ -1,6 +1,6 @@
 # Papers and textbooks — mri-reconstruction
 
-[Skill instructions](../SKILL.md) · [All skill reading lists](https://github.com/KeWang0622/mri-research-skill/blob/main/REFERENCES.md)
+[Skill instructions](../SKILL.md) · [MRFoundry reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
 A starter reading list, organized by the decision it supports. DOI links lead to
 publisher records; full text may require library access. Only links explicitly
@@ -33,7 +33,7 @@ Brown RW, Cheng Y-CN, Haacke EM, Thompson MR, Venkatesan R. **Magnetic Resonance
 
 ## Practical references and software
 
-[Extended method bibliography](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/recon-methods.md) · [Tool documentation](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/tools.md)
+[Extended method bibliography](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/recon-methods.md) · [Tool documentation](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/tools.md)
 
 Software documentation explains installation and APIs; it does not replace the
 method paper. The curated reading list is not a source for every statement in the

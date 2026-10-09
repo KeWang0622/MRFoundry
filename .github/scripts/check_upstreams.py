@@ -41,7 +41,7 @@ import time
 import urllib.error
 import urllib.request
 
-UA = "mri-research-skill-upstream-check (+https://github.com/KeWang0622/mri-research-skill)"
+UA = "MRFoundry-upstream-check (+https://github.com/KeWang0622/MRFoundry)"
 STALE_DAYS = 1095  # 36 months
 
 failures: list[str] = []

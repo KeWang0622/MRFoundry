@@ -17,7 +17,7 @@ metadata:
   version: "0.8.0"
 ---
 
-# Pulse Sequence & Trajectory Design
+# MRFoundry: Pulse Sequence & Trajectory Design
 
 You are a pulse-sequence designer. Prototype vendor-neutrally with **Pulseq**
 first (fast to iterate, portable, open); reserve vendor SDKs for product-level
@@ -28,7 +28,7 @@ integration.
 
 See the [annotated reading list](references/reading-list.md) for primary papers,
 textbooks, publication details, direct source links and what each source supports.
-Use the [repo-wide reference index](https://github.com/KeWang0622/mri-research-skill/blob/main/REFERENCES.md) to navigate across skills.
+Use the [repo-wide reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md) to navigate across skills.
 When using a method, cite its specific source; distinguish paper evidence from
 software instructions and current venue/safety requirements.
 
@@ -39,7 +39,7 @@ For project experiments, read `.mri-research/INDEX.md` when present and retrieve
 only relevant preferences, environment notes and evidence-linked lessons. After
 meaningful runs or corrections, record outcomes, failures, limitations and next
 steps; revise scoped lessons without erasing history. Keep user preferences
-separate from scientific findings. Use the [project memory workflow](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/project-memory.md)
+separate from scientific findings. Use the [project memory workflow](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/project-memory.md)
 to initialize the folder or connect project `CLAUDE.md` / `AGENTS.md`. If the hub
 is absent, retrieve the reference from the official skill repository.
 
@@ -52,9 +52,9 @@ upstream example, then execute the user's workflow. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
-Read the [tool setup guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/tool-setup.md) when installing,
+Read the [tool setup guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/tool-setup.md) when installing,
 repairing, or choosing an execution environment. If the hub is not installed,
-retrieve that reference from the official `KeWang0622/mri-research-skill` repository.
+retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 
 ## Pulseq-first workflow
 
@@ -83,7 +83,7 @@ reconstruction (NUFFT).
 
 ## EPI, diffusion preparation and DENSE
 
-Read the hub’s [sequence families and detailed guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/sequences-and-trajectories.md#sequence-families-contrast-encoding-and-readout)
+Read the hub’s [sequence families and detailed guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/sequences-and-trajectories.md#sequence-families-contrast-encoding-and-readout)
 for GRE, SE/FSE, inversion recovery, bSSFP, EPI and DENSE. Keep contrast,
 readout and fitted models distinct. Diffusion preparation needs b-matrix checks;
 DENSE needs displacement encoding and phase/tracking validation. Verify the
@@ -123,8 +123,10 @@ Product SMS sequences from CMRR: https://www.cmrr.umn.edu/multiband/
 ## Gradient optimization, GIRF & simulation
 
 - **Time-optimal gradients:** **GrOpt** (https://github.com/mloecher/gropt) and
-  Lustig's **minTimeGradient**
-  (https://people.eecs.berkeley.edu/~mlustig/software/tOptGrad_V0.2.tar.gz); validate PNS with
+  Lustig's **minTimeGradient / tOptGrad** on the
+  [author's software page](https://people.eecs.berkeley.edu/~mlustig/Software.html).
+  Use its **Time Optimal Gradient Design** section for the package and demo;
+  verify the current download before installing. Validate PNS with
   **safe_pns_prediction** (https://github.com/filip-szczepankiewicz/safe_pns_prediction).
 - **GIRF (gradient impulse response):** **MRI-gradient/GIRF**
   (https://github.com/MRI-gradient/GIRF); Julia spiral recon with correction:
@@ -156,4 +158,4 @@ integration or features Pulseq can't express.
 - **Physics background and the citation trail:** the `mri-research` hub.
 
 Deeper reference:
-https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/sequences-and-trajectories.md
+https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/sequences-and-trajectories.md

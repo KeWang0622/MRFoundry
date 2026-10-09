@@ -1,5 +1,7 @@
 # Quantitative MRI (qMRI) & MR spectroscopy (MRS)
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Use this when the goal is **parameter maps or metabolite concentrations**, not a
 single qualitative image — relaxometry, susceptibility, perfusion, magnetization
 transfer, and spectroscopy. These methods pair a specialized acquisition with a

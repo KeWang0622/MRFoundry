@@ -1,5 +1,7 @@
 # Reconstruction methods & the landmark-paper reading list
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Use this to (a) pick the right method for a task and (b) hand the user the
 canonical paper. Every citation below was verified; include the DOI/arXiv id
 when you cite so the user can find it behind their own library access. Do not

@@ -1,5 +1,7 @@
 # Programmatic access to literature & data: APIs, keys, and MCP servers
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Use this when the user wants to *find, fetch, or monitor* MR papers/datasets
 programmatically — or asks which resources need an API key or whether there's
 an MCP server for it. This lets the skill actually retrieve current information

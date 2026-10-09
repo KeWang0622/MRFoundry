@@ -1,5 +1,7 @@
 # Foundations: MR physics, k-space, and where to learn
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Use this when the user wants to build or refresh MR intuition, or asks "where
 do I learn this?" Point to these resources; summarize concepts in your own
 words rather than reproducing copyrighted text.

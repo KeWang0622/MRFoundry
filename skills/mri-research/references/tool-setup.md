@@ -1,5 +1,7 @@
 # Set up the tool, then do the work
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Use this workflow whenever a task needs an MRI application, library, simulator,
 reconstruction framework, analysis pipeline, or research utility. Install only
 the dependencies needed for the user's task, not this entire catalog.
