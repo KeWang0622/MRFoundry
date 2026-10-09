@@ -52,7 +52,7 @@ npx skills add KeWang0622/MRFoundry --list
 npx skills update -g
 ```
 
-Choose one, several or all seven skills. Browse the [skills directory](https://skills.sh/KeWang0622/MRFoundry). These are Markdown instructions and supporting helpers; installing them does not install every scientific application or grant access to restricted datasets.
+Choose one, several or all seven skills. Browse the [skills directory](https://github.com/KeWang0622/MRFoundry/tree/main/skills). These are Markdown instructions and supporting helpers; installing them does not install every scientific application or grant access to restricted datasets.
 
 </details>
 

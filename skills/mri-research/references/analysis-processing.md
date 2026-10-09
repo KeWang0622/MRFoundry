@@ -1,5 +1,7 @@
 # MRI image analysis & processing
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Use this once you have **images** (not raw k-space): organizing, converting,
 registering, segmenting, and analyzing MR data. This is the "after
 reconstruction" half of MRI research — structural, functional, and diffusion

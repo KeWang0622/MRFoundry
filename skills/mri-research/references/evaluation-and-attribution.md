@@ -1,5 +1,7 @@
 # Evaluation and attribution in MRI research
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Use this guide when choosing reconstruction evidence, comparing methods, or
 writing scientific claims. Scale the evaluation to the stated task; a format
 conversion or demonstration does not require a clinical study.

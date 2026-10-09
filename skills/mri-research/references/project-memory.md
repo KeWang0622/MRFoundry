@@ -1,5 +1,7 @@
 # Research memory that improves through use
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Each project can keep `.mri-research/` as its small, durable research notebook.
 Use it to carry findings and the researcher's working preferences across tasks
 and agents. This is an explicit read → experiment → record → reassess loop,

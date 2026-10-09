@@ -1,4 +1,4 @@
-# Security Policy
+# MRFoundry security policy
 
 ## Scope
 

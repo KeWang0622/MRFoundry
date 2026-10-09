@@ -1,5 +1,7 @@
 # Pulse sequence programming & k-space trajectory design
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Use this when the user wants to design/program a pulse sequence, define or
 analyze a k-space trajectory, or simulate an acquisition. Sequence design and
 trajectory design are two sides of the same coin: the gradient waveforms in the
@@ -113,8 +115,10 @@ adiabatic, multiband, and parallel-transmit/pTx pulses).
 - **Gradient & trajectory optimization:** **GrOpt**
   (https://github.com/mloecher/gropt) for time-optimal gradient-waveform design,
   and Lustig's **minTimeGradient / tOptGrad**
-  (https://people.eecs.berkeley.edu/~mlustig/software/tOptGrad_V0.2.tar.gz) for time-optimal
-  gradients along an arbitrary k-space path. Validate against PNS with
+  on the [author's software page](https://people.eecs.berkeley.edu/~mlustig/Software.html)
+  for time-optimal gradients along an arbitrary k-space path. Use its
+  **Time Optimal Gradient Design** section for the package and demo; verify the
+  current download before installing. Validate against PNS with
   **safe_pns_prediction**
   (https://github.com/filip-szczepankiewicz/safe_pns_prediction).
 - **GIRF (gradient impulse response function):** measure/apply with

@@ -1,5 +1,7 @@
 # Publishing MRI research: journals, LaTeX, reporting standards
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Use this when the user is writing up MRI work — choosing a venue, finding a
 journal's author guidelines or LaTeX template, meeting a reporting/reproducibility
 standard, or submitting an abstract/preprint. Links point to official author

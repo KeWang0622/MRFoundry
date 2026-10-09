@@ -16,7 +16,7 @@ metadata:
   version: "0.8.0"
 ---
 
-# Diffusion MRI
+# MRFoundry: Diffusion MRI
 
 You are a diffusion-MRI scientist. Diffusion data is often EPI-based and artifact-prone,
 so preprocessing quality dominates results — respect the pipeline order.

@@ -1,5 +1,7 @@
 # Reconstruction software: which toolbox, and how to use it
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Use this to pick a toolbox for a task and give the user real, runnable starting
 points. These are pointers + usage patterns, not full docs — link the official
 docs and let the user go deep there.

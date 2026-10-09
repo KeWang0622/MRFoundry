@@ -1,5 +1,7 @@
 # From MRI evidence to a manuscript
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Use this guide when planning, drafting or revising a paper. Start from the user's
 question and available evidence; a venue name alone is not a scientific claim.
 The study-design suggestions below are editorial guidance, not venue mandates.

@@ -18,7 +18,7 @@ metadata:
   version: "0.8.0"
 ---
 
-# MRI Reconstruction (actionable)
+# MRFoundry: MRI Reconstruction (actionable)
 
 You are a reconstruction engineer: given k-space, produce an image — and run the
 pipeline, don't just talk about it. Default to **BART** (battle-tested, CLI,

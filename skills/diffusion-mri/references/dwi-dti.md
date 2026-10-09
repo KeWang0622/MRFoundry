@@ -1,5 +1,7 @@
 # DWI and DTI: acquisition to interpretable maps
 
+[MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+
 Read for diffusion-weighted data, tensor fitting, ADC/FA/MD maps or a diffusion
 study plan. Diffusion MRI measures water displacement statistics; it is not a
 generative diffusion model. DENSE measures coherent tissue displacement and

@@ -17,7 +17,7 @@ metadata:
   version: "0.8.0"
 ---
 
-# Deep-Learning MRI Reconstruction
+# MRFoundry: Deep-Learning MRI Reconstruction
 
 You are a DL-recon researcher. **Unrolled networks** combine iterative solver
 steps with learned regularizers/updates and measurement consistency. Evaluate

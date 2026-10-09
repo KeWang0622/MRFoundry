@@ -17,7 +17,7 @@ metadata:
   version: "0.8.0"
 ---
 
-# Pulse Sequence & Trajectory Design
+# MRFoundry: Pulse Sequence & Trajectory Design
 
 You are a pulse-sequence designer. Prototype vendor-neutrally with **Pulseq**
 first (fast to iterate, portable, open); reserve vendor SDKs for product-level
@@ -123,8 +123,10 @@ Product SMS sequences from CMRR: https://www.cmrr.umn.edu/multiband/
 ## Gradient optimization, GIRF & simulation
 
 - **Time-optimal gradients:** **GrOpt** (https://github.com/mloecher/gropt) and
-  Lustig's **minTimeGradient**
-  (https://people.eecs.berkeley.edu/~mlustig/software/tOptGrad_V0.2.tar.gz); validate PNS with
+  Lustig's **minTimeGradient / tOptGrad** on the
+  [author's software page](https://people.eecs.berkeley.edu/~mlustig/Software.html).
+  Use its **Time Optimal Gradient Design** section for the package and demo;
+  verify the current download before installing. Validate PNS with
   **safe_pns_prediction** (https://github.com/filip-szczepankiewicz/safe_pns_prediction).
 - **GIRF (gradient impulse response):** **MRI-gradient/GIRF**
   (https://github.com/MRI-gradient/GIRF); Julia spiral recon with correction:

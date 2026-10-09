@@ -1,4 +1,4 @@
-# Changelog
+# MRFoundry changelog
 
 All notable changes to this project are documented in this file.
 

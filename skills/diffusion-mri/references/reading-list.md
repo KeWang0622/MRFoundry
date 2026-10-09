@@ -1,6 +1,6 @@
 # Papers and textbooks — diffusion-mri
 
-[Skill instructions](../SKILL.md) · [All skill reading lists](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
+[Skill instructions](../SKILL.md) · [MRFoundry reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
 A starter reading list, organized by the decision it supports. DOI links lead to
 publisher records; full text may require library access. Only links explicitly
