@@ -135,6 +135,6 @@ publishing it; perform those actions only within the user's authorization.
 Use the [annotated reading list](reading-list.md) for CLAIM 2024, COBIDAS and
 MRI physics references. Use CLAIM for imaging AI reporting and COBIDAS within
 its neuroimaging scope; neither is a universal venue checklist. The shared
-[evaluation guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/evaluation-and-attribution.md)
+[evaluation guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/evaluation-and-attribution.md)
 explains endpoint selection and original-source attribution. Consult original
 papers for the particular diffusion/reconstruction method used in a manuscript.

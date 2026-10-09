@@ -201,7 +201,7 @@ ideal rectangular pulsed-gradient spin echo, `b = (γ G δ)² (Δ − δ/3)` wit
 rad/s/T gives b in s/m²; divide by 10⁶ for s/mm². Real waveforms need the full
 encoding history, including refocusing sign changes and imaging-gradient cross
 terms. Preserve directions and b-values with exported images; connect to the
-[diffusion guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/diffusion-mri/references/dwi-dti.md).
+[diffusion guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/diffusion-mri/references/dwi-dti.md).
 
 ### DENSE: displacement encoding with stimulated echoes
 

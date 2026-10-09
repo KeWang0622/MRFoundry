@@ -20,14 +20,14 @@ metadata:
   version: "0.8.0"
 ---
 
-# MRI Research Hub
+# MRFoundry: MRI Research Hub
 
 
 ## Papers and textbooks
 
 See the [annotated reading list](references/reading-list.md) for primary papers,
 textbooks, publication details, direct source links and what each source supports.
-Use the [repo-wide reference index](https://github.com/KeWang0622/mri-research-skill/blob/main/REFERENCES.md) to navigate across skills.
+Use the [repo-wide reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md) to navigate across skills.
 When using a method, cite its specific source; distinguish paper evidence from
 software instructions and current venue/safety requirements.
 
@@ -62,7 +62,7 @@ Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
 Read the [tool setup guide](references/tool-setup.md) when installing,
 repairing, or choosing an execution environment. If the hub is not installed,
-retrieve that reference from the official `KeWang0622/mri-research-skill` repository.
+retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 
 ## What this is (and is not)
 
@@ -89,7 +89,7 @@ nilearn."
 ## The expert team (sibling skills)
 
 This hub is the generalist. The repo also ships focused expert agents — install
-any with `npx skills add KeWang0622/mri-research-skill --skill <name>`:
+any with `npx skills add KeWang0622/MRFoundry --skill <name>`:
 
 - **mri-research-workflow** — end-to-end research assistant: idea → experiments →
   paper (CVPR/MICCAI/MRM); orchestrates the experts below and helps write it.
@@ -158,7 +158,7 @@ what you need):
 |---|---|
 | MR physics, k-space intuition, contrast, where to *learn* (courses, handbooks, free books) | [`references/foundations.md`](references/foundations.md) |
 | Designing/programming pulse sequences and k-space trajectories, RF pulse design, simulation | [`references/sequences-and-trajectories.md`](references/sequences-and-trajectories.md) |
-| DWI/DTI, ADC/FA/MD, gradients, diffusion preprocessing and model QC | [Diffusion skill and its DWI/DTI guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/diffusion-mri/SKILL.md) |
+| DWI/DTI, ADC/FA/MD, gradients, diffusion preprocessing and model QC | [Diffusion skill and its DWI/DTI guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/diffusion-mri/SKILL.md) |
 | MRI hardware: low-field, open-source consoles, coils, gradients, safety | [`references/hardware.md`](references/hardware.md) |
 | Which reconstruction method/paper applies + the landmark reading list (parallel imaging → CS → low-rank → DL → diffusion → fingerprinting) | [`references/recon-methods.md`](references/recon-methods.md) |
 | Which reconstruction *software* to use and how (BART, SigPy, MIRT.jl, MRIReco.jl, torchkbnufft, DIRECT, Gadgetron) | [`references/tools.md`](references/tools.md) |

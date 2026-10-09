@@ -1,6 +1,6 @@
 # Papers and textbooks — mri-research-workflow
 
-[Skill instructions](../SKILL.md) · [All skill reading lists](https://github.com/KeWang0622/mri-research-skill/blob/main/REFERENCES.md)
+[Skill instructions](../SKILL.md) · [All skill reading lists](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
 A starter reading list, organized by the decision it supports. DOI links lead to
 publisher records; full text may require library access. Only links explicitly
@@ -12,7 +12,7 @@ reading guidance, not invented chapter or page numbers.
 Haldar JP. **The “State of the Art” in MR Image Reconstruction? Knowledge, Culture, and What We Leave Behind in An Era of Big Data and Machine Learning.** Magnetic Resonance in Medicine, 2026;96:7–12. [DOI](https://doi.org/10.1002/mrm.70377).
 
 **Use it for:** Critical perspective on reconstruction evaluation and scientific
-practice. The project's [operational guide](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/evaluation-and-attribution.md)
+practice. The project's [operational guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/evaluation-and-attribution.md)
 turns these concerns into workflow decisions; it is not a protocol validated by
 the editorial's author.
 
@@ -36,7 +36,7 @@ Bernstein MA, King KF, Zhou XJ. **Handbook of MRI Pulse Sequences.** Academic Pr
 
 ## Practical references and software
 
-[Venue guide and paper-summary workflow](https://github.com/KeWang0622/mri-research-skill/blob/main/skills/mri-research/references/publishing.md). MRM, MICCAI, ISMRM and CVPR requirements come from their official target-year/track author pages, not these methodology papers.
+[Venue guide and paper-summary workflow](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/publishing.md). MRM, MICCAI, ISMRM and CVPR requirements come from their official target-year/track author pages, not these methodology papers.
 
 Software documentation explains installation and APIs; it does not replace the
 method paper. The curated reading list is not a source for every statement in the

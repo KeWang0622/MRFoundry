@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this in your research or tooling, please cite it as below."
-title: "mri-research: A curated knowledge hub for magnetic resonance imaging research"
+title: "MRFoundry: MRI research guidance for coding agents"
 abstract: >-
   A curated, verified reference hub that gives an AI coding agent fluent
   orientation across the whole magnetic resonance imaging (MRI) research
@@ -25,8 +25,8 @@ authors:
 version: 0.8.0
 date-released: "2026-10-07"
 license: MIT
-repository-code: "https://github.com/KeWang0622/mri-research-skill"
-url: "https://github.com/KeWang0622/mri-research-skill"
+repository-code: "https://github.com/KeWang0622/MRFoundry"
+url: "https://github.com/KeWang0622/MRFoundry"
 keywords:
   - MRI
   - magnetic resonance imaging

@@ -1,25 +1,18 @@
 <div align="center" id="top">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/wordmark-dark.png">
-  <img alt="mri-research" src="assets/wordmark-light.png" width="360" align="middle">
-</picture>
-&nbsp;&nbsp;
-<img src="assets/mri-mascot-transparent.png" alt="The mri-research MRI mascot" width="115" align="middle">
-
-<br>
+<h1><img src="assets/mri-mascot-transparent.png" alt="MRFoundry MRI mascot" width="76" align="middle"> MRFoundry</h1>
 
 **MRI research guidance for your coding agent — from the question to the paper.**
 
-[![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/mri-research-skill/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/mri-research-skill/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/mri-research-skill?style=flat-square&labelColor=000000)](LICENSE) ![Version](https://img.shields.io/badge/version-0.8.0-1f6feb?style=flat-square&labelColor=000000) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/mri-research-skill?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/mri-research-skill)
+[![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/MRFoundry/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/MRFoundry/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](LICENSE) ![Version](https://img.shields.io/badge/version-0.8.0-1f6feb?style=flat-square&labelColor=000000) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/MRFoundry)
 
 </div>
 
 <p align="center">
-<a href="#quick-start">Quick start</a> · <a href="#how-it-works">Workflow</a> · <a href="#choose-your-skills">Skills</a> · <a href="REFERENCES.md">Papers &amp; textbooks</a> · <a href="#research-memory">Research memory</a> · <a href="https://kewang0622.github.io/slides/mri-research/">Interactive tutorial</a> · <a href="#contributing">Contribute</a>
+<a href="#quick-start">Quick start</a> · <a href="#how-it-works">Workflow</a> · <a href="#choose-your-skills">Skills</a> · <a href="REFERENCES.md">Papers &amp; textbooks</a> · <a href="#research-memory">Research memory</a> · <a href="https://kewang0622.github.io/slides/mrfoundry/">Interactive tutorial</a> · <a href="#contributing">Contribute</a>
 </p>
 
-Coding agents can write MRI code, but choosing the right signal model, data convention, tool and validation takes domain knowledge. **mri-research** gives your agent curated guidance and primary references across MRI physics, acquisition, reconstruction, analysis and publishing.
+Coding agents can write MRI code, but choosing the right signal model, data convention, tool and validation takes domain knowledge. **MRFoundry** gives your agent curated guidance and primary references across MRI physics, acquisition, reconstruction, analysis and publishing.
 
 **Seven installable skills · Established scientific tools · Project-local research memory**
 
@@ -28,7 +21,7 @@ Coding agents can write MRI code, but choosing the right signal model, data conv
 Install with the open [skills CLI](https://github.com/vercel-labs/skills), then select the skills and supported coding agents you want to use:
 
 ```bash
-npx skills add KeWang0622/mri-research-skill -g
+npx skills add KeWang0622/MRFoundry -g
 ```
 
 Start with a request in your agent:
@@ -37,29 +30,29 @@ Start with a request in your agent:
 
 The skills guide tool selection, setup, execution and checks. Scientific applications such as PyPulseq, KomaMRI and BART are installed separately as needed; the agent is instructed to handle routine setup in an isolated environment and test an upstream example before use.
 
-**[Explore the interactive tutorial →](https://kewang0622.github.io/slides/mri-research/)** — agents, skills, MRI examples and the self-improvement workflow. [Presentation information](presentations/README.md).
+**[Explore the interactive tutorial →](https://kewang0622.github.io/slides/mrfoundry/)** — agents, skills, MRI examples and the self-improvement workflow. [Presentation information](presentations/README.md).
 
 <details>
 <summary>Install one skill, choose an agent, or update</summary>
 
 ```bash
 # Install only for the current project
-npx skills add KeWang0622/mri-research-skill
+npx skills add KeWang0622/MRFoundry
 
 # Choose one skill
-npx skills add KeWang0622/mri-research-skill --skill mri-reconstruction
+npx skills add KeWang0622/MRFoundry --skill mri-reconstruction
 
 # Target a supported agent
-npx skills add KeWang0622/mri-research-skill -a claude-code
+npx skills add KeWang0622/MRFoundry -a claude-code
 
 # Browse without installing
-npx skills add KeWang0622/mri-research-skill --list
+npx skills add KeWang0622/MRFoundry --list
 
 # Update installed global skills
 npx skills update -g
 ```
 
-Choose one, several or all seven skills. Browse the [skills directory](https://skills.sh/KeWang0622/mri-research-skill). These are Markdown instructions and supporting helpers; installing them does not install every scientific application or grant access to restricted datasets.
+Choose one, several or all seven skills. Browse the [skills directory](https://skills.sh/KeWang0622/MRFoundry). These are Markdown instructions and supporting helpers; installing them does not install every scientific application or grant access to restricted datasets.
 
 </details>
 
@@ -199,18 +192,18 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md) an
 
 - **On main:** agent-owned application setup and project research memory across all seven skills.
 - **[v0.8.0](CHANGELOG.md):** venue-specific paper writing, evidence-linked project memory, diffusion/sequence guidance and annotated references.
-- **[v0.7.0](https://github.com/KeWang0622/mri-research-skill/releases/tag/v0.7.0):** updated BART upstream guidance, reconstruction caveats and upstream monitoring.
-- [Full changelog](CHANGELOG.md) · [Releases](https://github.com/KeWang0622/mri-research-skill/releases)
+- **[v0.7.0](https://github.com/KeWang0622/MRFoundry/releases/tag/v0.7.0):** updated BART upstream guidance, reconstruction caveats and upstream monitoring.
+- [Full changelog](CHANGELOG.md) · [Releases](https://github.com/KeWang0622/MRFoundry/releases)
 
 ## Star history
 
 If this is useful to your research group, a star helps others discover it.
 
-<a href="https://www.star-history.com/?repos=KeWang0622%2Fmri-research-skill&amp;type=date">
+<a href="https://www.star-history.com/?repos=KeWang0622%2FMRFoundry&amp;type=date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=KeWang0622/mri-research-skill&amp;type=Date&amp;theme=dark">
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=KeWang0622/mri-research-skill&amp;type=Date">
-    <img alt="GitHub star history for mri-research-skill" src="https://api.star-history.com/svg?repos=KeWang0622/mri-research-skill&amp;type=Date" width="760">
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=KeWang0622/MRFoundry&amp;type=Date&amp;theme=dark">
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=KeWang0622/MRFoundry&amp;type=Date">
+    <img alt="GitHub star history for MRFoundry" src="https://api.star-history.com/svg?repos=KeWang0622/MRFoundry&amp;type=Date" width="760">
   </picture>
 </a>
 
@@ -222,12 +215,12 @@ If this helps your research or tooling, please cite it (GitHub's
 "Cite this repository" button reads [`CITATION.cff`](CITATION.cff)):
 
 ```bibtex
-@software{wang_mri_research,
+@software{wang_mrfoundry,
   author  = {Wang, Ke},
-  title   = {mri-research: A curated knowledge hub for MRI research},
+  title   = {MRFoundry: MRI research guidance for coding agents},
   year    = {2026},
   version = {0.8.0},
-  url     = {https://github.com/KeWang0622/mri-research-skill}
+  url     = {https://github.com/KeWang0622/MRFoundry}
 }
 ```
 

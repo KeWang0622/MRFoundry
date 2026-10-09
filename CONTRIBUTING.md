@@ -1,4 +1,4 @@
-# Contributing to mri-research
+# Contributing to MRFoundry
 
 Thanks for helping keep this a high-quality entry point for the **MRI research**
 community — the whole pipeline, not just reconstruction. Contributions that add

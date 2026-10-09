@@ -3,7 +3,7 @@
   "notGrouped": "bottom",
   "groupings": [
     {
-      "title": "MRI Research (generalist hub)",
+      "title": "MRFoundry: MRI research hub",
       "description": "The generalist navigator and curated reference hub across the whole MRI pipeline \u2014 physics, acquisition, reconstruction, analysis, quantitative MRI, spectroscopy, hardware, and publishing.",
       "skills": [
         "mri-research"
