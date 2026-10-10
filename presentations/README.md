@@ -10,4 +10,6 @@ Use the arrow keys or on-screen controls to move between slides. The top chapter
 
 The deck is hosted in the [website repository](https://github.com/KeWang0622/KeWang0622.github.io/tree/master/slides/mrfoundry). Publish updates there. This skills repository keeps links only; do not add the generated standalone HTML here.
 
+The cover, navigation and closing slide use the [MRFoundry visual identity](../assets/BRAND.md): a blue MR / editorial Foundry wordmark, compact MRI-bore mark and the familiar scanner mascot. The canonical presentation name is **MRFoundry**; previously shared tutorial URLs redirect to this version.
+
 The MRI mascot is decorative AI-generated artwork. Interactive demonstrations use analytic phantoms. The research-memory page explains a general feedback process, scoped evidence and personal research preferences. No patient scans are included.
