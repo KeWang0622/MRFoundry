@@ -1,6 +1,13 @@
 <div align="center" id="top">
 
-<h1><img src="assets/mri-mascot-transparent.png" alt="MRFoundry MRI mascot" width="76" align="middle"> MRFoundry</h1>
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/mrfoundry-logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/mrfoundry-logo-light.svg">
+    <img src="assets/mrfoundry-logo-light.svg" alt="MRFoundry" width="510" align="middle">
+  </picture>
+  <img src="assets/mri-mascot-transparent.png" alt="MRFoundry MRI mascot" width="94" align="middle">
+</h1>
 
 **MRI research guidance for your coding agent — from the question to the paper.**
 
