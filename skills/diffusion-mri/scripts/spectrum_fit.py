@@ -114,10 +114,12 @@ def stratified_recovery_test(make_truth, fit_fn, bvals, sigma, n=2000, seed=0, n
 
     make_truth(rng, n, bvals) -> (signals, truth) or (signals, truth, group_labels); draw the truth
     parameters for each compared group from development fits (not from a broad prior).
-    Returns pooled bias/sd/r, the slope of estimate vs truth (1 = no compression), bias in truth-
-    quantile bins, bias per group and 'worst_abs_bias' (max over bins and groups). Use the worst
-    bin/group bias to choose models: a pooled bias near zero can hide large bias in one tissue, and
-    minimizing RMSE over a broad prior favours the prior's centre."""
+    Returns pooled bias/sd/r, the slope of estimate vs truth (1 = no compression), bias, spread and RMSE
+    in truth-quantile bins and per group, 'worst_abs_bias' and 'worst_rmse' (max over bins and groups).
+    Choose settings by the worst bin/group RMSE, which penalizes both bias and voxelwise spread, and then
+    check the worst bias against your tolerance: a pooled bias near zero can hide large bias in one tissue,
+    minimizing RMSE over a broad prior favours the prior's centre, and minimizing bias alone favours weak
+    regularization with unstable voxel values."""
     rng = np.random.default_rng(seed)
     b = np.asarray(bvals, float)
     made = make_truth(rng, n, b)
@@ -132,13 +134,16 @@ def stratified_recovery_test(make_truth, fit_fn, bvals, sigma, n=2000, seed=0, n
     for i in range(n_bins):
         m = (truth >= edges[i]) & ((truth <= edges[i + 1]) if i == n_bins - 1 else (truth < edges[i + 1]))
         if m.any():
-            bins.append({'truth_range': [float(edges[i]), float(edges[i + 1])], 'bias': float(err[m].mean()), 'n': int(m.sum())})
+            bins.append({'truth_range': [float(edges[i]), float(edges[i + 1])], 'bias': float(err[m].mean()),
+                         'sd': float(err[m].std()), 'rmse': float(np.sqrt(np.mean(err[m] ** 2))), 'n': int(m.sum())})
     per_group = {}
     if groups is not None:
         for g in np.unique(groups):
             m = groups == g
-            per_group[str(g)] = {'bias': float(err[m].mean()), 'sd': float(err[m].std()), 'n': int(m.sum())}
+            per_group[str(g)] = {'bias': float(err[m].mean()), 'sd': float(err[m].std()),
+                                 'rmse': float(np.sqrt(np.mean(err[m] ** 2))), 'n': int(m.sum())}
     worst = max([abs(x['bias']) for x in bins] + [abs(v['bias']) for v in per_group.values()])
+    worst_rmse = max([x['rmse'] for x in bins] + [v['rmse'] for v in per_group.values()])
     r = float(np.corrcoef(est, truth)[0, 1]) if est.std() > 0 and truth.std() > 0 else float('nan')
     return {'bias': float(err.mean()), 'sd': float(err.std()), 'r': r, 'slope': slope, 'bins': bins,
-            'groups': per_group, 'worst_abs_bias': float(worst), 'n': int(n)}
+            'groups': per_group, 'worst_abs_bias': float(worst), 'worst_rmse': float(worst_rmse), 'n': int(n)}

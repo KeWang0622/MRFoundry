@@ -56,7 +56,7 @@ Start slow installs (for example Julia/KomaMRI) in the background while you writ
 Work from the installed skill first: its scripts and references cover routine work;
 fetch remote references only when something you need is missing locally.
 Work efficiently: write each stage as one script with built-in checks, run it end to
-end, and fix with targeted edits rather than many exploratory one-off commands. Keep effort proportionate: closed-form or linear fits need only numpy/scipy; install heavy toolboxes only for the steps that need them, and produce every requested deliverable before refining. Before finishing, confirm every requested deliverable exists under its exact name and location, and rerun each standalone entrypoint from a fresh copy in a temporary directory with the project's interpreter on the provided input; record that command in the environment record. Do not leave routine setup
+end, and fix with targeted edits rather than many exploratory one-off commands. Keep effort proportionate: closed-form or linear fits need only numpy/scipy; install heavy toolboxes only for the steps that need them, and produce every requested deliverable before refining. Before finishing, confirm every requested deliverable exists under its exact name, with code and outputs together in the location the task specifies (the workspace root if none is specified), and rerun each standalone entrypoint from a fresh copy in a temporary directory with the project's interpreter on the provided input; record that command in the environment record. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
@@ -121,8 +121,11 @@ tissue with the largest fraction.
   b-values, directions and noise level, with truth parameters for each compared group
   taken from development fits and a generative model that differs from the fitting
   basis. Report bias per group and per true-value bin and the estimate-versus-truth
-  slope. A pooled bias near zero does not show that any one tissue is unbiased, and
-  choosing by pooled RMSE over a broad prior selects the prior's centre.
+  slope. Choose settings by the worst group or bin RMSE (bias and spread together), then
+  check the worst bias against the study tolerance and the voxelwise precision (test-retest
+  or repeated-noise spread). A pooled bias near zero does not show that any one tissue is
+  unbiased; choosing by pooled RMSE over a broad prior selects the prior's centre; and
+  minimizing bias alone favours weak regularization with unstable voxel fractions.
 - **Noise floor**: estimate sigma from background or repeats; use a Rician-aware fit
   or floor correction at high b and report residual bias.
 - **Tools.** [`scripts/spectrum_fit.py`](scripts/spectrum_fit.py): `background_sigma`,
