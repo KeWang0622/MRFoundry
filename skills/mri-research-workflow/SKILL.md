@@ -11,10 +11,10 @@ description: >-
   It connects the workflow with specialized MRI skills. Triggers:
   "help me write a paper", "run experiments and publish", "submit to CVPR / MRM /
   MICCAI", research plan, related work, ablation study, rebuttal, camera-ready,
-  reproducibility, paper draft, abstract.
+  reproducibility, paper draft, abstract. Also use for quantitative biomarker comparison and repeatability statistics (subject-level AUC and bootstrap CIs, ICC, wCV, development/test splits) and for checking deliverables against a requested schema.
 metadata:
   author: Ke Wang
-  version: "0.9.0"
+  version: "0.10.0"
 ---
 
 # MRFoundry: MRI Research Workflow (idea → paper)
@@ -113,6 +113,15 @@ script: file names and paths, JSON keys and nesting, array shapes and dtypes, an
 Recompute every reported number from the saved outputs and confirm they match. [`scripts/check_deliverables.py`](scripts/check_deliverables.py)
 checks files, nested JSON keys and array shapes against a small spec. A correct
 analysis delivered in the wrong structure cannot be reused or verified.
+
+
+## Quantitative study statistics
+
+For biomarker comparisons and repeatability studies use [`scripts/study_stats.py`](scripts/study_stats.py)
+(tested): Mann-Whitney `auc`, `subject_bootstrap` CIs that resample subjects, `icc_3_1`,
+`within_subject_cv` (wCV and repeatability coefficient) and `threshold_on_dev`. The statistical unit is the
+subject (or lesion), never the voxel; report n as subjects. Fix every analysis choice on development
+subjects and apply it unchanged to held-out subjects; say which subjects informed which choice.
 
 ## Choose the venue and summarize related work
 

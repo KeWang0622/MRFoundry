@@ -11,10 +11,10 @@ description: >-
   k-space trajectory, spiral/radial/EPI, diffusion encoding, DENSE, RF pulse, SLR, multiband/SMS, IDEA,
   EPIC, Orchestra, `.seq`. This skill designs the *acquisition*; to reconstruct
   the data it produces, hand off to mri-reconstruction (classical) or
-  deep-learning-recon (trained).
+  deep-learning-recon (trained). Also use for simulation studies that design a sequence, Bloch-simulate the exported file and reconstruct or fit maps: spoiled/multi-echo GRE, inversion recovery and T1 mapping, spin echo/CPMG T2, balanced SSFP; ships a tested exported-sequence checker (TE/TR/TI, spoiling, receive phase, balanced moments, slice selection, sampling) and an end-to-end example pipeline.
 metadata:
   author: Ke Wang
-  version: "0.9.0"
+  version: "0.10.0"
 ---
 
 # MRFoundry: Pulse Sequence & Trajectory Design
@@ -93,32 +93,55 @@ retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 5. **Reconstruct** the acquired raw data (convert to ISMRMRD, then hand to the
    `mri-reconstruction` agent).
 
+## Fast path for a simulation study (sequence -> Bloch -> reconstruction -> map)
+
+1. Setup: `pip install pypulseq sigpy komamripy matplotlib`, then start `python scripts/test_seqlib.py` in the
+   background: its first KomaMRI call installs and compiles Julia (about 3.5 min, once).
+2. Copy [`scripts/example_pipeline.py`](scripts/example_pipeline.py): a tested end-to-end chain (build, check the
+   read-back file, waveform figure, KomaMRI simulation of the exported file, archive with hashes, standalone
+   reconstruction from the archive, orientation check, report). Swap in a family builder: spoiled GRE in
+   `scripts/test_seqlib.py`; inversion-recovery GRE, balanced SSFP and spin echo in `scripts/test_check_exported_seq.py`.
+3. Run `python scripts/check_exported_seq.py sequence.seq` with EVERY requested parameter as an expectation
+   (flags below) and fix the build until all lines PASS before simulating.
+4. Put samples on the grid with `kspace_grid` (it uses the exported k, so line order and polarity cannot be
+   mixed up), fit maps with `mri-reconstruction/scripts/qmri_fit.py`, and check orientation and values against
+   the known object. Report values measured from the export.
+5. One script per stage with built-in checks; keep printed output short (it is re-read on every turn).
+
 ## Verify the exported sequence, not the design script
 
-A sequence that runs, simulates and reconstructs can still be the wrong sequence.
-Treat the build script as a claim and the exported `.seq` as the evidence: read it
-back with a fresh `pp.Sequence().read()` and measure each requested property.
-[`scripts/check_exported_seq.py`](scripts/check_exported_seq.py) reports these and
-compares them with expectations you pass on the command line.
+A sequence that runs, simulates and reconstructs can still be the wrong sequence. Treat the build script as a
+claim and the exported `.seq` as the evidence: read it back and measure each requested property.
+[`scripts/check_exported_seq.py`](scripts/check_exported_seq.py) classifies RF pulses (set `use='excitation'`,
+`'refocusing'` or `'inversion'` on every pulse; `calculate_kspace` also relies on it) and prints PASS/FAIL per item.
 
-- **Echo and repetition times.** TE is the time from the excitation RF centre
-  (`pp.calc_rf_center`) to the ADC sample at the k-space centre, for every echo;
-  TR is the spacing of excitation centres. Insert delays on the gradient raster so the
-  realized values equal the request. Never let blocks collapse to the minimum TE.
-- **Excitation.** A 2D or multislice protocol with a slice thickness needs a
-  slice-selective pulse (sinc/SLR) played with its slice-select gradient and followed
-  by the rephaser. Check the flip angle from the RF area and the slice profile width
-  (small-tip Fourier transform of the RF under the actual gradient, or a Bloch profile).
-  A short hard pulse is non-selective.
-- **Spoiling.** Quadratic RF spoiling: `inc = (inc + Δ) % 360; phase = (phase + inc) % 360`
-  (Δ often 117°). Wrap both every update; unwrapped phases grow to 10^5 degrees and lose
-  precision in the text export. Give each ADC the RF phase of its own TR. Confirm from the
-  read-back file that the second difference of RF phases equals Δ. Report the spoiler
-  gradient area in cycles per voxel or slice thickness.
-- **Sampling.** From the exported trajectory, check the k = 0 sample index, line order,
-  readout polarity (monopolar/bipolar), spacing 1/FOV and any sampling contract.
-- **Report measured values.** Put the read-back TE/TR/flip/slice width and spoiling in
-  the report, not the values typed into the build script; state any mismatch.
+- **All families.** TE = excitation RF centre (`pp.calc_rf_center`) -> ADC sample at k = 0, per echo; TR =
+  excitation-centre spacing. Insert delays on the block raster so realized values equal the request; never
+  let blocks collapse to a minimum TE. `--te --tr --flip --max-grad --max-slew`.
+- **Slice selection.** A slice prescription needs a sinc/SLR pulse played with its slice-select gradient,
+  then the rephaser; check flip from RF area and the small-tip slice FWHM. A hard pulse is non-selective.
+  `--slice-thickness`.
+- **Spoiled GRE.** Quadratic RF spoiling `inc = (inc + 117) % 360; phase = (phase + inc) % 360` (wrap both);
+  every ADC gets the phase of its own excitation; spoiler after the last ADC of each TR, stated in cycles per
+  slice/voxel: `--rf-spoil 117 --min-spoil-cycles 2`. Multi-echo: TE per echo; monopolar readouts need a
+  flyback between echoes (`--monopolar`).
+- **Inversion recovery.** TI = inversion RF centre -> excitation RF centre (not block starts); spoil the
+  transverse magnetization after the inversion; state the inversion repetition time. Recovery is often
+  incomplete: fit a + b exp(-TI/T1) (3 parameters; magnitude data need polarity restoration) or fit a
+  simulation of the exact timing (`qmri_fit.fit_dictionary`), and test the fit on simulated known T1:
+  `--ti ... --min-inversion-spoil-cycles 2`.
+- **Spin echo / TSE.** Refocusing centre at TE/2 after the excitation centre (echo spacing for trains);
+  CPMG refocusing phase = excitation phase +/- 90 deg; crushers equal on both sides: `--te --cpmg`.
+- **Balanced SSFP.** Zero net gradient area between consecutive excitation centres on x, y and z: slice
+  rephaser after the pulse and again before the next one, phase-encode rewinder, readout rewinder. TE = TR/2.
+  0/180 RF phase cycling with the ADC phase following the RF. Steady state needs preparation (alpha/2 -
+  TR/2 catalyzation or enough dummy TRs): verify by simulating and comparing early and late lines with
+  `qmri_fit.bssfp_signal`: `--balanced --rf-phase-cycle 180 --te-half-tr`.
+- **Sampling.** Check the k = 0 sample index, line set/order, polarity and 1/FOV spacing against any sampling
+  contract: `--matrix NX NY --fov F`. Reconstruct with image axes oriented like the object ([y, x]) and
+  verify on a simulated asymmetric object before trusting maps.
+- **Report measured values** (TE/TR/TI/flip/slice width/spoiling/moments) from the read-back file, not the
+  numbers typed into the build script; state any mismatch.
 
 ## Trajectories
 

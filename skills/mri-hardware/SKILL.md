@@ -12,7 +12,7 @@ description: >-
   turning acquired k-space into images to mri-reconstruction.
 metadata:
   author: Ke Wang
-  version: "0.9.0"
+  version: "0.10.0"
 ---
 
 # MRFoundry: MRI Hardware & Safety

@@ -45,3 +45,23 @@ def recovery_test(make_truth, fit_fn, bvals, sigma, n=2000, seed=0):
     r = float(np.corrcoef(est, truth)[0, 1]) if est.std() > 0 and truth.std() > 0 else float('nan')
     return {'bias': float(err.mean()), 'sd': float(err.std()), 'r': r, 'median_abs_error': float(np.median(np.abs(err))), 'n': int(n)}
 
+
+def adc_fit(signals, bvals, bmax=1000.0, bmin=0.0):
+    """Conventional mono-exponential ADC from b in [bmin, bmax] only (clinical convention b <= 1000 s/mm^2;
+    higher b values bend the curve through kurtosis/restriction and lower the ADC). Log-linear least squares per
+    voxel over all directions/repeats of the selected shells. signals (n_vox, n_b) magnitude; returns ADC in the
+    inverse units of bvals (s/mm^2 -> mm^2/s; multiply by 1e3 for um^2/ms)."""
+    b = np.asarray(bvals, float); keep = (b >= bmin - 1e-6) & (b <= bmax + 1e-6)
+    if len(np.unique(np.round(b[keep]))) < 2: raise ValueError('need at least two distinct b-values within the ADC range')
+    Y = np.log(np.clip(np.atleast_2d(np.asarray(signals, float))[:, keep], 1e-12, None)); A = np.stack([np.ones(keep.sum()), -b[keep]], 1)
+    coef, *_ = np.linalg.lstsq(A, Y.T, rcond=None)
+    return coef[1]
+
+def fixed_compartment_fraction(signals, bvals, diffusivities, target_below, sigma=None, normalize_b0=True):
+    """Well-posed signal fraction: NNLS on a few fixed, well-separated compartment diffusivities (e.g. restricted,
+    hindered, free), optional Rician floor correction with sigma, then the weight fraction with D < target_below.
+    Pick the compartment values from literature/development data and confirm them with recovery_test."""
+    S = np.atleast_2d(np.asarray(signals, float))
+    if sigma is not None: S = floor_correct(S, sigma)
+    w = fit_weights(S, bvals, diffusivities, normalize_b0=normalize_b0)
+    return fraction_below(w, diffusivities, target_below), w

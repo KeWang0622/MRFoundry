@@ -10,12 +10,12 @@ description: >-
   TractSeg, QSIPrep. Also use for apparent diffusion coefficient (ADC) studies and multi-compartment or
   spectrum signal-fraction models such as restriction spectrum imaging (RSI), NNLS
   diffusion spectra and IVIM-type fits. Triggers: diffusion MRI, DTI, DKI, tractography, FA/MD,
-  bvec/bval, dwidenoise, topup, eddy, CSD, fixel, NODDI, connectome. Starts from
+  bvec/bval, dwidenoise, topup, eddy, CSD, fixel, NODDI, connectome, ADC, RSI, restricted fraction, test-retest repeatability, lesion versus normal biomarker comparison. Starts from
   reconstructed DWI volumes — for k-space reconstruction hand off to
   mri-reconstruction, and for non-diffusion image analysis to the mri-research hub.
 metadata:
   author: Ke Wang
-  version: "0.9.0"
+  version: "0.10.0"
 ---
 
 # MRFoundry: Diffusion MRI
@@ -123,6 +123,17 @@ off, so fractions can be precise-looking and wrong.
   `floor_correct`, `fit_weights` (NNLS with optional Tikhonov or smoothness regularization),
   `fraction_below` and a generic `recovery_test`; `scripts/test_spectrum_fit.py` shows an
   unregularized fine grid recovering a low-diffusivity fraction far worse than a few compartments.
+
+- **ADC convention.** Conventional ADC is a mono-exponential fit over b <= 1000 s/mm^2 (b = 0 plus the
+  low shells); including higher shells lowers ADC through kurtosis/restriction. Use `adc_fit(signals, bvals,
+  bmax=1000)` unless the study defines another range, and state the range.
+- **Well-posed fraction in one call.** `fixed_compartment_fraction(signals, bvals, [D_restricted, D_hindered,
+  D_free], cutoff, sigma)` (floor-corrected NNLS on a few fixed compartments), validated with `recovery_test`.
+- **Biomarker comparison studies** (lesion vs normal, test-retest): summarize each ROI per subject and
+  session first; the subject is the statistical unit. Choose compartments, thresholds and settings on
+  development subjects only; report AUC with subject-bootstrap CIs and ICC/wCV for repeatability using
+  `mri-research-workflow/scripts/study_stats.py`; recompute every reported number from the saved maps and
+  validate the results file against the requested schema (`check_deliverables.py`).
 
 ## Tractography & bundles
 

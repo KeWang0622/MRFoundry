@@ -12,10 +12,10 @@ description: >-
   for anything TRAINED (unrolled networks, VarNet, self-supervised, diffusion
   priors, fastMRI models) hand off to the deep-learning-recon skill. Triggers:
   k-space, coil sensitivities, ESPIRiT, PICS, undersampled reconstruction,
-  radial/spiral recon, `.cfl`/`.hdr`, ISMRMRD, Siemens twix, GE P-file.
+  radial/spiral recon, `.cfl`/`.hdr`, ISMRMRD, Siemens twix, GE P-file. Also use for Cartesian reconstruction of simulated data and quantitative maps (T1, T2, T2* relaxometry fits, inversion recovery, VFA, dictionary fits) with tested helpers.
 metadata:
   author: Ke Wang
-  version: "0.9.0"
+  version: "0.10.0"
 ---
 
 # MRFoundry: MRI Reconstruction (actionable)
@@ -152,6 +152,16 @@ reconstructions silently: `cartesian_image` (centred inverse FFT; sample n//2 is
 [y, x]), `direct_dft` (forward model for checks) and `nufft_least_squares` (SigPy coordinates
 ordered (ky, kx) times FOV; output rescaled to the direct-sum model).
 `python scripts/test_reconlib.py` verifies them against a direct DFT.
+
+
+## Quantitative maps from reconstructed images
+
+[`scripts/qmri_fit.py`](scripts/qmri_fit.py) (tested, vectorized, no initial guesses): `fit_monoexp`
+(T2/T2*), `fit_inversion_recovery` (3-parameter, complex or magnitude with polarity restoration),
+`fit_vfa`, `fit_dictionary` (match to simulated signals when no closed form fits the exact timing) and
+closed-form checks `ernst_signal`, `ir_signal`, `bssfp_signal` (Bloch fixed point). Test every fit on
+simulated data with known parameters from your own exported sequence before reporting maps; check map
+orientation ([y, x], no flips) against the known object.
 
 ## SigPy (Python) alternative
 

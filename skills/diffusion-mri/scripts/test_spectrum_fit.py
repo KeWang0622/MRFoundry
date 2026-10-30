@@ -18,3 +18,14 @@ print('few compartments',r_few);print('fine grid, no regularization',r_fine);pri
 assert r_few['sd']<r_fine['sd'] and r_reg['sd']<r_fine['sd'],'expected regularization or few compartments to reduce spread'
 print('ok')
 
+
+# Conventional ADC range and fixed-compartment fraction
+import numpy as np
+from spectrum_fit import adc_fit, fixed_compartment_fraction
+b = np.array([0, 0, 500, 1000, 1500, 2000, 3000])
+S = np.exp(-b * 1.5e-3)[None] * 0.5 + np.exp(-b * 0.3e-3)[None] * 0.5
+a1 = adc_fit(S, b, bmax=1000)[0]; a_all = adc_fit(S, b, bmax=3000)[0]
+assert a_all < a1, (a1, a_all)
+f, w = fixed_compartment_fraction(np.exp(-b * 0.2e-3)[None] * .3 + np.exp(-b * 1.2e-3)[None] * .5 + np.exp(-b * 3e-3)[None] * .2, b, [0.2e-3, 1.2e-3, 3e-3], 0.5e-3)
+assert abs(f[0] - 0.3) < 1e-6, f
+print('adc_fit: ADC(b<=1000) %.2e mm2/s vs all shells %.2e; fixed_compartment_fraction ok' % (a1, a_all))

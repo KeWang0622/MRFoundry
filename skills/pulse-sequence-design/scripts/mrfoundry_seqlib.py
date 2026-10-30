@@ -90,3 +90,43 @@ def simulate_with_koma(seq_file, x, y, z, rho, T1, T2, T2s=None, B0_Hz=None, rf_
     n = ns[0]
     return {'samples': raw.reshape(len(ns), n), 'k': np.asarray(k).T.reshape(len(ns), n, 3), 't': np.asarray(ta).reshape(len(ns), n)}
 
+
+def kspace_grid(samples, k, fov_m, n, group=None):
+    """Place simulated samples on a Cartesian grid using the EXPORTED trajectory (not the build script).
+    samples, k: per-ADC arrays from simulate_with_koma ((n_adc, ns) and (n_adc, ns, 3), cycles/m).
+    n: (ny, nx). group: optional int per ADC (echo index, TI index, ...). Returns (n_groups, ny, nx) with
+    grid[g, j, i] = sample at ky = (j - ny//2)/fov, kx = (i - nx//2)/fov; raises if a sample is off-grid,
+    duplicated or missing, so line order and readout polarity are handled automatically."""
+    ny, nx = n; fx, fy = (fov_m, fov_m) if np.isscalar(fov_m) else fov_m
+    group = np.zeros(len(samples), int) if group is None else np.asarray(group, int)
+    G = group.max() + 1; out = np.zeros((G, ny, nx), complex); seen = np.zeros((G, ny, nx), int)
+    for a in range(len(samples)):
+        ix = np.asarray(k[a])[:, 0] * fx + nx // 2; iy = np.asarray(k[a])[:, 1] * fy + ny // 2
+        ri, rj = np.rint(ix).astype(int), np.rint(iy).astype(int)
+        if np.max(abs(ix - ri)) > 1e-3 or np.max(abs(iy - rj)) > 1e-3 or ri.min() < 0 or ri.max() >= nx or rj.min() < 0 or rj.max() >= ny:
+            raise ValueError(f'ADC {a}: samples are not on the Cartesian grid (check prephaser area, dwell, FOV)')
+        out[group[a], rj, ri] = samples[a]; seen[group[a], rj, ri] += 1
+    if seen.max() > 1 or seen.min() < 1:
+        raise ValueError(f'grid coverage: duplicated {int((seen > 1).sum())}, missing {int((seen < 1).sum())} samples')
+    return out
+
+def plot_waveforms(seq_file, png, t_window=None):
+    """Plot RF magnitude/phase, Gx/Gy/Gz and ADC sampling times read back from an exported .seq (headless)."""
+    import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
+    s = pp.Sequence(); s.read(str(seq_file)); w = list(s.waveforms())[:3]; t = 0.; rf_t, rf_a, adc_t = [], [], []
+    for i in s.block_events:
+        b = s.get_block(i)
+        if b.rf is not None: rf_t.append(t + b.rf.delay + np.asarray(b.rf.t)); rf_a.append(np.asarray(b.rf.signal) * np.exp(1j * b.rf.phase_offset))
+        if b.adc is not None: adc_t.append(t + b.adc.delay + (np.arange(b.adc.num_samples) + .5) * b.adc.dwell)
+        t += pp.calc_duration(b)
+    t0, t1 = t_window or (0, t)
+    fig, ax = plt.subplots(5, 1, sharex=True, figsize=(10, 8))
+    for x, a in zip(rf_t, rf_a):
+        m = (x >= t0) & (x <= t1); ax[0].plot(x[m] * 1e3, abs(a[m]), 'k'); ax[1].plot(x[m] * 1e3, np.angle(a[m]), 'k.', ms=1)
+    for x in adc_t:
+        m = (x >= t0) & (x <= t1); ax[0].plot(x[m] * 1e3, np.zeros(m.sum()), 'r|', ms=4)
+    for j, name in enumerate(['Gx', 'Gy', 'Gz']):
+        if j < len(w) and len(w[j][0]): m = (w[j][0] >= t0) & (w[j][0] <= t1); ax[j + 2].plot(w[j][0][m] * 1e3, w[j][1][m] / 42.576e6 * 1e3)
+        ax[j + 2].set_ylabel(name + ' mT/m')
+    ax[0].set_ylabel('|RF| Hz, ADC red'); ax[1].set_ylabel('RF phase'); ax[-1].set_xlabel('time (ms)')
+    fig.tight_layout(); fig.savefig(png, dpi=110); plt.close(fig); return png

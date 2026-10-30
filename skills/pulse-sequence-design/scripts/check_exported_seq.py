@@ -1,105 +1,242 @@
 #!/usr/bin/env python3
 """Measure what an exported Pulseq file actually does, independent of the script that built it.
 
-Usage:
-  python check_exported_seq.py sequence.seq [--te 0.005 0.010] [--tr 0.25] [--flip 20]
-      [--slice-thickness 0.005] [--rf-spoil 117] [--max-grad 32] [--max-slew 130]
+Usage (all expectations optional; SI units, gradients in mT/m, slew in T/m/s):
+  python check_exported_seq.py sequence.seq --te 0.005 --tr 0.02 --flip 15 --slice-thickness 0.005 \
+      --rf-spoil 117 --min-spoil-cycles 2 --matrix 64 64 --fov 0.2 --monopolar --max-grad 32 --max-slew 130
+  inversion recovery:  --ti 0.1 0.5 1.5 --min-inversion-spoil-cycles 2
+  balanced SSFP:       --balanced --rf-phase-cycle 180 --te-half-tr
+  spin echo / CPMG:    --te 0.08 --cpmg
 
-Reports realized echo times (excitation RF centre -> ADC sample nearest k-space centre),
-TR, flip angles, slice-selective excitation and small-tip slice FWHM, RF-spoiling phase
-increments, ADC/RF phase agreement, post-readout spoiler area, gradient/slew peaks and
-Pulseq timing errors. With expectations given, prints PASS/FAIL per item and exits 1 on
-any FAIL. Requires pypulseq (>=1.4) and numpy.
+What is measured from the read-back file (fresh pp.Sequence().read):
+  * RF roles: excitation (< 135 deg), inversion (large pulse not followed by an ADC before the next
+    excitation) and refocusing (large pulse after an excitation and before its ADCs). An explicit
+    rf.use ('excitation'/'inversion'/'refocusing') in the file takes precedence.
+  * TE: excitation RF centre -> ADC sample closest to k = 0, per ADC. TR: spacing of excitation centres.
+  * TI: inversion RF centre -> next excitation RF centre. Refocusing: time after excitation centre,
+    and its phase relative to the excitation (CPMG: +/-90 deg).
+  * RF phase pattern of excitations (second difference for quadratic spoiling, first difference for
+    phase cycling) and ADC phase minus the phase of its own excitation (receive phase).
+  * Net gradient area per axis between consecutive excitation centres (balanced sequences: ~0).
+  * Spoiler area after each inversion (to the next excitation) and after the last ADC of each TR
+    (to the next RF), per axis, in cycles/m; with --slice-thickness also cycles per slice.
+  * Cartesian sampling: per ADC, kx grid (i - n//2)/fov, readout polarity, ky line set and order.
+  * Peak gradient/slew per axis and Pulseq timing errors. Number of excitations before the first ADC.
+Prints a compact summary and one PASS/FAIL line per expectation (add --json for every measurement);
+exits 1 on any FAIL. From Python: rep, checks = measure('sequence.seq', te=..., ...).
+Use the measured values in your report. Requires pypulseq >= 1.4 and numpy.
 """
-import argparse,json,sys
+import argparse, json, sys
 import numpy as np
 import pypulseq as pp
 
-def wrap_deg(x):return (np.asarray(x)+180.)%360.-180.
+LARGE_FLIP_DEG = 135.0
+ROLES = {'excitation', 'inversion', 'refocusing'}
 
-def small_tip_fwhm(rf,gz_t,gz_g,t0,extent):
-    rt=np.asarray(rf.t);sig=np.asarray(rf.signal)
-    w=np.diff(np.r_[0.,(rt[:-1]+rt[1:])/2,float(rf.shape_dur)])
-    g=np.interp(t0+rf.delay+rt,gz_t,gz_g,left=0,right=0) if len(gz_t) else np.zeros_like(rt)
-    if not np.any(abs(g[abs(sig)>.05*abs(sig).max()])>1.):return None   # no slice-select gradient during RF
-    z=np.linspace(-extent,extent,2001);phase=np.cumsum(g*w)
-    resp=abs(np.exp(2j*np.pi*np.outer(z,phase))@(sig*w));mid=np.argmin(abs(z));half=resp[mid]/2;l=r=mid
-    while l>0 and resp[l]>=half:l-=1
-    while r<len(z)-1 and resp[r]>=half:r+=1
-    return None if l==0 or r==len(z)-1 else float(z[r]-z[l])
+def wrap_deg(x):
+    return (np.asarray(x, float) + 180.0) % 360.0 - 180.0
 
-def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoil=None, max_grad=None, max_slew=None, gamma=42.576e6):
-    """Return (report, checks) for an exported .seq; expectations are optional (SI units, mT/m, T/m/s)."""
-    class A: pass
-    a=A();a.seq=str(seq_path);a.te=te;a.tr=tr;a.flip=flip;a.slice_thickness=slice_thickness;a.rf_spoil=rf_spoil
-    a.max_grad=max_grad;a.max_slew=max_slew;a.gamma=gamma
-    s=pp.Sequence();s.read(a.seq);rep={};checks=[]
-    ok,err=s.check_timing();rep['timing_ok']=bool(ok);rep['timing_errors']=[str(e) for e in err][:5]
-    t=0.;rfs=[];adcs=[]
+def _area(w, t0, t1):
+    """Exact integral of a piecewise-linear waveform (t, g) between t0 and t1 (cycles/m if g in Hz/m)."""
+    t, g = w
+    if len(t) == 0 or t1 <= t0:
+        return 0.0
+    tt = np.r_[t0, t[(t > t0) & (t < t1)], t1]
+    return float(np.trapezoid(np.interp(tt, t, g, left=0, right=0), tt))
+
+def _rf(rf, block_start):
+    rt = np.asarray(rf.t); sig = np.asarray(rf.signal)
+    w = np.diff(np.r_[0., (rt[:-1] + rt[1:]) / 2, float(rf.shape_dur)])
+    use = str(getattr(rf, 'use', '') or '').lower()
+    use = {'e': 'excitation', 'r': 'refocusing', 'i': 'inversion'}.get(use, use)
+    return dict(start=block_start + rf.delay, end=block_start + rf.delay + float(rf.shape_dur),
+                center=block_start + rf.delay + pp.calc_rf_center(rf)[0], flip=float(abs(np.sum(sig * w)) * 360.0),
+                phase=float(np.rad2deg(rf.phase_offset)), use=use if use in ROLES else None, rf=rf, block_start=block_start)
+
+def small_tip_fwhm(r, wz, extent):
+    rf = r['rf']; rt = np.asarray(rf.t); sig = np.asarray(rf.signal)
+    w = np.diff(np.r_[0., (rt[:-1] + rt[1:]) / 2, float(rf.shape_dur)])
+    g = np.interp(r['block_start'] + rf.delay + rt, wz[0], wz[1], left=0, right=0) if len(wz[0]) else np.zeros_like(rt)
+    if not np.any(abs(g[abs(sig) > .05 * abs(sig).max()]) > 1.):
+        return None                      # no slice-select gradient during the RF: non-selective
+    z = np.linspace(-extent, extent, 2001)
+    resp = abs(np.exp(2j * np.pi * np.outer(z, np.cumsum(g * w))) @ (sig * w)); mid = np.argmin(abs(z)); half = resp[mid] / 2; lo = hi = mid
+    while lo > 0 and resp[lo] >= half: lo -= 1
+    while hi < len(z) - 1 and resp[hi] >= half: hi += 1
+    return None if lo == 0 or hi == len(z) - 1 else float(z[hi] - z[lo])
+
+def _uniq(x, nd=4):
+    return sorted(set(round(float(v), nd) for v in x if np.isfinite(v)))
+
+def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoil=None, max_grad=None, max_slew=None,
+            gamma=42.576e6, ti=None, balanced=False, rf_phase_cycle=None, te_half_tr=False, cpmg=False,
+            min_spoil_cycles=None, min_inversion_spoil_cycles=None, matrix=None, fov=None, monopolar=False,
+            balanced_tol=0.05):
+    """Return (report, checks). te/ti: list or float (s); tr (s); flip (deg, excitations); matrix (nx, ny); fov m or (fx, fy)."""
+    te = None if te is None else list(np.atleast_1d(te)); ti = None if ti is None else list(np.atleast_1d(ti))
+    s = pp.Sequence(); s.read(str(seq_path)); rep = {}; checks = []
+    ok, err = s.check_timing(); rep['timing_ok'] = bool(ok); rep['timing_errors'] = [str(e) for e in err][:5]
+    t = 0.; rfs = []; adcs = []
     for i in s.block_events:
-        b=s.get_block(i)
-        if b.rf is not None:rfs.append((t,b.rf))
-        if b.adc is not None:adcs.append((t,b.adc))
-        t+=pp.calc_duration(b)
-    rep['duration_s']=t;rep['n_rf']=len(rfs);rep['n_adc']=len(adcs)
-    waves=s.waveforms()
-    rep['peak_grad_mT_m']=[float(np.max(abs(w[1]))/a.gamma*1e3) if len(w[1]) else 0. for w in waves]
-    rep['peak_slew_T_m_s']=[float(np.max(abs(np.diff(w[1])/np.diff(w[0])))/a.gamma) if len(w[1])>1 else 0. for w in waves]
-    flips=[];fwhm=[];centers=[]
-    for st,rf in rfs:
-        rt=np.asarray(rf.t);sig=np.asarray(rf.signal);w=np.diff(np.r_[0.,(rt[:-1]+rt[1:])/2,float(rf.shape_dur)])
-        flips.append(float(abs(np.sum(sig*w))*360.));centers.append(st+rf.delay+pp.calc_rf_center(rf)[0])
-        ext=2*(a.slice_thickness or 0.01);fwhm.append(small_tip_fwhm(rf,waves[2][0],waves[2][1],st,ext) if len(waves)>2 else None)
-    centers=np.array(centers);rep['flip_deg']=sorted(set(round(f,3) for f in flips))
-    rep['slice_selective_all_rf']=all(f is not None for f in fwhm)
-    rep['slice_fwhm_mm']=sorted(set(round(f*1e3,3) for f in fwhm if f is not None))
+        b = s.get_block(i)
+        if b.rf is not None: rfs.append(_rf(b.rf, t))
+        if b.adc is not None: adcs.append(dict(start=t + b.adc.delay, adc=b.adc,
+                                               end=t + b.adc.delay + b.adc.num_samples * b.adc.dwell))
+        t += s.block_durations[i] if hasattr(s, 'block_durations') else pp.calc_duration(b)
+    total = t; rep['duration_s'] = total; rep['n_rf'] = len(rfs); rep['n_adc'] = len(adcs)
+    waves = list(s.waveforms())[:3]
+    while len(waves) < 3: waves.append((np.array([]), np.array([])))
+    waves = [(np.asarray(w[0], float), np.asarray(w[1], float)) for w in waves]
+    rep['peak_grad_mT_m'] = [float(np.max(abs(w[1])) / gamma * 1e3) if len(w[1]) else 0. for w in waves]
+    rep['peak_slew_T_m_s'] = [float(np.max(abs(np.diff(w[1]) / np.maximum(np.diff(w[0]), 1e-12))) / gamma) if len(w[1]) > 1 else 0. for w in waves]
+    # --- RF roles
+    adc_starts = np.array([a['start'] for a in adcs])
+    small = [q for q in rfs if (q['use'] or ('excitation' if q['flip'] < LARGE_FLIP_DEG else '')) == 'excitation']
+    for r in rfs:
+        if r['use']: r['role'] = r['use']; continue
+        if r['flip'] < LARGE_FLIP_DEG: r['role'] = 'excitation'; continue
+        nxt = next((q['start'] for q in small if q['start'] > r['center']), total)
+        prev_exc = any(q['center'] < r['center'] for q in small)
+        has_adc = bool(np.any((adc_starts > r['end']) & (adc_starts < nxt)))
+        r['role'] = 'refocusing' if (prev_exc and has_adc) else 'inversion'
+    exc = [r for r in rfs if r['role'] == 'excitation']; inv = [r for r in rfs if r['role'] == 'inversion']
+    ref = [r for r in rfs if r['role'] == 'refocusing']
+    rep['rf_roles'] = {'excitation': len(exc), 'inversion': len(inv), 'refocusing': len(ref)}
+    ec = np.array([r['center'] for r in exc])
+    rep['excitation_flip_deg'] = _uniq([r['flip'] for r in exc], 3)
+    rep['first_excitation_flips_deg'] = [round(r['flip'], 3) for r in exc[:3]]
+    if inv: rep['inversion_flip_deg'] = _uniq([r['flip'] for r in inv], 2)
+    if ref: rep['refocusing_flip_deg'] = _uniq([r['flip'] for r in ref], 2)
+    fw = [small_tip_fwhm(r, waves[2], 2 * (slice_thickness or 0.01)) for r in exc]
+    rep['excitation_slice_selective_all'] = bool(exc) and all(f is not None for f in fw)
+    rep['excitation_slice_fwhm_mm'] = _uniq([f * 1e3 for f in fw if f is not None], 3)
+    rep['tr_ms'] = _uniq(np.diff(ec) * 1e3, 4)
+    # --- ADC timing, TE, receive phase, sampling
+    tes = []; owner = []
     if adcs:
-        k,_,_,_,ta=s.calculate_kspace();kk=np.asarray(k).T;start=0;tes=[];kmin=[];prev=[]
-        for st,adc in adcs:
-            n=adc.num_samples;seg=kk[start:start+n];tt=np.asarray(ta)[start:start+n];start+=n
-            j=int(np.argmin(np.linalg.norm(seg,axis=1)));kmin.append(float(np.linalg.norm(seg[j])))
-            p=np.searchsorted(centers,tt[0],side='right')-1;prev.append(p);tes.append(float(tt[j]-centers[p]) if p>=0 else float('nan'))
-        rep['echo_times_ms_unique']=sorted(set(round(x*1e3,4) for x in tes))
-        rep['min_abs_k_per_adc_max_cycles_m']=max(kmin)
-        rfph=np.rad2deg([r.phase_offset for _,r in rfs]);adph=np.rad2deg([d.phase_offset for _,d in adcs])
-        rep['adc_minus_rf_phase_max_deg']=float(np.max(abs(wrap_deg(adph-rfph[np.clip(prev,0,None)]))))
-        z=waves[2] if len(waves)>2 else [np.array([]),np.array([])];areas=[]
-        last={}
-        for (st,adc),p in zip(adcs,prev):last[p]=st+adc.delay+adc.num_samples*adc.dwell
-        for p,tend in last.items():
-            tn=centers[p+1] if p+1<len(centers) else t;g=np.linspace(tend,tn,4000)
-            areas.append(float(abs(np.trapezoid(np.interp(g,z[0],z[1],left=0,right=0),g))) if len(z[0]) else 0.)
-        rep['post_readout_z_area_cycles_per_m_min']=min(areas) if areas else None
-    exc=centers[sorted(set(prev))] if adcs else centers
-    rep['tr_ms_unique']=sorted(set(round(x*1e3,4) for x in np.diff(centers)))
-    ph=np.rad2deg([r.phase_offset for _,r in rfs])
-    if len(ph)>=3:rep['rf_phase_second_diff_deg_unique']=sorted(set(round(float(x)%360,3) for x in wrap_deg(np.diff(ph,2))))
-    def chk(name,cond,detail):checks.append({'item':name,'pass':bool(cond),'detail':detail})
-    chk('pulseq timing',rep['timing_ok'],rep['timing_errors'][:2])
-    if a.max_grad:chk('peak gradient',max(rep['peak_grad_mT_m'])<=a.max_grad+1e-3,rep['peak_grad_mT_m'])
-    if a.max_slew:chk('peak slew',max(rep['peak_slew_T_m_s'])<=a.max_slew+1e-3,rep['peak_slew_T_m_s'])
-    if a.te and adcs:
-        uniq=np.array(sorted(set(round(x,7) for x in tes)));chk('realized TE',len(uniq)==len(a.te) and np.allclose(uniq,sorted(a.te),atol=1e-5),list(uniq*1e3))
-    if a.tr:chk('realized TR',len(rep['tr_ms_unique'])>0 and np.allclose(rep['tr_ms_unique'],a.tr*1e3,atol=1e-2),rep['tr_ms_unique'])
-    if a.flip:chk('flip angle',np.allclose(flips,a.flip,atol=.25),rep['flip_deg'])
-    if a.slice_thickness:chk('slice-selective excitation and FWHM',rep['slice_selective_all_rf'] and all(abs(f-a.slice_thickness)<=.2*a.slice_thickness for f in fwhm if f is not None),rep['slice_fwhm_mm'])
-    if a.rf_spoil is not None and len(ph)>=3:
-        e=wrap_deg(np.diff(ph,2)-a.rf_spoil);chk('quadratic RF spoiling increment',np.max(abs(e))<.1,{'max_error_deg':float(np.max(abs(e))),'hint':'wrap increment and phase to [0,360) each update'})
-    if adcs and a.rf_spoil is not None:chk('ADC phase equals RF phase of the same TR',rep['adc_minus_rf_phase_max_deg']<.1,rep['adc_minus_rf_phase_max_deg'])
-    if adcs and a.slice_thickness and rep.get('post_readout_z_area_cycles_per_m_min') is not None:
-        chk('post-readout slice spoiling (cycles per slice)',True,rep['post_readout_z_area_cycles_per_m_min']*a.slice_thickness)
-    rep['checks']=checks
-    return rep,checks
+        k, _, _, _, ta = s.calculate_kspace(); kk = np.asarray(k).T; ta = np.asarray(ta); pos = 0
+        rep_adc = []
+        for a in adcs:
+            n = a['adc'].num_samples; seg = kk[pos:pos + n]; tt = ta[pos:pos + n]; pos += n
+            j = int(np.argmin(np.linalg.norm(seg, axis=1))); p = int(np.searchsorted(ec, tt[0], side='right') - 1)
+            owner.append(p); tes.append(float(tt[j] - ec[p]) if p >= 0 else float('nan'))
+            a.update(k=seg, t=tt, kmin_index=j, kmin=float(np.linalg.norm(seg[j])), owner=p)
+        rep['adc_samples'] = _uniq([a['adc'].num_samples for a in adcs], 0)
+        rep['excitations_before_first_adc'] = int(adcs[0]['owner'])   # unacquired (dummy/preparation) excitations
+        rep['te_ms'] = _uniq(np.array(tes) * 1e3, 4)
+        rep['k_center_sample_index'] = _uniq([a['kmin_index'] for a in adcs], 0)
+        rep['max_abs_k_at_center_sample_cycles_m'] = max(a['kmin'] for a in adcs)
+        rx = [wrap_deg(np.rad2deg(a['adc'].phase_offset) - exc[a['owner']]['phase']) if a['owner'] >= 0 else np.nan for a in adcs]
+        rep['adc_minus_excitation_phase_max_deg'] = float(np.nanmax(np.abs(rx)))
+        # spoiler after the last ADC of each excitation interval, to the next RF start
+        last = {}
+        for a in adcs: last[a['owner']] = max(last.get(a['owner'], -1), a['end'])
+        rf_starts = np.array([r['start'] for r in rfs]); post = []
+        for p, tend in last.items():
+            nxt = rf_starts[rf_starts > tend]; t1 = nxt[0] if len(nxt) else total
+            post.append([_area(w, tend, t1) for w in waves])
+        post = np.abs(np.array(post)); rep['post_readout_spoiler_cycles_m_min_per_axis'] = post.min(0).round(3).tolist()
+        if slice_thickness: rep['post_readout_z_spoiler_cycles_per_slice_min'] = float(post[:, 2].min() * slice_thickness)
+        if te_half_tr and len(ec) > 1:
+            rep['te_minus_half_tr_ms'] = _uniq((np.array(tes) - np.median(np.diff(ec)) / 2) * 1e3, 4)
+    # --- excitation phase pattern
+    ph = np.array([r['phase'] for r in exc])
+    if len(ph) >= 2: rep['excitation_phase_first_diff_deg'] = _uniq(wrap_deg(np.diff(ph)) % 360, 3)[:8]
+    if len(ph) >= 3: rep['excitation_phase_second_diff_deg'] = _uniq(wrap_deg(np.diff(ph, 2)) % 360, 3)[:8]
+    rep['max_abs_excitation_phase_deg'] = float(np.max(np.abs(ph))) if len(ph) else 0.
+    # --- balanced moments between consecutive excitation centres
+    if len(ec) > 1:
+        net = np.array([[_area(w, a, b) for w in waves] for a, b in zip(ec[:-1], ec[1:])])
+        rep['net_area_per_tr_cycles_m_max_abs'] = np.abs(net).max(0).round(4).tolist()
+    # --- inversion recovery
+    if inv:
+        tis = []; inv_sp = []
+        for r in inv:
+            nx = [q for q in exc if q['center'] > r['center']]
+            if nx:
+                tis.append(nx[0]['center'] - r['center'])
+                inv_sp.append([_area(w, r['end'], nx[0]['start']) for w in waves])   # up to the next excitation START
+        rep['ti_ms'] = _uniq(np.array(tis) * 1e3, 4)
+        if inv_sp:
+            sp = np.abs(np.array(inv_sp)); rep['post_inversion_spoiler_cycles_m_min_per_axis'] = sp.min(0).round(3).tolist()
+            if slice_thickness: rep['post_inversion_z_spoiler_cycles_per_slice_min'] = float(sp[:, 2].min() * slice_thickness)
+    # --- spin echo
+    if ref:
+        tau = []; rel = []
+        for r in ref:
+            p = int(np.searchsorted(ec, r['center'], side='right') - 1)
+            if p >= 0: tau.append(r['center'] - ec[p]); rel.append(wrap_deg(r['phase'] - exc[p]['phase']))
+        rep['refocusing_after_excitation_ms'] = _uniq(np.array(tau) * 1e3, 4)[:12]
+        rep['refocusing_minus_excitation_phase_deg'] = _uniq(rel, 2)
+    # --- Cartesian sampling
+    if matrix is not None and fov is not None and adcs:
+        nx, ny = int(matrix[0]), int(matrix[-1]); fx, fy = (fov, fov) if np.isscalar(fov) else (fov[0], fov[-1])
+        exp_kx = (np.arange(nx) - nx // 2) / fx; errs = []; pol = []; kys = []
+        for a in adcs:
+            if a['adc'].num_samples != nx: errs.append(np.inf); continue
+            kx = a['k'][:, 0]; pol.append(np.sign(np.median(np.diff(kx))))
+            errs.append(float(min(np.max(abs(kx - exp_kx)), np.max(abs(kx[::-1] - exp_kx)))))
+            kys.append(float(np.median(a['k'][:, 1])))
+        rep['kx_grid_max_err_cycles_m'] = float(max(errs)); rep['readout_polarities'] = _uniq(pol, 0)
+        rep['ky_lines'] = len(_uniq(kys, 3)); exp_ky = (np.arange(ny) - ny // 2) / fy
+        rep['ky_set_max_err_cycles_m'] = float(max(min(abs(exp_ky - v)) for v in kys)) if kys else None
+        rep['ky_order_first_lines'] = [round(v * fy, 3) for v in kys[:6]]
+    # --- checks
+    def chk(name, cond, detail): checks.append({'item': name, 'pass': bool(cond), 'detail': detail})
+    chk('pulseq timing', rep['timing_ok'], rep['timing_errors'][:2])
+    if max_grad: chk('peak gradient', max(rep['peak_grad_mT_m']) <= max_grad + 1e-3, rep['peak_grad_mT_m'])
+    if max_slew: chk('peak slew', max(rep['peak_slew_T_m_s']) <= max_slew + 1e-3, rep['peak_slew_T_m_s'])
+    if te is not None and adcs:
+        u = np.array(_uniq(np.array(tes), 7)); chk('realized TE (excitation centre -> k=0 sample)', len(u) == len(te) and np.allclose(u, sorted(te), atol=1e-5), rep['te_ms'])
+    if tr is not None: chk('realized TR (excitation centres)', len(rep['tr_ms']) > 0 and np.allclose(rep['tr_ms'], tr * 1e3, atol=1e-2), rep['tr_ms'])
+    if ti is not None: chk('realized TI (inversion centre -> excitation centre)', 'ti_ms' in rep and len(rep['ti_ms']) == len(ti) and np.allclose(rep['ti_ms'], np.sort(ti) * 1e3, atol=1e-2), rep.get('ti_ms'))
+    if flip is not None:
+        acq = sorted(set(owner)) if adcs else range(len(exc))
+        chk('excitation flip angle (acquired TRs)', len(exc) > 0 and np.allclose([exc[p]['flip'] for p in acq if p >= 0], flip, atol=.25), rep['excitation_flip_deg'])
+    if slice_thickness:
+        chk('slice-selective excitation with small-tip FWHM within 20%', rep['excitation_slice_selective_all'] and all(abs(f - slice_thickness) <= .2 * slice_thickness for f in fw if f is not None), rep['excitation_slice_fwhm_mm'])
+    if rf_spoil is not None and len(ph) >= 3:
+        e = wrap_deg(np.diff(ph, 2) - rf_spoil); chk('quadratic RF spoiling increment', np.max(abs(e)) < .1, {'max_error_deg': float(np.max(abs(e))), 'hint': 'wrap increment and phase to [0,360) each update'})
+    if rf_phase_cycle is not None and len(ph) >= 2:
+        e = wrap_deg(np.diff(ph) - rf_phase_cycle); chk('RF phase cycling increment', np.max(abs(e)) < .1, rep['excitation_phase_first_diff_deg'])
+    if adcs and (rf_spoil is not None or rf_phase_cycle is not None):
+        chk('ADC phase equals the phase of its own excitation', rep['adc_minus_excitation_phase_max_deg'] < .1, rep['adc_minus_excitation_phase_max_deg'])
+    if balanced: chk('balanced: zero net gradient area per TR on every axis', 'net_area_per_tr_cycles_m_max_abs' in rep and max(rep['net_area_per_tr_cycles_m_max_abs']) <= balanced_tol, rep.get('net_area_per_tr_cycles_m_max_abs'))
+    if te_half_tr and adcs and 'te_minus_half_tr_ms' in rep: chk('TE = TR/2', max(abs(np.array(rep['te_minus_half_tr_ms']))) <= 1e-2, rep['te_minus_half_tr_ms'])
+    if cpmg: chk('CPMG: refocusing phase = excitation phase +/- 90 deg', ref and all(abs(abs(x) - 90) < .1 for x in rep['refocusing_minus_excitation_phase_deg']), rep.get('refocusing_minus_excitation_phase_deg'))
+    if min_spoil_cycles is not None and adcs and slice_thickness:
+        chk('post-readout z spoiler (cycles per slice)', rep['post_readout_z_spoiler_cycles_per_slice_min'] >= min_spoil_cycles - 1e-3, rep['post_readout_z_spoiler_cycles_per_slice_min'])
+    if min_inversion_spoil_cycles is not None and slice_thickness:
+        chk('post-inversion z spoiler (cycles per slice)', inv and rep.get('post_inversion_z_spoiler_cycles_per_slice_min', 0) >= min_inversion_spoil_cycles - 1e-3, rep.get('post_inversion_z_spoiler_cycles_per_slice_min'))
+    if matrix is not None and fov is not None and adcs:
+        chk('Cartesian kx grid (i - n//2)/fov', rep['kx_grid_max_err_cycles_m'] <= .01, rep['kx_grid_max_err_cycles_m'])
+        chk('Cartesian ky line set', rep['ky_set_max_err_cycles_m'] is not None and rep['ky_set_max_err_cycles_m'] <= .01, rep['ky_set_max_err_cycles_m'])
+        if monopolar: chk('monopolar readout', rep['readout_polarities'] == [1.0], rep['readout_polarities'])
+    rep['checks'] = checks
+    return rep, checks
 
 def main():
-    ap=argparse.ArgumentParser(description=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('seq');ap.add_argument('--te',type=float,nargs='*');ap.add_argument('--tr',type=float)
-    ap.add_argument('--flip',type=float);ap.add_argument('--slice-thickness',type=float);ap.add_argument('--rf-spoil',type=float)
-    ap.add_argument('--max-grad',type=float,help='mT/m');ap.add_argument('--max-slew',type=float,help='T/m/s')
-    ap.add_argument('--gamma',type=float,default=42.576e6);a=ap.parse_args()
-    rep,checks=measure(a.seq,a.te,a.tr,a.flip,a.slice_thickness,a.rf_spoil,a.max_grad,a.max_slew,a.gamma)
-    print(json.dumps(rep,indent=1,default=float))
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('seq'); ap.add_argument('--te', type=float, nargs='*'); ap.add_argument('--tr', type=float)
+    ap.add_argument('--ti', type=float, nargs='*'); ap.add_argument('--flip', type=float); ap.add_argument('--slice-thickness', type=float)
+    ap.add_argument('--rf-spoil', type=float); ap.add_argument('--rf-phase-cycle', type=float)
+    ap.add_argument('--balanced', action='store_true'); ap.add_argument('--te-half-tr', action='store_true'); ap.add_argument('--cpmg', action='store_true')
+    ap.add_argument('--min-spoil-cycles', type=float); ap.add_argument('--min-inversion-spoil-cycles', type=float)
+    ap.add_argument('--matrix', type=int, nargs='+'); ap.add_argument('--fov', type=float, nargs='+'); ap.add_argument('--monopolar', action='store_true')
+    ap.add_argument('--max-grad', type=float, help='mT/m'); ap.add_argument('--max-slew', type=float, help='T/m/s')
+    ap.add_argument('--gamma', type=float, default=42.576e6); ap.add_argument('--json', action='store_true', help='print all measurements')
+    a = ap.parse_args()
+    fov = None if a.fov is None else (a.fov[0] if len(a.fov) == 1 else a.fov)
+    rep, checks = measure(a.seq, a.te, a.tr, a.flip, a.slice_thickness, a.rf_spoil, a.max_grad, a.max_slew, a.gamma, a.ti,
+                          a.balanced, a.rf_phase_cycle, a.te_half_tr, a.cpmg, a.min_spoil_cycles, a.min_inversion_spoil_cycles,
+                          a.matrix, fov, a.monopolar)
+    keys = ['rf_roles', 'excitation_flip_deg', 'te_ms', 'tr_ms', 'ti_ms', 'refocusing_after_excitation_ms', 'excitations_before_first_adc',
+            'adc_samples', 'excitation_slice_fwhm_mm', 'peak_grad_mT_m', 'peak_slew_T_m_s']
+    out = rep if a.json else {k: rep[k] for k in keys if k in rep}
+    print(json.dumps({k: v for k, v in out.items() if k != 'checks'}, default=float))
+    for c in checks: print(('PASS ' if c['pass'] else 'FAIL ') + c['item'] + ': ' + json.dumps(c['detail'], default=float))
     sys.exit(1 if any(not c['pass'] for c in checks) else 0)
 
-if __name__=='__main__':main()
+if __name__ == '__main__':
+    main()
 

@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased — detail checks, tested pipelines and study statistics (0.10.0)
+
+- pulse-sequence-design 0.10.0: `check_exported_seq.py` classifies excitation/inversion/refocusing pulses and checks
+  TE, TR, TI, spin-echo refocusing timing and CPMG phase, quadratic RF spoiling or 0/180 phase cycling with receive
+  phase, balanced moments per TR, inversion and post-readout spoilers, slice selection, Cartesian sampling and
+  hardware limits (compact PASS/FAIL output; tests cover spoiled GRE, inversion-recovery GRE, bSSFP and spin echo,
+  each with failing variants). New tested `example_pipeline.py` (build, check, waveforms, KomaMRI simulation of the
+  export, archive, standalone reconstruction, orientation check, report); `kspace_grid` and `plot_waveforms`
+  helpers; fast-path and per-family checklists; description covers simulation and relaxometry studies.
+- mri-reconstruction 0.10.0: `qmri_fit.py` (+ test): mono-exponential, 3-parameter inversion recovery with
+  polarity restoration, VFA, dictionary fits; Ernst, inversion-recovery and bSSFP (Bloch fixed point) signals.
+- diffusion-mri 0.10.0: `adc_fit` with an explicit b-range (conventional b <= 1000) and `fixed_compartment_fraction`;
+  biomarker-study checklist.
+- mri-research-workflow 0.10.0: `study_stats.py` (+ test): subject-level AUC, subject bootstrap CIs, ICC(3,1),
+  wCV/repeatability coefficient, development-only thresholds.
+- All skills 0.10.0.
+
+Motivated by development failure modes and token sinks (turn count) in A/B evaluations; no held-out task content.
+
+
 ## Unreleased — evaluation-driven detail guidance
 
 - pulse-sequence-design 0.9.0: verify the exported sequence (realized TE/TR, slice-selective

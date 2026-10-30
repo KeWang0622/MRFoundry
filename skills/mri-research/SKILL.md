@@ -17,7 +17,7 @@ description: >-
   papers, and datasets rather than bundling them.
 metadata:
   author: Ke Wang
-  version: "0.9.0"
+  version: "0.10.0"
 ---
 
 # MRFoundry: MRI Research Hub
