@@ -49,3 +49,56 @@ def threshold_on_dev(dev_pos, dev_neg):
         if j > best: best, thr = j, float(t)
     return thr
 
+
+
+# ---- general repeatability and paired-comparison statistics (standard formulas) ----------------------------
+def icc(data, form='3,1'):
+    """Intraclass correlation for an (n subjects x k sessions/raters) array (Shrout & Fleiss 1979; McGraw & Wong 1996).
+    form: '1,1' one-way random; '2,1' two-way random, absolute agreement; '3,1' two-way mixed, consistency;
+    append 'k' (e.g. '2,k') for the reliability of the mean of k measurements. State the form you report."""
+    Y = np.asarray(data, float); n, k = Y.shape
+    gm = Y.mean(); rm = Y.mean(1); cm = Y.mean(0)
+    msr = k * np.sum((rm - gm) ** 2) / (n - 1)
+    msc = n * np.sum((cm - gm) ** 2) / (k - 1)
+    sse = np.sum((Y - rm[:, None] - cm[None, :] + gm) ** 2); mse = sse / ((n - 1) * (k - 1))
+    msw = np.sum((Y - rm[:, None]) ** 2) / (n * (k - 1))
+    f = form.replace(' ', '')
+    if f == '1,1': return (msr - msw) / (msr + (k - 1) * msw)
+    if f == '2,1': return (msr - mse) / (msr + (k - 1) * mse + k * (msc - mse) / n)
+    if f == '3,1': return (msr - mse) / (msr + (k - 1) * mse)
+    if f == '1,k': return (msr - msw) / msr
+    if f == '2,k': return (msr - mse) / (msr + (msc - mse) / n)
+    if f == '3,k': return (msr - mse) / msr
+    raise ValueError(form)
+
+
+def repeatability(data, ci=0.95):
+    """Within-subject SD, CV and repeatability coefficient for (n subjects x k >= 2 sessions).
+    sw^2 = mean within-subject variance (ddof 1); chi-square CI for sw with n(k-1) degrees of freedom;
+    wCV_rms = sqrt(mean(var_i / mean_i^2)); RC = 2.77 sw (Bland & Altman 1996)."""
+    from scipy.stats import chi2
+    Y = np.asarray(data, float); n, k = Y.shape
+    v = Y.var(1, ddof=1); m = Y.mean(1); sw = np.sqrt(v.mean()); df = n * (k - 1); a = (1 - ci) / 2
+    return {'sw': float(sw), 'sw_ci': [float(sw * np.sqrt(df / chi2.ppf(1 - a, df))), float(sw * np.sqrt(df / chi2.ppf(a, df)))],
+            'wcv_rms': float(np.sqrt(np.mean(v / m ** 2))), 'wcv_pooled': float(sw / m.mean()), 'rc': float(2.77 * sw), 'df': int(df)}
+
+
+def paired_difference(a, b, ci=0.95):
+    """Paired comparison of a - b (one value per subject): mean, t-based CI, Cohen's dz and two-sided p."""
+    from scipy.stats import t as tdist
+    d = np.asarray(a, float) - np.asarray(b, float); n = len(d); sd = d.std(ddof=1); se = sd / np.sqrt(n)
+    q = tdist.ppf(1 - (1 - ci) / 2, n - 1); tt = d.mean() / se if se > 0 else np.inf
+    return {'mean': float(d.mean()), 'ci': [float(d.mean() - q * se), float(d.mean() + q * se)], 'dz': float(d.mean() / sd) if sd > 0 else float('inf'),
+            't': float(tt), 'p': float(2 * tdist.sf(abs(tt), n - 1)), 'n': int(n), 'df': int(n - 1)}
+
+
+def bland_altman(a, b):
+    """Bias and 95% limits of agreement of a - b."""
+    d = np.asarray(a, float) - np.asarray(b, float); s = d.std(ddof=1)
+    return {'bias': float(d.mean()), 'loa': [float(d.mean() - 1.96 * s), float(d.mean() + 1.96 * s)], 'n': int(len(d))}
+
+
+def balanced_accuracy(y_true, y_pred):
+    """Mean of sensitivity and specificity for binary labels (compute at the declared unit, e.g. one value per subject)."""
+    t = np.asarray(y_true, bool); p = np.asarray(y_pred, bool)
+    return float((np.mean(p[t]) + np.mean(~p[~t])) / 2)

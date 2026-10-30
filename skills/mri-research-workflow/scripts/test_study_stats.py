@@ -15,6 +15,19 @@ def main():
     assert n == 8 and lo <= est <= hi; thr = threshold_on_dev([5, 6, 7], [1, 2, 3]); assert 3 < thr < 5
     print('study_stats ok: ICC %.3f wCV %.3f AUC %.2f [%.2f, %.2f] n=%d' % (icc, wcv, est, lo, hi, n))
 
+def test_general():
+    sf = np.array([[9, 2, 5, 8], [6, 1, 3, 2], [8, 4, 6, 8], [7, 1, 2, 6], [10, 5, 6, 9], [6, 2, 4, 7]], float)
+    ref = {'1,1': .17, '2,1': .29, '3,1': .71, '1,k': .44, '2,k': .62, '3,k': .91}
+    for f, v in ref.items():
+        assert abs(icc(sf, f) - v) < 0.006, (f, icc(sf, f))
+    print('ICC forms match Shrout & Fleiss (1979) Table 4')
+    rng = np.random.default_rng(0); true = rng.normal(10, 2, 200); Y = true[:, None] + rng.normal(0, 0.5, (200, 3))
+    r = repeatability(Y); assert abs(r['sw'] - 0.5) < 0.04 and r['sw_ci'][0] < 0.5 < r['sw_ci'][1] and r['df'] == 400
+    pdiff = paired_difference(Y[:, 0] + 0.3, Y[:, 1]); assert pdiff['ci'][0] < 0.3 < pdiff['ci'][1]
+    assert balanced_accuracy([1, 1, 0, 0], [1, 0, 0, 0]) == 0.75 and abs(bland_altman([1, 2, 3], [0, 1, 2])['bias'] - 1) < 1e-12
+    print('repeatability (k sessions, chi-square CI), paired t CI, Bland-Altman and balanced accuracy ok')
+
 if __name__ == '__main__':
     main()
+    test_general()
 

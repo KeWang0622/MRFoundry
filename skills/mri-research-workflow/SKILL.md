@@ -120,7 +120,7 @@ For biomarker comparisons and repeatability studies use [`scripts/study_stats.py
 (tested): Mann-Whitney `auc`, `subject_bootstrap` CIs that resample subjects, `icc_3_1`,
 `within_subject_cv` (wCV and repeatability coefficient) and `threshold_on_dev`. The statistical unit is the
 subject (or lesion), never the voxel; report n as subjects. Fix every analysis choice on development
-subjects and apply it unchanged to held-out subjects; say which subjects informed which choice.
+subjects and apply it unchanged to held-out subjects; say which subjects informed which choice. It also provides `icc` (one-way, two-way random and mixed, single and average measures, for k sessions), `repeatability` (within-subject SD with chi-square CI, wCV, repeatability coefficient), `paired_difference` (t-based CI, Cohen's dz), `bland_altman` and `balanced_accuracy`. A study's own analysis plan overrides these defaults; declare the statistical unit and the ICC form for every endpoint.
 
 ## Choose the venue and summarize related work
 
