@@ -75,7 +75,8 @@ retrieve that reference from the official `KeWang0622/MRFoundry` repository.
    komamripy, returning samples in ADC order with k-space and times). Single-echo Cartesian
    and radial examples are in [`scripts/test_seqlib.py`](scripts/test_seqlib.py). Setup:
    `pip install pypulseq sigpy komamripy`; the first `import komamripy` installs Julia and
-   compiles KomaMRI, so run `python scripts/test_seqlib.py` in the background early.
+   compiles KomaMRI (about 3.5 min the first time on a fresh depot, about 10 s afterwards;
+   measured with komamripy 0.0.14 / KomaMRI 0.14), so run `python scripts/test_seqlib.py` in the background early.
    Use these instead of reading library source to learn the APIs.
 2. **Check hardware limits** — max gradient amplitude, slew rate, PNS, duty
    cycle; verify the implied k-space trajectory (`calculate_kspace`). Then verify
