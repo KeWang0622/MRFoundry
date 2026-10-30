@@ -74,7 +74,7 @@ retrieve that reference from the official `KeWang0622/MRFoundry` repository.
    exact TE/TR delays, wrapped RF spoiling, and `simulate_with_koma` (KomaMRI through
    komamripy, returning samples in ADC order with k-space and times). Single-echo Cartesian
    and radial examples are in [`scripts/test_seqlib.py`](scripts/test_seqlib.py). Setup:
-   `pip install pypulseq sigpy komamripy`; the first `import komamripy` installs Julia and
+   `pip install pypulseq sigpy komamripy`; the first komamripy call (not the import) installs Julia and
    compiles KomaMRI (about 3.5 min the first time on a fresh depot, about 10 s afterwards;
    measured with komamripy 0.0.14 / KomaMRI 0.14), so run `python scripts/test_seqlib.py` in the background early.
    Use these instead of reading library source to learn the APIs.
