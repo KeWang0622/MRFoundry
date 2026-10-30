@@ -28,12 +28,11 @@ def small_tip_fwhm(rf,gz_t,gz_g,t0,extent):
     while r<len(z)-1 and resp[r]>=half:r+=1
     return None if l==0 or r==len(z)-1 else float(z[r]-z[l])
 
-def main():
-    ap=argparse.ArgumentParser(description=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('seq');ap.add_argument('--te',type=float,nargs='*');ap.add_argument('--tr',type=float)
-    ap.add_argument('--flip',type=float);ap.add_argument('--slice-thickness',type=float);ap.add_argument('--rf-spoil',type=float)
-    ap.add_argument('--max-grad',type=float,help='mT/m');ap.add_argument('--max-slew',type=float,help='T/m/s')
-    ap.add_argument('--gamma',type=float,default=42.576e6);a=ap.parse_args()
+def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoil=None, max_grad=None, max_slew=None, gamma=42.576e6):
+    """Return (report, checks) for an exported .seq; expectations are optional (SI units, mT/m, T/m/s)."""
+    class A: pass
+    a=A();a.seq=str(seq_path);a.te=te;a.tr=tr;a.flip=flip;a.slice_thickness=slice_thickness;a.rf_spoil=rf_spoil
+    a.max_grad=max_grad;a.max_slew=max_slew;a.gamma=gamma
     s=pp.Sequence();s.read(a.seq);rep={};checks=[]
     ok,err=s.check_timing();rep['timing_ok']=bool(ok);rep['timing_errors']=[str(e) for e in err][:5]
     t=0.;rfs=[];adcs=[]
@@ -89,7 +88,18 @@ def main():
     if adcs and a.rf_spoil is not None:chk('ADC phase equals RF phase of the same TR',rep['adc_minus_rf_phase_max_deg']<.1,rep['adc_minus_rf_phase_max_deg'])
     if adcs and a.slice_thickness and rep.get('post_readout_z_area_cycles_per_m_min') is not None:
         chk('post-readout slice spoiling (cycles per slice)',True,rep['post_readout_z_area_cycles_per_m_min']*a.slice_thickness)
-    rep['checks']=checks;print(json.dumps(rep,indent=1,default=float))
+    rep['checks']=checks
+    return rep,checks
+
+def main():
+    ap=argparse.ArgumentParser(description=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('seq');ap.add_argument('--te',type=float,nargs='*');ap.add_argument('--tr',type=float)
+    ap.add_argument('--flip',type=float);ap.add_argument('--slice-thickness',type=float);ap.add_argument('--rf-spoil',type=float)
+    ap.add_argument('--max-grad',type=float,help='mT/m');ap.add_argument('--max-slew',type=float,help='T/m/s')
+    ap.add_argument('--gamma',type=float,default=42.576e6);a=ap.parse_args()
+    rep,checks=measure(a.seq,a.te,a.tr,a.flip,a.slice_thickness,a.rf_spoil,a.max_grad,a.max_slew,a.gamma)
+    print(json.dumps(rep,indent=1,default=float))
     sys.exit(1 if any(not c['pass'] for c in checks) else 0)
+
 if __name__=='__main__':main()
 

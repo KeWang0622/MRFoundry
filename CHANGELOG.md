@@ -14,7 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   recovery tests, noise floor); description now covers ADC and RSI-type studies.
 - mri-research-workflow 0.9.0: check deliverables against the requested interface.
 
-Motivated by detail-level failures in development A/B evaluations; no task content.
+- Tested helper libraries: pulse-sequence-design `scripts/mrfoundry_seqlib.py` (+ `test_seqlib.py`),
+  mri-reconstruction `scripts/mrfoundry_reconlib.py` (+ test), diffusion-mri `scripts/spectrum_fit.py`
+  (+ test), mri-research-workflow `scripts/check_deliverables.py`.
+- All skills 0.9.0: run the skill's tests or a small upstream example, start slow installs in the
+  background, work from local skill content first, write each stage as one checked script;
+  project memory only for ongoing projects.
+
+Motivated by detail-level failures and token/time sinks in development A/B evaluations; no task content.
 
 ## Unreleased
 

@@ -35,6 +35,8 @@ software instructions and current venue/safety requirements.
 
 ## Project research memory
 
+For ongoing projects only: use this when `.mrfoundry/INDEX.md` exists or the user
+asks to keep project notes; skip it for one-off tasks.
 If only the legacy `.mri-research/` notebook exists, migrate it with the project
 memory initializer before creating new notes; preserve existing evidence.
 For project experiments, read `.mrfoundry/INDEX.md` when present and retrieve
@@ -49,8 +51,13 @@ is absent, retrieve the reference from the official skill repository.
 
 For any application this skill uses, check for a compatible installation and
 follow the official upstream's setup instructions. Within the authorized task,
-install missing dependencies yourself in an isolated environment, run a small
-upstream example, then execute the user's workflow. Do not leave routine setup
+install missing dependencies yourself in an isolated environment, run this skill's
+test script or a small upstream example, then execute the user's workflow.
+Start slow installs (for example Julia/KomaMRI) in the background while you write code.
+Work from the installed skill first: its scripts and references cover routine work;
+fetch remote references only when something you need is missing locally.
+Work efficiently: write each stage as one script with built-in checks, run it end to
+end, and fix with targeted edits rather than many exploratory one-off commands. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
@@ -112,6 +119,10 @@ off, so fractions can be precise-looking and wrong.
   the effect you hope to show or by test-set results.
 - **Handle the noise floor** at high b (estimate sigma from background or repeats; use a
   Rician-aware fit or floor correction) and report residual bias with the results.
+- **Tools.** [`scripts/spectrum_fit.py`](scripts/spectrum_fit.py) provides `background_sigma`,
+  `floor_correct`, `fit_weights` (NNLS with optional Tikhonov or smoothness regularization),
+  `fraction_below` and a generic `recovery_test`; `scripts/test_spectrum_fit.py` shows an
+  unregularized fine grid recovering a low-diffusivity fraction far worse than a few compartments.
 
 ## Tractography & bundles
 

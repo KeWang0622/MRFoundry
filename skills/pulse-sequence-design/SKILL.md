@@ -35,6 +35,8 @@ software instructions and current venue/safety requirements.
 
 ## Project research memory
 
+For ongoing projects only: use this when `.mrfoundry/INDEX.md` exists or the user
+asks to keep project notes; skip it for one-off tasks.
 If only the legacy `.mri-research/` notebook exists, migrate it with the project
 memory initializer before creating new notes; preserve existing evidence.
 For project experiments, read `.mrfoundry/INDEX.md` when present and retrieve
@@ -49,8 +51,13 @@ is absent, retrieve the reference from the official skill repository.
 
 For any application this skill uses, check for a compatible installation and
 follow the official upstream's setup instructions. Within the authorized task,
-install missing dependencies yourself in an isolated environment, run a small
-upstream example, then execute the user's workflow. Do not leave routine setup
+install missing dependencies yourself in an isolated environment, run this skill's
+test script or a small upstream example, then execute the user's workflow.
+Start slow installs (for example Julia/KomaMRI) in the background while you write code.
+Work from the installed skill first: its scripts and references cover routine work;
+fetch remote references only when something you need is missing locally.
+Work efficiently: write each stage as one script with built-in checks, run it end to
+end, and fix with targeted edits rather than many exploratory one-off commands. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
@@ -62,6 +69,14 @@ retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 
 1. **Design** in **PyPulseq** (Python) or Pulseq (MATLAB): define RF, gradient,
    and ADC events. https://github.com/pulseq/pypulseq · https://github.com/pulseq/pulseq
+   Start from the tested helpers in [`scripts/mrfoundry_seqlib.py`](scripts/mrfoundry_seqlib.py):
+   system limits, slice-selective excitation, readout with a chosen sample exactly at k = 0,
+   exact TE/TR delays, wrapped RF spoiling, and `simulate_with_koma` (KomaMRI through
+   komamripy, returning samples in ADC order with k-space and times). Single-echo Cartesian
+   and radial examples are in [`scripts/test_seqlib.py`](scripts/test_seqlib.py). Setup:
+   `pip install pypulseq sigpy komamripy`; the first `import komamripy` installs Julia and
+   compiles KomaMRI, so run `python scripts/test_seqlib.py` in the background early.
+   Use these instead of reading library source to learn the APIs.
 2. **Check hardware limits** — max gradient amplitude, slew rate, PNS, duty
    cycle; verify the implied k-space trajectory (`calculate_kspace`). Then verify
    the *exported* file against every requested parameter (next section).

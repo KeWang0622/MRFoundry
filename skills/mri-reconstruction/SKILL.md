@@ -15,7 +15,7 @@ description: >-
   radial/spiral recon, `.cfl`/`.hdr`, ISMRMRD, Siemens twix, GE P-file.
 metadata:
   author: Ke Wang
-  version: "0.8.0"
+  version: "0.9.0"
 ---
 
 # MRFoundry: MRI Reconstruction (actionable)
@@ -49,6 +49,8 @@ If the shared guide is absent in a standalone install, retrieve
 
 ## Project research memory
 
+For ongoing projects only: use this when `.mrfoundry/INDEX.md` exists or the user
+asks to keep project notes; skip it for one-off tasks.
 If only the legacy `.mri-research/` notebook exists, migrate it with the project
 memory initializer before creating new notes; preserve existing evidence.
 For project experiments, read `.mrfoundry/INDEX.md` when present and retrieve
@@ -63,8 +65,13 @@ is absent, retrieve the reference from the official skill repository.
 
 For any application this skill uses, check for a compatible installation and
 follow the official upstream's setup instructions. Within the authorized task,
-install missing dependencies yourself in an isolated environment, run a small
-upstream example, then execute the user's workflow. Do not leave routine setup
+install missing dependencies yourself in an isolated environment, run this skill's
+test script or a small upstream example, then execute the user's workflow.
+Start slow installs (for example Julia/KomaMRI) in the background while you write code.
+Work from the installed skill first: its scripts and references cover routine work;
+fetch remote references only when something you need is missing locally.
+Work efficiently: write each stage as one script with built-in checks, run it end to
+end, and fix with targeted edits rather than many exploratory one-off commands. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
@@ -137,6 +144,14 @@ data with coils on dim 3 and a fully-sampled ACS** (calibration region); pass a
 (radial/spiral/cones/rosette — not EPI, which is Cartesian). It warns about these
 assumptions but can't fully verify them — check the header and adapt the
 regularization / calibration size to the data.
+
+## Tested conventions (Python)
+
+[`scripts/mrfoundry_reconlib.py`](scripts/mrfoundry_reconlib.py) fixes conventions that break
+reconstructions silently: `cartesian_image` (centred inverse FFT; sample n//2 is k = 0; image
+[y, x]), `direct_dft` (forward model for checks) and `nufft_least_squares` (SigPy coordinates
+ordered (ky, kx) times FOV; output rescaled to the direct-sum model).
+`python scripts/test_reconlib.py` verifies them against a direct DFT.
 
 ## SigPy (Python) alternative
 
