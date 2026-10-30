@@ -70,7 +70,7 @@ Start slow installs (for example Julia/KomaMRI) in the background while you writ
 Work from the installed skill first: its scripts and references cover routine work;
 fetch remote references only when something you need is missing locally.
 Work efficiently: write each stage as one script with built-in checks, run it end to
-end, and fix with targeted edits rather than many exploratory one-off commands. Keep effort proportionate: closed-form or linear fits need only numpy/scipy; install heavy toolboxes only for the steps that need them, and produce every requested deliverable before refining. Do not leave routine setup
+end, and fix with targeted edits rather than many exploratory one-off commands. Keep effort proportionate: closed-form or linear fits need only numpy/scipy; install heavy toolboxes only for the steps that need them, and produce every requested deliverable before refining. Before finishing, confirm every requested deliverable exists under its exact name and location, and rerun each standalone entrypoint from a fresh copy in a temporary directory with the project's interpreter on the provided input; record that command in the environment record. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
@@ -174,18 +174,25 @@ algorithms. Before reconstructing, establish and record:
   differ from numpy's unnormalized `ifft2` by a constant. State the intensity scale,
   use the same coil combination as the reference (RSS vs sensitivity-weighted),
   and say whether an error metric fits a scale (`nrmse`).
+- **Encoding sign**: the standard model is s(k) = Σ m(r) exp(−i2πk·r), reconstructed by a
+  centred inverse FFT; some vendors and simulators use exp(+i2πk·r), which needs the forward
+  transform (`image_from_kspace(ksp, encoding_sign=+1)`). The wrong choice mirrors the image in
+  both axes and shifts it by one pixel for even matrices. Take the sign from the documentation.
 - **Orientation**: confirm row/column order and flips against an asymmetric feature,
   a provided reference or header geometry; fft-for-ifft or a missing shift mirrors
   or rolls the image.
 - **Standalone entrypoints**: read acceleration, ACS, oversampling, partial-Fourier
   and noise information from the file or header, never from constants tuned to one
   dataset, and rerun the script on a second (or simulated) dataset.
-- **Validate first**: build k-space from a known image and smooth coil maps with
-  `fft2c`, apply your sampling, and confirm the pipeline recovers it before using the
-  real data. Report the SNR cost of acceleration with a g-factor or pseudo-replicas.
+- **Validate first, with an independent forward model**: simulate k-space from a known,
+  asymmetric image and smooth coil maps using the signal equation exactly as documented
+  (sign, centring, scaling; `direct_dft_signed` is an explicit sum, not an FFT), apply your
+  sampling and conventions, and confirm the pipeline recovers it. A round trip through your
+  own FFT helpers cannot detect a sign, shift or axis-order error. Report the SNR cost of
+  acceleration with a g-factor or pseudo-replicas.
 
 [`scripts/mrfoundry_rawrecon.py`](scripts/mrfoundry_rawrecon.py) (numpy only; `python scripts/test_rawrecon.py`):
-`fft2c`/`ifft2c`, `rss`, `noise_covariance`, `prewhiten`, `remove_readout_oversampling`,
+`fft2c`/`ifft2c`, `image_from_kspace` and `direct_dft_signed` (encoding sign), `rss`, `noise_covariance`, `prewhiten`, `remove_readout_oversampling`,
 `grappa_2d` (Tikhonov-regularized 2-line kernel from ACS), `pocs_partial_fourier`,
 `sense_cg` (Cartesian CG-SENSE), `pseudo_replica` (noise maps, g-factor) and `nrmse`.
 Prefer BART or SigPy for production reconstructions; the helpers make conventions

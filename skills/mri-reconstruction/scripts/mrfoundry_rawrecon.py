@@ -24,6 +24,31 @@ def rss(coil_images, axis=0):
     return np.sqrt(np.sum(np.abs(coil_images) ** 2, axis=axis))
 
 
+def image_from_kspace(ksp, encoding_sign=-1, axes=(-2, -1)):
+    """Centred orthonormal reconstruction that honours the encoding sign of the data.
+
+    Standard MRI signal model: s(k) = sum_r m(r) exp(-i 2 pi k.r)  (encoding_sign=-1) -> image = ifft2c(s).
+    Some vendors or simulators use exp(+i 2 pi k.r) (encoding_sign=+1) -> image = fft2c(s). Using the wrong
+    transform mirrors the image in both axes and, for even matrix sizes, shifts it by one pixel. Read the sign
+    from the data documentation; confirm it with direct_dft_signed on a small asymmetric object."""
+    if encoding_sign not in (-1, 1):
+        raise ValueError('encoding_sign must be -1 or +1')
+    return ifft2c(ksp, axes) if encoding_sign == -1 else fft2c(ksp, axes)
+
+
+def direct_dft_signed(image, encoding_sign=-1):
+    """Independent forward model for convention checks: centred k and r indices (k = 0 and r = 0 at n//2),
+    s[ky, kx] = sum_{y, x} m[y, x] exp(sign * i 2 pi (ky y / ny + kx x / nx)), orthonormal scaling.
+    Written as an explicit sum (no FFT), so it checks FFT shift, sign and scaling conventions of a pipeline."""
+    m = np.asarray(image)
+    ny, nx = m.shape
+    ky = np.arange(ny) - ny // 2
+    kx = np.arange(nx) - nx // 2
+    Ey = np.exp(encoding_sign * 2j * np.pi * np.outer(ky, ky) / ny)
+    Ex = np.exp(encoding_sign * 2j * np.pi * np.outer(kx, kx) / nx)
+    return Ey @ m @ Ex.T / np.sqrt(ny * nx)
+
+
 # ------------------------------------------------------------------ noise
 def noise_covariance(noise):
     """Noise covariance (C x C) from noise-only samples [coil, samples] (any trailing shape)."""

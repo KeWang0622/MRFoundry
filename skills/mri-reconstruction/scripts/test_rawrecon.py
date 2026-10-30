@@ -22,6 +22,15 @@ ksp = fft2c(coil)
 assert np.allclose(ifft2c(ksp), coil) and np.isclose(np.sum(np.abs(ksp) ** 2), np.sum(np.abs(coil) ** 2))
 print("centred orthonormal FFT pair: round trip and energy preserved")
 
+obj_small = np.zeros((16, 16)); obj_small[3:6, 9:13] = 1.0; obj_small[11, 2] = 2.0
+for sgn in (-1, 1):
+    s = direct_dft_signed(obj_small, sgn)
+    assert np.allclose(image_from_kspace(s, sgn), obj_small, atol=1e-12)
+wrong = np.abs(image_from_kspace(direct_dft_signed(obj_small, 1), -1))
+assert np.allclose(wrong, np.roll(obj_small[::-1, ::-1], (1, 1), axis=(0, 1)), atol=1e-12)
+assert np.allclose(direct_dft_signed(obj_small, -1), fft2c(obj_small), atol=1e-12)
+print("encoding sign: image_from_kspace matches an explicit-sum forward model for both signs; the wrong sign mirrors and shifts by one pixel")
+
 psi = np.cov(rng.normal(size=(C, 5000)) + 0.5 * rng.normal(size=(1, 5000)))
 Lc = np.linalg.cholesky(psi)
 noise = Lc @ ((rng.normal(size=(C, 200000)) + 1j * rng.normal(size=(C, 200000))) / np.sqrt(2))
