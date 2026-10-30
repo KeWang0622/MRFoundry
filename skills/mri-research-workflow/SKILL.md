@@ -14,7 +14,7 @@ description: >-
   reproducibility, paper draft, abstract.
 metadata:
   author: Ke Wang
-  version: "0.8.0"
+  version: "0.9.0"
 ---
 
 # MRFoundry: MRI Research Workflow (idea → paper)
@@ -98,6 +98,13 @@ retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 6. **Submit & revise.** Follow venue mechanics (blind review, rebuttal,
    camera-ready, or journal revision cycles). Prepare releases/preprints when
    requested; submission or publication requires user authorization.
+
+## Deliver exactly what was requested
+
+Before finishing, check deliverables against the requested interface with a short
+script: file names and paths, JSON keys and nesting, array shapes and dtypes, and units.
+Recompute every reported number from the saved outputs and confirm they match. A correct
+analysis delivered in the wrong structure cannot be reused or verified.
 
 ## Choose the venue and summarize related work
 

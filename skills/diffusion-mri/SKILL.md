@@ -7,13 +7,15 @@ description: >-
   removal, susceptibility distortion + eddy/motion correction), fiber-orientation
   estimation (CSD), tractography, white-matter bundle segmentation, and turnkey
   diffusion pipelines. Tools: MRtrix3, DIPY, FSL (eddy/topup/FDT), AMICO (NODDI),
-  TractSeg, QSIPrep. Triggers: diffusion MRI, DTI, DKI, tractography, FA/MD,
+  TractSeg, QSIPrep. Also use for apparent diffusion coefficient (ADC) studies and multi-compartment or
+  spectrum signal-fraction models such as restriction spectrum imaging (RSI), NNLS
+  diffusion spectra and IVIM-type fits. Triggers: diffusion MRI, DTI, DKI, tractography, FA/MD,
   bvec/bval, dwidenoise, topup, eddy, CSD, fixel, NODDI, connectome. Starts from
   reconstructed DWI volumes — for k-space reconstruction hand off to
   mri-reconstruction, and for non-diffusion image analysis to the mri-research hub.
 metadata:
   author: Ke Wang
-  version: "0.8.0"
+  version: "0.9.0"
 ---
 
 # MRFoundry: Diffusion MRI
@@ -90,6 +92,26 @@ QC. Downstream diffusion modeling and tractography use **QSIRecon**
   for crossing fibers; MRtrix3 `dwi2fod`.
 - **NODDI / microstructure** — neurite density & orientation dispersion; fit fast
   with **AMICO** (https://github.com/daducci/AMICO).
+
+## Signal-fraction and diffusivity-spectrum models
+
+Multi-compartment fits (restriction spectrum imaging, NNLS diffusivity spectra,
+IVIM-type and free-water models) are ill-conditioned: neighbouring diffusivities trade
+off, so fractions can be precise-looking and wrong.
+
+- **Define the target** (for example, signal fraction below a stated diffusivity) and
+  make sure the model can represent it; avoid basis diffusivities near the cutoff.
+- **Keep the model well posed.** Use a few well-separated fixed compartments justified
+  by the literature, or a regularized spectrum (nonnegativity plus smoothness/Tikhonov).
+  An unregularized fine-grid NNLS spectrum gives unstable voxelwise fractions.
+- **Run a recovery test before analysing real data.** Simulate signals at the actual
+  b-values, directions and noise level (Rician magnitude) from plausible tissue models
+  that are *not* the fitting basis (for example, continuous diffusivity distributions),
+  fit them, and report bias, spread and correlation of the target quantity. Choose the
+  basis and regularization with this test and development data; never by the size of
+  the effect you hope to show or by test-set results.
+- **Handle the noise floor** at high b (estimate sigma from background or repeats; use a
+  Rician-aware fit or floor correction) and report residual bias with the results.
 
 ## Tractography & bundles
 

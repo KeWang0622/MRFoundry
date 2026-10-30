@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased — evaluation-driven detail guidance
+
+- pulse-sequence-design 0.9.0: verify the exported sequence (realized TE/TR, slice-selective
+  excitation and width, wrapped quadratic RF spoiling with matching ADC phase, sampling) and
+  `scripts/check_exported_seq.py`.
+- diffusion-mri 0.9.0: signal-fraction and diffusivity-spectrum models (well-posed models,
+  recovery tests, noise floor); description now covers ADC and RSI-type studies.
+- mri-research-workflow 0.9.0: check deliverables against the requested interface.
+
+Motivated by detail-level failures in development A/B evaluations; no task content.
+
 ## Unreleased
 
 ### Changed

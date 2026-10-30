@@ -14,7 +14,7 @@ description: >-
   deep-learning-recon (trained).
 metadata:
   author: Ke Wang
-  version: "0.8.0"
+  version: "0.9.0"
 ---
 
 # MRFoundry: Pulse Sequence & Trajectory Design
@@ -63,7 +63,8 @@ retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 1. **Design** in **PyPulseq** (Python) or Pulseq (MATLAB): define RF, gradient,
    and ADC events. https://github.com/pulseq/pypulseq · https://github.com/pulseq/pulseq
 2. **Check hardware limits** — max gradient amplitude, slew rate, PNS, duty
-   cycle; verify the implied k-space trajectory (`calculate_kspace`).
+   cycle; verify the implied k-space trajectory (`calculate_kspace`). Then verify
+   the *exported* file against every requested parameter (next section).
 3. **Simulate** with **KomaMRI** (GPU Bloch, Pulseq-compatible):
    https://github.com/JuliaHealth/KomaMRI.jl — install Julia/KomaMRI or its official
    Python interface `komamripy`, run an upstream example, then feed the exported
@@ -75,6 +76,33 @@ retrieve that reference from the official `KeWang0622/MRFoundry` repository.
    (https://github.com/pulseq/MR-Physics-with-Pulseq) are the best on-ramp.
 5. **Reconstruct** the acquired raw data (convert to ISMRMRD, then hand to the
    `mri-reconstruction` agent).
+
+## Verify the exported sequence, not the design script
+
+A sequence that runs, simulates and reconstructs can still be the wrong sequence.
+Treat the build script as a claim and the exported `.seq` as the evidence: read it
+back with a fresh `pp.Sequence().read()` and measure each requested property.
+[`scripts/check_exported_seq.py`](scripts/check_exported_seq.py) reports these and
+compares them with expectations you pass on the command line.
+
+- **Echo and repetition times.** TE is the time from the excitation RF centre
+  (`pp.calc_rf_center`) to the ADC sample at the k-space centre, for every echo;
+  TR is the spacing of excitation centres. Insert delays on the gradient raster so the
+  realized values equal the request. Never let blocks collapse to the minimum TE.
+- **Excitation.** A 2D or multislice protocol with a slice thickness needs a
+  slice-selective pulse (sinc/SLR) played with its slice-select gradient and followed
+  by the rephaser. Check the flip angle from the RF area and the slice profile width
+  (small-tip Fourier transform of the RF under the actual gradient, or a Bloch profile).
+  A short hard pulse is non-selective.
+- **Spoiling.** Quadratic RF spoiling: `inc = (inc + Δ) % 360; phase = (phase + inc) % 360`
+  (Δ often 117°). Wrap both every update; unwrapped phases grow to 10^5 degrees and lose
+  precision in the text export. Give each ADC the RF phase of its own TR. Confirm from the
+  read-back file that the second difference of RF phases equals Δ. Report the spoiler
+  gradient area in cycles per voxel or slice thickness.
+- **Sampling.** From the exported trajectory, check the k = 0 sample index, line order,
+  readout polarity (monopolar/bipolar), spacing 1/FOV and any sampling contract.
+- **Report measured values.** Put the read-back TE/TR/flip/slice width and spoiling in
+  the report, not the values typed into the build script; state any mismatch.
 
 ## Trajectories
 
