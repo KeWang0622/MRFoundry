@@ -1,31 +1,61 @@
-"""Self-test for spectrum_fit.py (python test_spectrum_fit.py): an unregularized fine-grid NNLS
-spectrum should recover a low-diffusivity fraction worse than a few well-separated compartments."""
-import os,sys
+"""Self-test for spectrum_fit.py (python test_spectrum_fit.py).
+
+Values below are an arbitrary synthetic example (not taken from any organ, protocol or study):
+1. an unregularized fine-grid NNLS spectrum is less stable than a regularized spectrum or a few atoms;
+2. a misplaced fixed atom biases high-fraction tissue although pooled bias can look small;
+3. calibrating the basis on pooled development curves finds a better atom and lowers the worst-group bias.
+"""
+import os, sys
 import numpy as np
-sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from spectrum_fit import *
-b=np.array([0]*2+[100]*3+[500]*6+[1000]*6+[2000]*6+[3000]*6,float);cut=0.5e-3
-def truth(rng,n,b):
-    grid=np.geomspace(1e-5,4e-3,300);f=rng.dirichlet([2,4,2],n)
-    def logn(med,s):w=np.exp(-.5*((np.log(grid)-np.log(med))/s)**2);return w/w.sum()
-    comp=np.stack([logn(0.2e-3,.4),logn(1.1e-3,.25),logn(2.8e-3,.08)])
-    w=f@comp;return w@np.exp(-np.outer(grid,b)),(w[:,grid<cut]).sum(1)
-few=[0.0,0.3e-3,1.2e-3,3.0e-3];fine=np.geomspace(5e-5,3.2e-3,60)
-r_few=recovery_test(truth,lambda M,b:fraction_below(fit_weights(M,b,few),few,cut),b,sigma=0.03,n=600)
-r_fine=recovery_test(truth,lambda M,b:fraction_below(fit_weights(M,b,fine),fine,cut),b,sigma=0.03,n=600)
-r_reg=recovery_test(truth,lambda M,b:fraction_below(fit_weights(M,b,fine,lam=0.05,smooth=True),fine,cut),b,sigma=0.03,n=600)
-print('few compartments',r_few);print('fine grid, no regularization',r_fine);print('fine grid, smoothness-regularized',r_reg)
-assert r_few['sd']<r_fine['sd'] and r_reg['sd']<r_fine['sd'],'expected regularization or few compartments to reduce spread'
+
+b = np.repeat([0, 150, 400, 900, 1600, 2500, 3500], [2, 3, 4, 4, 6, 6, 6]).astype(float)
+cut = 0.9e-3
+grid = np.geomspace(1e-5, 4e-3, 400)
+def logn(med, s):
+    w = np.exp(-.5 * ((np.log(grid) - np.log(med)) / s) ** 2)
+    return w / w.sum()
+COMP = np.stack([logn(0.42e-3, .3), logn(1.5e-3, .2), logn(3.0e-3, .05)])
+def make(rng, n, b, lo=(0.05, 0.25), hi=(0.45, 0.75)):
+    g = rng.integers(0, 2, n)
+    fs = np.where(g == 0, rng.uniform(*lo, n), rng.uniform(*hi, n))
+    ff = rng.uniform(0.05, 0.15, n)
+    f = np.stack([fs, 1 - fs - ff, ff], 1)
+    w = f @ COMP
+    return w @ np.exp(-np.outer(grid, b)), (w[:, grid < cut]).sum(1), np.where(g == 0, 'low', 'high')
+
+few = [0.42e-3, 1.5e-3, 3.0e-3]
+fine = np.geomspace(5e-5, 3.5e-3, 60)
+r_few = recovery_test(lambda r, n, b: make(r, n, b)[:2], lambda M, b: fraction_below(fit_weights(M, b, few), few, cut), b, 0.02, n=600)
+r_fine = recovery_test(lambda r, n, b: make(r, n, b)[:2], lambda M, b: fraction_below(fit_weights(M, b, fine), fine, cut), b, 0.02, n=600)
+r_reg = recovery_test(lambda r, n, b: make(r, n, b)[:2], lambda M, b: fraction_below(fit_weights(M, b, fine, lam=0.05, smooth=True), fine, cut), b, 0.02, n=600)
+assert r_few['sd'] < r_fine['sd'] and r_reg['sd'] < r_fine['sd'], (r_few, r_fine, r_reg)
+print('spread: few atoms %.3f, regularized fine grid %.3f, unregularized fine grid %.3f' % (r_few['sd'], r_reg['sd'], r_fine['sd']))
+
+# development curves: tissue-class averages from separate development data (high SNR after averaging)
+rng = np.random.default_rng(7)
+dev = []
+for lo, hi in [((0.08, 0.12), (0.08, 0.12)), ((0.25, 0.3), (0.25, 0.3)), ((0.6, 0.65), (0.6, 0.65))]:
+    S, _, _ = make(rng, 400, b, lo, hi)
+    dev.append(np.abs(S + rng.normal(0, .02, S.shape) + 1j * rng.normal(0, .02, S.shape)).mean(0))
+cands = {f'slow={d * 1e3:.2f}': [d, 1.5e-3, 3.0e-3] for d in [0.2e-3, 0.3e-3, 0.42e-3, 0.55e-3, 0.7e-3]}
+cal = calibrate_basis(np.array(dev), b, cands, lambda w, D: fraction_below(w, D, cut), sigma=0.02 / np.sqrt(400))
+print('calibration ranking:', [(e['name'], round(e['residual_rms'], 5)) for e in cal['ranked']])
+assert cal['best'] == 'slow=0.42', cal['best']
+
+def strat(D):
+    return stratified_recovery_test(make, lambda M, bb: fraction_below(fit_fixed_basis(M, bb, D), D, cut), b, 0.02, n=1500, seed=3)
+s_bad, s_good = strat([0.2e-3, 1.5e-3, 3.0e-3]), strat(cands[cal['best']])
+print('misplaced atom: pooled bias %+.3f, groups %s, worst %.3f' % (s_bad['bias'], {k: round(v['bias'], 3) for k, v in s_bad['groups'].items()}, s_bad['worst_abs_bias']))
+print('calibrated atom: pooled bias %+.3f, groups %s, worst %.3f' % (s_good['bias'], {k: round(v['bias'], 3) for k, v in s_good['groups'].items()}, s_good['worst_abs_bias']))
+assert s_good['worst_abs_bias'] < s_bad['worst_abs_bias'] and abs(s_bad['groups']['high']['bias']) > abs(s_bad['groups']['low']['bias'])
 print('ok')
 
-
-# Conventional ADC range and fixed-compartment fraction
-import numpy as np
-from spectrum_fit import adc_fit, fixed_compartment_fraction
-b = np.array([0, 0, 500, 1000, 1500, 2000, 3000])
-S = np.exp(-b * 1.5e-3)[None] * 0.5 + np.exp(-b * 0.3e-3)[None] * 0.5
-a1 = adc_fit(S, b, bmax=1000)[0]; a_all = adc_fit(S, b, bmax=3000)[0]
+# Conventional ADC range
+S = np.exp(-np.array([0, 0, 500, 1000, 1500, 2000, 3000]) * 1.5e-3)[None] * 0.5 + np.exp(-np.array([0, 0, 500, 1000, 1500, 2000, 3000]) * 0.3e-3)[None] * 0.5
+bb = np.array([0, 0, 500, 1000, 1500, 2000, 3000])
+a1 = adc_fit(S, bb, bmax=1000)[0]; a_all = adc_fit(S, bb, bmax=3000)[0]
 assert a_all < a1, (a1, a_all)
-f, w = fixed_compartment_fraction(np.exp(-b * 0.2e-3)[None] * .3 + np.exp(-b * 1.2e-3)[None] * .5 + np.exp(-b * 3e-3)[None] * .2, b, [0.2e-3, 1.2e-3, 3e-3], 0.5e-3)
-assert abs(f[0] - 0.3) < 1e-6, f
-print('adc_fit: ADC(b<=1000) %.2e mm2/s vs all shells %.2e; fixed_compartment_fraction ok' % (a1, a_all))
+print('adc_fit: ADC(b<=1000) %.2e mm2/s vs all shells %.2e' % (a1, a_all))
+

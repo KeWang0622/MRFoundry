@@ -46,9 +46,9 @@ def radial_gre(path, n=32, spokes=24, fov=0.2, te=4e-3, tr=15e-3, flip=12, sl=5e
 def main():
     tmp=tempfile.mkdtemp()
     c=cartesian_gre(os.path.join(tmp,'cart.seq'));rep,checks=measure(c,te=[6e-3],tr=20e-3,flip=15,slice_thickness=5e-3,rf_spoil=117,max_grad=32,max_slew=130)
-    bad=[x for x in checks if not x['pass']];assert not bad,bad;print('cartesian: exported checks pass; TE ms',rep['echo_times_ms_unique'],'slice FWHM mm',rep['slice_fwhm_mm'])
+    bad=[x for x in checks if not x['pass']];assert not bad,bad;print('cartesian: exported checks pass; TE ms',rep.get('te_ms'),'slice FWHM mm',rep.get('excitation_slice_fwhm_mm'))
     r=radial_gre(os.path.join(tmp,'rad.seq'));rep,checks=measure(r,te=[4e-3],tr=15e-3,flip=12,slice_thickness=5e-3,rf_spoil=117)
-    bad=[x for x in checks if not x['pass']];assert not bad,bad;print('radial: exported checks pass; TE ms',rep['echo_times_ms_unique'])
+    bad=[x for x in checks if not x['pass']];assert not bad,bad;print('radial: exported checks pass; TE ms',rep.get('te_ms'))
     try:import komamripy  # noqa
     except ImportError:print('komamripy not installed: simulation test skipped');return
     n=32;fov=0.2;yy,xx=np.mgrid[0:n,0:n];rho=((xx-12)**2+(yy-18)**2<=36)*1.0+((xx-22)**2+(yy-10)**2<=9)*0.5

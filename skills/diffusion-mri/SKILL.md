@@ -1,18 +1,17 @@
 ---
 name: diffusion-mri
 description: >-
-  Diffusion MRI (dMRI) expert — acquisition, preprocessing, modeling, and
-  tractography. Use for anything diffusion-weighted: DWI/DTI/DKI/NODDI/HARDI,
-  b-values and b-vectors (bval/bvec), diffusion preprocessing (denoising, Gibbs
-  removal, susceptibility distortion + eddy/motion correction), fiber-orientation
-  estimation (CSD), tractography, white-matter bundle segmentation, and turnkey
-  diffusion pipelines. Tools: MRtrix3, DIPY, FSL (eddy/topup/FDT), AMICO (NODDI),
-  TractSeg, QSIPrep. Also use for apparent diffusion coefficient (ADC) studies and multi-compartment or
-  spectrum signal-fraction models such as restriction spectrum imaging (RSI), NNLS
-  diffusion spectra and IVIM-type fits. Triggers: diffusion MRI, DTI, DKI, tractography, FA/MD,
-  bvec/bval, dwidenoise, topup, eddy, CSD, fixel, NODDI, connectome, ADC, RSI, restricted fraction, test-retest repeatability, lesion versus normal biomarker comparison. Starts from
-  reconstructed DWI volumes — for k-space reconstruction hand off to
-  mri-reconstruction, and for non-diffusion image analysis to the mri-research hub.
+  Read before fitting, converting or reporting any diffusion-weighted MRI result:
+  ADC, DTI/DKI (FA, MD, eigenvectors), IVIM, NODDI, multi-compartment or spectrum
+  signal fractions, CSD and tractography, and diffusion biomarker or repeatability
+  studies. Prevents silent errors: b-vector frame conventions (FSL vs world) when
+  reporting orientations, the wrong b-range for conventional ADC/DTI, noise-floor
+  bias at high b, and biased or unstable fractions from uncalibrated model
+  settings. Ships tested helpers (gradient-frame conversion with forward-phantom
+  checks, closed-form tensor fit, noise floor, regularized and fixed-basis fits,
+  calibration on development data, stratified recovery tests). Preprocessing with
+  MRtrix3, FSL topup/eddy, DIPY and QSIPrep. Starts from reconstructed DWI;
+  k-space reconstruction belongs to mri-reconstruction.
 metadata:
   author: Ke Wang
   version: "0.10.0"
@@ -43,7 +42,7 @@ For project experiments, read `.mrfoundry/INDEX.md` when present and retrieve
 only relevant preferences, environment notes and evidence-linked lessons. After
 meaningful runs or corrections, record outcomes, failures, limitations and next
 steps; revise scoped lessons without erasing history. Keep user preferences
-separate from scientific findings. Use the [project memory workflow](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/project-memory.md)
+separate from scientific findings. Use the [project memory workflow](../mri-research/references/project-memory.md)
 to initialize the folder or connect project `CLAUDE.md` / `AGENTS.md`. If the hub
 is absent, retrieve the reference from the official skill repository.
 
@@ -57,11 +56,11 @@ Start slow installs (for example Julia/KomaMRI) in the background while you writ
 Work from the installed skill first: its scripts and references cover routine work;
 fetch remote references only when something you need is missing locally.
 Work efficiently: write each stage as one script with built-in checks, run it end to
-end, and fix with targeted edits rather than many exploratory one-off commands. Do not leave routine setup
+end, and fix with targeted edits rather than many exploratory one-off commands. Keep effort proportionate: closed-form or linear fits need only numpy/scipy; install heavy toolboxes only for the steps that need them, and produce every requested deliverable before refining. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
-Read the [tool setup guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/tool-setup.md) when installing,
+Read the [tool setup guide](../mri-research/references/tool-setup.md) when installing,
 repairing, or choosing an execution environment. If the hub is not installed,
 retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 
@@ -103,37 +102,63 @@ QC. Downstream diffusion modeling and tractography use **QSIRecon**
 ## Signal-fraction and diffusivity-spectrum models
 
 Multi-compartment fits (restriction spectrum imaging, NNLS diffusivity spectra,
-IVIM-type and free-water models) are ill-conditioned: neighbouring diffusivities trade
-off, so fractions can be precise-looking and wrong.
+IVIM-type and free-water models) are ill-conditioned: neighbouring diffusivities
+trade off, so fractions can look precise and still be biased, usually most in the
+tissue with the largest fraction.
 
-- **Define the target** (for example, signal fraction below a stated diffusivity) and
-  make sure the model can represent it; avoid basis diffusivities near the cutoff.
-- **Keep the model well posed.** Use a few well-separated fixed compartments justified
-  by the literature, or a regularized spectrum (nonnegativity plus smoothness/Tikhonov).
-  An unregularized fine-grid NNLS spectrum gives unstable voxelwise fractions.
-- **Run a recovery test before analysing real data.** Simulate signals at the actual
-  b-values, directions and noise level (Rician magnitude) from plausible tissue models
-  that are *not* the fitting basis (for example, continuous diffusivity distributions),
-  fit them, and report bias, spread and correlation of the target quantity. Choose the
-  basis and regularization with this test and development data; never by the size of
-  the effect you hope to show or by test-set results.
-- **Handle the noise floor** at high b (estimate sigma from background or repeats; use a
-  Rician-aware fit or floor correction) and report residual bias with the results.
-- **Tools.** [`scripts/spectrum_fit.py`](scripts/spectrum_fit.py) provides `background_sigma`,
-  `floor_correct`, `fit_weights` (NNLS with optional Tikhonov or smoothness regularization),
-  `fraction_below` and a generic `recovery_test`; `scripts/test_spectrum_fit.py` shows an
-  unregularized fine grid recovering a low-diffusivity fraction far worse than a few compartments.
+- **Define the target** (for example, the signal fraction below a stated
+  diffusivity) and make sure the model can represent it.
+- **Default to a regularized spectrum** (nonnegativity plus smoothness or Tikhonov,
+  with the weight chosen on development data) when compartment diffusivities are
+  uncertain. An unregularized fine-grid NNLS spectrum gives unstable voxelwise fractions.
+- **Calibrate before fixing a basis.** Follow the
+  [model calibration procedure](../mri-research/references/model-calibration.md): fit
+  candidate bases to pooled development ROI or tissue-class curves (`calibrate_basis`),
+  compare residuals and residual patterns across b, and check identifiability (how far
+  the target moves among candidates that fit equally well). Do not copy diffusivities
+  from examples, other organs, field strengths or protocols.
+- **Stratified recovery test** (`stratified_recovery_test`): simulate at the actual
+  b-values, directions and noise level, with truth parameters for each compared group
+  taken from development fits and a generative model that differs from the fitting
+  basis. Report bias per group and per true-value bin and the estimate-versus-truth
+  slope. A pooled bias near zero does not show that any one tissue is unbiased, and
+  choosing by pooled RMSE over a broad prior selects the prior's centre.
+- **Noise floor**: estimate sigma from background or repeats; use a Rician-aware fit
+  or floor correction at high b and report residual bias.
+- **Tools.** [`scripts/spectrum_fit.py`](scripts/spectrum_fit.py): `background_sigma`,
+  `floor_correct`, `fit_weights` (NNLS, optional Tikhonov/smoothness), `fit_fixed_basis`,
+  `calibrate_basis`, `fraction_below`, `stratified_recovery_test`, `adc_fit`;
+  `scripts/test_spectrum_fit.py` shows a misplaced fixed atom biasing high-fraction
+  tissue and calibration correcting it.
+- **ADC convention.** Conventional ADC is a mono-exponential fit over b <= 1000 s/mm^2
+  (b = 0 plus the low shells); higher shells lower ADC through kurtosis/restriction.
+  Use `adc_fit(signals, bvals, bmax=1000)` unless the study defines another range, and
+  state the range.
+- **Biomarker comparison studies** (group differences, test-retest): summarize each ROI
+  per subject and session; declare the statistical unit for every endpoint; make all
+  model, threshold and setting choices on development subjects only; follow the
+  study's analysis plan where given; use `mri-research-workflow` statistics and
+  deliverable checkers, and recompute every reported number from the saved maps.
 
-- **ADC convention.** Conventional ADC is a mono-exponential fit over b <= 1000 s/mm^2 (b = 0 plus the
-  low shells); including higher shells lowers ADC through kurtosis/restriction. Use `adc_fit(signals, bvals,
-  bmax=1000)` unless the study defines another range, and state the range.
-- **Well-posed fraction in one call.** `fixed_compartment_fraction(signals, bvals, [D_restricted, D_hindered,
-  D_free], cutoff, sigma)` (floor-corrected NNLS on a few fixed compartments), validated with `recovery_test`.
-- **Biomarker comparison studies** (lesion vs normal, test-retest): summarize each ROI per subject and
-  session first; the subject is the statistical unit. Choose compartments, thresholds and settings on
-  development subjects only; report AUC with subject-bootstrap CIs and ICC/wCV for repeatability using
-  `mri-research-workflow/scripts/study_stats.py`; recompute every reported number from the saved maps and
-  validate the results file against the requested schema (`check_deliverables.py`).
+## Gradient tables and coordinate frames
+
+Treat the gradient-table frame as a rule to apply, then verify it independently:
+
+- **Frames.** World coordinates are those of the NIfTI affine; array-axis components
+  are what a voxelwise fit on the data array uses; **FSL bvecs are array-axis
+  components with the x component negated when det(affine[:3, :3]) > 0**; MRtrix3
+  `-grad` tables are in world coordinates. `eddy` writes rotated bvecs in the FSL convention.
+  Check which frame each library expects before passing a table to it.
+- **Fit in one declared frame** and report orientations in world coordinates: rotate
+  array-frame eigenvectors with the affine's direction cosines.
+  [`scripts/gradient_frames.py`](scripts/gradient_frames.py) provides `array_from_fsl`,
+  `fsl_from_world`, `world_from_array` and a closed-form `fit_tensor_lls` (numpy only, so a
+  log-linear DTI fit needs no toolbox installation).
+- **Verify with an independent forward phantom**: simulate signals from world-frame
+  gradients and a known fiber direction (`simulate_tensor_signal`), pass them through
+  your actual file conversion and fit, and confirm the reported world direction. A
+  check that reuses your own conversion in both directions cannot detect a convention
+  error. Do not fix a suspected flip by trial and error on the result.
 
 ## Tractography & bundles
 
@@ -166,4 +191,4 @@ off, so fractions can be precise-looking and wrong.
   spin-echo EPI, multiband): `pulse-sequence-design`.
 
 Deeper reference (analysis tooling, formats):
-https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/analysis-processing.md
+../mri-research/references/analysis-processing.md

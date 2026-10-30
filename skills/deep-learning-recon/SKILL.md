@@ -1,17 +1,16 @@
 ---
 name: deep-learning-recon
 description: >-
-  Deep-learning MRI reconstruction expert. Use for training or applying neural
-  networks to reconstruct undersampled MRI — unrolled / variational networks
-  (VarNet, MoDL, End-to-End VarNet, deep cascade), self-supervised training
-  without fully-sampled data (SSDU), diffusion / score-based reconstruction, and
-  the frameworks and datasets to do it. Tools: DIRECT, fastMRI, ATOMMIC,
-  torchkbnufft; datasets fastMRI / mridata. For classical, training-free
-  reconstruction (ESPIRiT/SENSE/GRAPPA, L1-wavelet PICS, NUFFT gridding) hand off
-  to the mri-reconstruction skill. Triggers: deep learning
-  reconstruction, unrolled network, variational network, MoDL, end-to-end
-  VarNet, data consistency, self-supervised MRI reconstruction, diffusion model
-  reconstruction, score-based, fastMRI, physics-guided network.
+  Read before training, fine-tuning, applying or evaluating a neural network for
+  MRI reconstruction: unrolled and variational networks (VarNet, MoDL), self-
+  supervised training without fully sampled data (SSDU), diffusion or score-based
+  priors, physics-guided data consistency, fastMRI and mridata datasets, and
+  frameworks such as DIRECT, fastMRI and torchkbnufft. Prevents silent errors from
+  train, validation and test leakage, inconsistent k-space normalization and
+  sampling masks between training and testing, unfair classical baselines, and
+  metrics computed on the wrong region or scale. Classical training-free
+  reconstruction (ESPIRiT, SENSE, GRAPPA, compressed sensing, NUFFT) belongs to
+  mri-reconstruction.
 metadata:
   author: Ke Wang
   version: "0.10.0"
@@ -38,7 +37,7 @@ software instructions and current venue/safety requirements.
 ## Evaluation and original-source credit
 
 Before comparing methods or making scientific claims, identify the intended task
-and the evidence needed to support it. Use the [evaluation and attribution guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/evaluation-and-attribution.md)
+and the evidence needed to support it. Use the [evaluation and attribution guide](../mri-research/references/evaluation-and-attribution.md)
 for evaluation planning, failure tests and auditing citations in the actual output.
 Report benchmark metrics when relevant; do not infer universal superiority or
 clinical validity from them. Cite original methods and software separately, and
@@ -57,7 +56,7 @@ For project experiments, read `.mrfoundry/INDEX.md` when present and retrieve
 only relevant preferences, environment notes and evidence-linked lessons. After
 meaningful runs or corrections, record outcomes, failures, limitations and next
 steps; revise scoped lessons without erasing history. Keep user preferences
-separate from scientific findings. Use the [project memory workflow](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/project-memory.md)
+separate from scientific findings. Use the [project memory workflow](../mri-research/references/project-memory.md)
 to initialize the folder or connect project `CLAUDE.md` / `AGENTS.md`. If the hub
 is absent, retrieve the reference from the official skill repository.
 
@@ -71,11 +70,11 @@ Start slow installs (for example Julia/KomaMRI) in the background while you writ
 Work from the installed skill first: its scripts and references cover routine work;
 fetch remote references only when something you need is missing locally.
 Work efficiently: write each stage as one script with built-in checks, run it end to
-end, and fix with targeted edits rather than many exploratory one-off commands. Do not leave routine setup
+end, and fix with targeted edits rather than many exploratory one-off commands. Keep effort proportionate: closed-form or linear fits need only numpy/scipy; install heavy toolboxes only for the steps that need them, and produce every requested deliverable before refining. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
-Read the [tool setup guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/tool-setup.md) when installing,
+Read the [tool setup guide](../mri-research/references/tool-setup.md) when installing,
 repairing, or choosing an execution environment. If the hub is not installed,
 retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 
@@ -123,6 +122,20 @@ prototyping: mridata.org.
   metrics with their conventions when useful, alongside task-relevant evidence.
   Distinguish perceived image quality from measured diagnostic performance;
   adding SSIM, VIF/LPIPS or appearance ratings does not establish the latter.
+- **Split before anything is fitted.** Split by subject (or by volume when only one
+  subject exists), tune on validation only, and touch the test set once at the end.
+  Slices of the same volume in both training and test sets is leakage.
+- **Same pipeline for every method and split.** Use one k-space normalization, one
+  mask generator with recorded seeds, the same coil handling and the same test masks
+  for the network and every baseline; normalize with statistics available at test
+  time (for example from the undersampled data), not from the fully sampled target.
+- **Fair classical baseline.** Compare against a tuned classical reconstruction
+  (CG-SENSE or ESPIRiT with L1-wavelet, regularization tuned on validation) on the
+  identical data and masks; hand its implementation to mri-reconstruction.
+- **Metrics with conventions.** Compute NRMSE/PSNR/SSIM on magnitude images with the
+  same scaling and within a stated region; state the data range used for PSNR/SSIM
+  and report per-subject values with spread. On CPU, prefer small unrolled models
+  with few cascades, and check data consistency of the output.
 - **Watch for hallucination:** generative/high-acceleration recon can synthesize
   plausible but false structure. Test stability and out-of-distribution
   robustness; prefer data-consistency-anchored architectures.
@@ -143,4 +156,4 @@ prototyping: mridata.org.
 - **Theory, citations, and the wider landscape:** the `mri-research` hub.
 
 Deeper reference:
-https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/recon-methods.md
+../mri-research/references/recon-methods.md

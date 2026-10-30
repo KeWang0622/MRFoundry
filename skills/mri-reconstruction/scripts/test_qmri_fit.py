@@ -24,6 +24,27 @@ def main():
     assert abs(p[0, 0] - 0.9) / 0.9 < 0.01 and abs(sc[0] - 3) < 0.05 and co[0] > 0.9999; print('dictionary fit ok')
     print('all qmri_fit tests passed')
 
+
+def test_extras():
+    e = epg_cpmg(10, 0.01, 0.08, refocus_deg=180.0)
+    assert np.allclose(e, np.exp(-np.arange(1, 11) * 0.01 / 0.08), rtol=1e-10); print('EPG with 180 deg refocusing = exp(-n ESP / T2)')
+    e = epg_cpmg(10, 0.01, 0.08, refocus_deg=120.0)
+    assert abs(e[0] - np.sin(np.deg2rad(60)) ** 2 * np.exp(-0.01 / 0.08)) < 1e-10 and e[1] > e[0]; print('EPG first echo sin^2(a/2) E2, stimulated echo raises echo 2')
+    D, P = epg_t2_dictionary(12, 0.01, np.geomspace(0.02, 0.3, 120), np.linspace(0.5, 1.0, 26))
+    sig = 2.5 * epg_cpmg(12, 0.01, 0.065, refocus_deg=180 * 0.83, excite_deg=90 * 0.83)
+    p, sc, co = fit_dictionary(sig[None], D, P)
+    assert abs(p[0, 0] / 0.065 - 1) < 0.03 and abs(p[0, 1] - 0.83) < 0.025; print('EPG dictionary recovers T2 %.4f and B1 %.2f' % tuple(p[0]))
+    cbf = asl_cbf_pcasl(0.01, 1.0, pld=1.8, label_duration=1.8)
+    ref = 6000 * 0.9 * 0.01 * np.exp(1.8 / 1.65) / (2 * 0.85 * 1.65 * (1 - np.exp(-1.8 / 1.65)))
+    assert abs(cbf - ref) < 1e-9; print('ASL PCASL consensus CBF %.1f ml/100g/min for dM/M0 = 1%%' % cbf)
+    t = np.arange(0, 6, 2 / 60)  # minutes
+    cp = 5.0 * (t / 0.3) * np.exp(1 - t / 0.3) + 0.8 * (1 - np.exp(-t / 0.5)) * np.exp(-t / 10)
+    ct = tofts_concentration(t, cp, 0.25, 0.3, 0.05)
+    k, v, vp = fit_tofts_linear(t, ct[None], cp)
+    assert abs(k[0] / 0.25 - 1) < 0.03 and abs(v[0] / 0.3 - 1) < 0.03 and abs(vp[0] - 0.05) < 0.005; print('extended Tofts linear fit: Ktrans %.3f ve %.3f vp %.3f' % (k[0], v[0], vp[0]))
+
 if __name__ == '__main__':
     main()
+    test_extras()
+    print('all extra quantitative model tests passed')
 

@@ -1,17 +1,16 @@
 ---
 name: mri-research-workflow
 description: >-
-  End-to-end MRI research assistant — take a project from idea to a published
-  paper, and help write it. Use this WHENEVER the user wants to plan or run an
-  MRI (or MRI + machine-learning) study and publish it: literature survey and
-  finding the gap, forming a hypothesis/claim, designing experiments (datasets,
-  baselines, metrics, ablations), running them, analyzing results, making
-  figures/tables, and drafting + submitting a manuscript to a venue such as
-  MICCAI, Magnetic Resonance in Medicine (MRM), JMRI, IEEE TMI, CVPR or NeurIPS.
-  It connects the workflow with specialized MRI skills. Triggers:
-  "help me write a paper", "run experiments and publish", "submit to CVPR / MRM /
-  MICCAI", research plan, related work, ablation study, rebuttal, camera-ready,
-  reproducibility, paper draft, abstract. Also use for quantitative biomarker comparison and repeatability statistics (subject-level AUC and bootstrap CIs, ICC, wCV, development/test splits) and for checking deliverables against a requested schema.
+  Read before designing, analysing or reporting an MRI study with subjects,
+  groups, repeated scans or method comparisons, and when writing a paper:
+  development and held-out splits, biomarker comparisons, repeatability (wCV,
+  ICC), cutoffs and classification, confidence intervals, pre-specified analysis
+  plans, figures, reports and manuscripts for venues such as MRM, ISMRM, MICCAI or
+  IEEE TMI. Prevents test-data leakage into tuning, the wrong statistical unit,
+  model choices made by effect size, and reported numbers that do not match saved
+  outputs. Ships tested statistics and deliverable checkers and venue-specific
+  writing guides. The measurement itself belongs to the specialist skills for
+  sequences, reconstruction and mapping, diffusion and hardware.
 metadata:
   author: Ke Wang
   version: "0.10.0"
@@ -37,7 +36,7 @@ software instructions and current venue/safety requirements.
 ## Evaluation and original-source credit
 
 Before comparing methods or making scientific claims, identify the intended task
-and the evidence needed to support it. Use the [evaluation and attribution guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/evaluation-and-attribution.md)
+and the evidence needed to support it. Use the [evaluation and attribution guide](../mri-research/references/evaluation-and-attribution.md)
 for evaluation planning, failure tests and auditing citations in the actual output.
 Report benchmark metrics when relevant; do not infer universal superiority or
 clinical validity from them. Cite original methods and software separately, and
@@ -56,7 +55,7 @@ For project experiments, read `.mrfoundry/INDEX.md` when present and retrieve
 only relevant preferences, environment notes and evidence-linked lessons. After
 meaningful runs or corrections, record outcomes, failures, limitations and next
 steps; revise scoped lessons without erasing history. Keep user preferences
-separate from scientific findings. Use the [project memory workflow](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/project-memory.md)
+separate from scientific findings. Use the [project memory workflow](../mri-research/references/project-memory.md)
 to initialize the folder or connect project `CLAUDE.md` / `AGENTS.md`. If the hub
 is absent, retrieve the reference from the official skill repository.
 
@@ -70,11 +69,11 @@ Start slow installs (for example Julia/KomaMRI) in the background while you writ
 Work from the installed skill first: its scripts and references cover routine work;
 fetch remote references only when something you need is missing locally.
 Work efficiently: write each stage as one script with built-in checks, run it end to
-end, and fix with targeted edits rather than many exploratory one-off commands. Do not leave routine setup
+end, and fix with targeted edits rather than many exploratory one-off commands. Keep effort proportionate: closed-form or linear fits need only numpy/scipy; install heavy toolboxes only for the steps that need them, and produce every requested deliverable before refining. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
-Read the [tool setup guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/tool-setup.md) when installing,
+Read the [tool setup guide](../mri-research/references/tool-setup.md) when installing,
 repairing, or choosing an execution environment. If the hub is not installed,
 retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 
@@ -125,7 +124,7 @@ subjects and apply it unchanged to held-out subjects; say which subjects informe
 
 ## Choose the venue and summarize related work
 
-Use the [venue and literature-digest guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/publishing.md)
+Use the [venue and literature-digest guide](../mri-research/references/publishing.md)
 for MRM, JMRI, TMI, MedIA, MICCAI, ISMRM, CVPR and related venues. Distinguish
 journal articles, conference papers, meeting abstracts and preprints. Match the
 scientific contribution to the audience; recheck the target year/track's official
@@ -150,9 +149,9 @@ claim to its analysis, and make unsupported text an explicit placeholder.
 
 - Manuscript logistics (journals, LaTeX classes, reporting standards, abstracts):
   hub `publishing` —
-  https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/publishing.md
+  ../mri-research/references/publishing.md
 - Finding/monitoring literature: hub `literature-access` —
-  https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/literature-access.md
+  ../mri-research/references/literature-access.md
 - Preprints: arXiv (eess.IV / physics.med-ph / cs.CV). Reviews on OpenReview for
   some venues.
 

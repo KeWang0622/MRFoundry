@@ -1,18 +1,17 @@
 ---
 name: mri-reconstruction
 description: >-
-  Actionable MRI image reconstruction — turn raw k-space into an image, and
-  actually run it. Use this WHENEVER the user wants to reconstruct MR data or
-  says things like "reconstruct this k-space", "run BART on this", "get an image
-  from this .cfl / .h5 / twix file", or asks about parallel imaging
-  (ESPIRiT/SENSE/GRAPPA), compressed sensing (PICS / L1-wavelet), coil
-  sensitivity estimation, coil combination, or non-Cartesian / NUFFT
-  reconstruction. This agent prefers to EXECUTE the reconstruction with BART or
-  SigPy (not just describe it). It covers classical/analytic reconstruction —
-  for anything TRAINED (unrolled networks, VarNet, self-supervised, diffusion
-  priors, fastMRI models) hand off to the deep-learning-recon skill. Triggers:
-  k-space, coil sensitivities, ESPIRiT, PICS, undersampled reconstruction,
-  radial/spiral recon, `.cfl`/`.hdr`, ISMRMRD, Siemens twix, GE P-file. Also use for Cartesian reconstruction of simulated data and quantitative maps (T1, T2, T2* relaxometry fits, inversion recovery, VFA, dictionary fits) with tested helpers.
+  Read before turning MR data into images or parameter maps: Cartesian and non-
+  Cartesian (radial, spiral, NUFFT) reconstruction, coil sensitivities and
+  combination, noise prewhitening, SENSE/GRAPPA/ESPIRiT, partial Fourier,
+  compressed sensing with BART or SigPy, g-factor and SNR, and relaxometry or
+  parameter fitting (T1, T2, T2*, VFA, dictionaries) on simulated or scanner data.
+  Prevents silent errors in k-space centring and FFT scaling, readout
+  oversampling, ACS and sampling patterns, image orientation, noise-floor bias and
+  signal-model mismatch. Ships tested helpers for raw-data reconstruction and
+  quantitative fitting. Inputs include .cfl, ISMRMRD/.h5, twix, P-files and numpy
+  arrays. Trained networks belong to deep-learning-recon; acquisition design to
+  pulse-sequence-design.
 metadata:
   author: Ke Wang
   version: "0.10.0"
@@ -38,7 +37,7 @@ software instructions and current venue/safety requirements.
 ## Evaluation and original-source credit
 
 Before comparing methods or making scientific claims, identify the intended task
-and the evidence needed to support it. Use the [evaluation and attribution guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/evaluation-and-attribution.md)
+and the evidence needed to support it. Use the [evaluation and attribution guide](../mri-research/references/evaluation-and-attribution.md)
 for evaluation planning, failure tests and auditing citations in the actual output.
 Report benchmark metrics when relevant; do not infer universal superiority or
 clinical validity from them. Cite original methods and software separately, and
@@ -57,7 +56,7 @@ For project experiments, read `.mrfoundry/INDEX.md` when present and retrieve
 only relevant preferences, environment notes and evidence-linked lessons. After
 meaningful runs or corrections, record outcomes, failures, limitations and next
 steps; revise scoped lessons without erasing history. Keep user preferences
-separate from scientific findings. Use the [project memory workflow](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/project-memory.md)
+separate from scientific findings. Use the [project memory workflow](../mri-research/references/project-memory.md)
 to initialize the folder or connect project `CLAUDE.md` / `AGENTS.md`. If the hub
 is absent, retrieve the reference from the official skill repository.
 
@@ -71,11 +70,11 @@ Start slow installs (for example Julia/KomaMRI) in the background while you writ
 Work from the installed skill first: its scripts and references cover routine work;
 fetch remote references only when something you need is missing locally.
 Work efficiently: write each stage as one script with built-in checks, run it end to
-end, and fix with targeted edits rather than many exploratory one-off commands. Do not leave routine setup
+end, and fix with targeted edits rather than many exploratory one-off commands. Keep effort proportionate: closed-form or linear fits need only numpy/scipy; install heavy toolboxes only for the steps that need them, and produce every requested deliverable before refining. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
-Read the [tool setup guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/tool-setup.md) when installing,
+Read the [tool setup guide](../mri-research/references/tool-setup.md) when installing,
 repairing, or choosing an execution environment. If the hub is not installed,
 retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 
@@ -154,6 +153,44 @@ ordered (ky, kx) times FOV; output rescaled to the direct-sum model).
 `python scripts/test_reconlib.py` verifies them against a direct DFT.
 
 
+## Acquired-data conventions and checks
+
+Most silent failures with acquired or vendor-style k-space are conventions, not
+algorithms. Before reconstructing, establish and record:
+
+- **Layout**: axis order (coil, ky, kx), which axis is the readout, and where k = 0
+  sits. Asymmetric echoes and partial Fourier move the peak: locate the k-space
+  maximum instead of assuming n//2.
+- **Readout oversampling** (often 2x): crop the central field of view after the
+  readout transform (`remove_readout_oversampling`) before comparing with a
+  nominal matrix.
+- **Noise**: estimate the covariance from the noise scan and prewhiten noise,
+  calibration and imaging data with the same matrix before ESPIRiT, GRAPPA or SENSE.
+- **Sampling**: acceleration, which lines were acquired (offset), ACS lines
+  (integrated or separate), partial-Fourier coverage. Keep acquired samples
+  unchanged; fill missing lines with GRAPPA/SENSE and asymmetric coverage with
+  POCS or homodyne rather than reporting zero-filled blur as final.
+- **FFT and scaling**: centred orthonormal transforms (`fft2c`/`ifft2c`, as in SigPy)
+  differ from numpy's unnormalized `ifft2` by a constant. State the intensity scale,
+  use the same coil combination as the reference (RSS vs sensitivity-weighted),
+  and say whether an error metric fits a scale (`nrmse`).
+- **Orientation**: confirm row/column order and flips against an asymmetric feature,
+  a provided reference or header geometry; fft-for-ifft or a missing shift mirrors
+  or rolls the image.
+- **Standalone entrypoints**: read acceleration, ACS, oversampling, partial-Fourier
+  and noise information from the file or header, never from constants tuned to one
+  dataset, and rerun the script on a second (or simulated) dataset.
+- **Validate first**: build k-space from a known image and smooth coil maps with
+  `fft2c`, apply your sampling, and confirm the pipeline recovers it before using the
+  real data. Report the SNR cost of acceleration with a g-factor or pseudo-replicas.
+
+[`scripts/mrfoundry_rawrecon.py`](scripts/mrfoundry_rawrecon.py) (numpy only; `python scripts/test_rawrecon.py`):
+`fft2c`/`ifft2c`, `rss`, `noise_covariance`, `prewhiten`, `remove_readout_oversampling`,
+`grappa_2d` (Tikhonov-regularized 2-line kernel from ACS), `pocs_partial_fourier`,
+`sense_cg` (Cartesian CG-SENSE), `pseudo_replica` (noise maps, g-factor) and `nrmse`.
+Prefer BART or SigPy for production reconstructions; the helpers make conventions
+explicit and serve as checks or small fallbacks.
+
 ## Quantitative maps from reconstructed images
 
 [`scripts/qmri_fit.py`](scripts/qmri_fit.py) (tested, vectorized, no initial guesses): `fit_monoexp`
@@ -161,7 +198,12 @@ ordered (ky, kx) times FOV; output rescaled to the direct-sum model).
 `fit_vfa`, `fit_dictionary` (match to simulated signals when no closed form fits the exact timing) and
 closed-form checks `ernst_signal`, `ir_signal`, `bssfp_signal` (Bloch fixed point). Test every fit on
 simulated data with known parameters from your own exported sequence before reporting maps; check map
-orientation ([y, x], no flips) against the known object.
+orientation ([y, x], no flips) against the known object. Also: `epg_cpmg` and `epg_t2_dictionary` (multi-echo spin echo with imperfect refocusing, where
+stimulated echoes bias mono-exponential T2; fit T2 with B1 by dictionary), `asl_cbf_pcasl` and
+`asl_cbf_pasl` (consensus single-compartment model: ΔM = control − label, equilibrium M0, result in
+ml/100 g/min) and `tofts_concentration` / `fit_tofts_linear` (extended Tofts with the plasma input
+Cp = Cblood / (1 − Hct); time units set the rate units). For fits with fixed nuisance settings, follow the
+[model calibration procedure](../mri-research/references/model-calibration.md).
 
 ## SigPy (Python) alternative
 
@@ -187,6 +229,6 @@ img  = mr.app.L1WaveletRecon(ksp, maps, lamda=0.01).run() # PI + CS
   skill. Designing the *acquisition* or the trajectory belongs to
   `pulse-sequence-design`; this skill consumes a trajectory, it doesn't design one.
 - For method theory and citations, see the hub:
-  https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/recon-methods.md
+  ../mri-research/references/recon-methods.md
   and tool details at
-  https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/tools.md
+  ../mri-research/references/tools.md

@@ -212,6 +212,16 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
         chk('Cartesian kx grid (i - n//2)/fov', rep['kx_grid_max_err_cycles_m'] <= .01, rep['kx_grid_max_err_cycles_m'])
         chk('Cartesian ky line set', rep['ky_set_max_err_cycles_m'] is not None and rep['ky_set_max_err_cycles_m'] <= .01, rep['ky_set_max_err_cycles_m'])
         if monopolar: chk('monopolar readout', rep['readout_polarities'] == [1.0], rep['readout_polarities'])
+    supplied = {'max_grad': max_grad, 'max_slew': max_slew, 'te': te, 'tr': tr, 'ti': ti, 'flip': flip,
+                'slice_thickness': slice_thickness, 'rf_spoil or rf_phase_cycle': rf_spoil if rf_spoil is not None else rf_phase_cycle,
+                'min_spoil_cycles': min_spoil_cycles, 'matrix and fov': matrix if fov is not None else None}
+    if ti is not None:
+        supplied['min_inversion_spoil_cycles'] = min_inversion_spoil_cycles
+    rep['not_checked'] = [k for k, v in supplied.items() if v is None]
+    rep['never_checked_here'] = ['steady state before the first acquired line (count and convergence of preparation repetitions)',
+                                 'inversion or preparation cycle period and recovery between cycles',
+                                 'that the simulation and reconstruction used this exact exported file',
+                                 'any protocol requirement not listed in the checks above']
     rep['checks'] = checks
     return rep, checks
 
@@ -235,6 +245,8 @@ def main():
     out = rep if a.json else {k: rep[k] for k in keys if k in rep}
     print(json.dumps({k: v for k, v in out.items() if k != 'checks'}, default=float))
     for c in checks: print(('PASS ' if c['pass'] else 'FAIL ') + c['item'] + ': ' + json.dumps(c['detail'], default=float))
+    if rep['not_checked']: print('NOT CHECKED (no expectation supplied): ' + ', '.join(rep['not_checked']))
+    print('VERIFY SEPARATELY: ' + '; '.join(rep['never_checked_here']))
     sys.exit(1 if any(not c['pass'] for c in checks) else 0)
 
 if __name__ == '__main__':

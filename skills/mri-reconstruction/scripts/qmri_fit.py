@@ -122,3 +122,88 @@ def bssfp_signal(flip_deg, tr, t1, t2, te=None, off_resonance_hz=0.0, phase_cycl
         out[idx] = Mte[0] + 1j * Mte[1]
     return out if out.shape else out[()]
 
+
+# ---- multi-echo spin echo with imperfect refocusing (extended phase graphs) --------------------------------
+def epg_cpmg(n_echoes, esp, t2, t1=1.0, refocus_deg=180.0, excite_deg=90.0):
+    """CPMG echo amplitudes by extended phase graphs (Hennig 1988; Weigel 2015). Excitation about the axis
+    perpendicular to the refocusing axis; refocus_deg is the actual (B1-scaled) refocusing angle; esp = echo
+    spacing (s). With imperfect refocusing, stimulated echoes make the decay non-exponential (even echoes
+    higher than odd ones): fitting a mono-exponential then biases T2. Returns |echo| for echoes 1..n."""
+    n = 2 * n_echoes + 2
+    F = np.zeros((3, n), complex)  # rows: F+, F-, Z
+    F[2, 0] = 1.0
+    def rot(a, phi):
+        c2, s2, s = np.cos(a / 2) ** 2, np.sin(a / 2) ** 2, np.sin(a)
+        return np.array([[c2, np.exp(2j * phi) * s2, -1j * np.exp(1j * phi) * s],
+                         [np.exp(-2j * phi) * s2, c2, 1j * np.exp(-1j * phi) * s],
+                         [-0.5j * np.exp(-1j * phi) * s, 0.5j * np.exp(1j * phi) * s, np.cos(a)]])
+    def relax(F, t):
+        E1, E2 = np.exp(-t / t1), np.exp(-t / t2)
+        F = F.copy(); F[:2] *= E2; F[2] *= E1; F[2, 0] += 1 - E1
+        return F
+    def shift(F):
+        F = F.copy(); F[0, 1:] = F[0, :-1].copy(); F[1, :-1] = F[1, 1:].copy(); F[1, -1] = 0; F[0, 0] = np.conj(F[1, 0])
+        return F
+    F = rot(np.deg2rad(excite_deg), np.pi / 2) @ F
+    Rf = rot(np.deg2rad(refocus_deg), 0.0)
+    out = []
+    for _ in range(n_echoes):
+        F = shift(relax(F, esp / 2))
+        F = Rf @ F
+        F = shift(relax(F, esp / 2))
+        out.append(abs(F[0, 0]))
+    return np.array(out)
+
+
+def epg_t2_dictionary(n_echoes, esp, t2_grid, b1_grid, t1=1.0, refocus_deg=180.0, excite_deg=90.0):
+    """Dictionary over (T2, B1 scale) for fit_dictionary: B1 scales both the excitation and refocusing angles.
+    Refocusing angles a and 360 - a give identical echo trains, so B1 above and below the value that makes
+    the refocusing angle 180 deg cannot be distinguished: keep the grid on one side or use a measured B1 map.
+    Returns (dictionary [n_t2 * n_b1, n_echoes], params [n, 2] = (T2, B1))."""
+    D, P = [], []
+    for t2 in np.asarray(t2_grid, float):
+        for b in np.asarray(b1_grid, float):
+            D.append(epg_cpmg(n_echoes, esp, t2, t1, refocus_deg * b, excite_deg * b)); P.append((t2, b))
+    return np.array(D), np.array(P)
+
+
+# ---- arterial spin labelling (consensus single-compartment model, Alsop et al. 2015) ------------------------
+def asl_cbf_pcasl(delta_m, m0, pld, label_duration, t1_blood=1.65, efficiency=0.85, partition=0.9):
+    """PCASL CBF in ml/100 g/min: 6000 * lambda * dM * exp(PLD/T1b) / (2 alpha T1b M0 (1 - exp(-tau/T1b))).
+    delta_m = control - label (same scaling as m0); times in s; t1_blood 1.65 s is the 3 T consensus value;
+    m0 must be the equilibrium (proton-density) signal, corrected if its TR was short."""
+    return 6000 * partition * np.asarray(delta_m) * np.exp(pld / t1_blood) / (
+        2 * efficiency * t1_blood * np.asarray(m0) * (1 - np.exp(-label_duration / t1_blood)))
+
+
+def asl_cbf_pasl(delta_m, m0, ti, ti1, t1_blood=1.65, efficiency=0.98, partition=0.9):
+    """PASL (QUIPSS II / Q2TIPS) CBF in ml/100 g/min: 6000 * lambda * dM * exp(TI/T1b) / (2 alpha TI1 M0)."""
+    return 6000 * partition * np.asarray(delta_m) * np.exp(ti / t1_blood) / (2 * efficiency * ti1 * np.asarray(m0))
+
+
+# ---- DCE-MRI (Tofts / extended Tofts) ---------------------------------------------------------------------
+def tofts_concentration(t, cp, ktrans, ve, vp=0.0):
+    """Extended Tofts tissue concentration Ct(t) = vp Cp(t) + Ktrans int Cp(u) exp(-kep (t-u)) du, kep = Ktrans/ve.
+    t uniformly sampled; cp is the PLASMA concentration (Cp = Cblood / (1 - Hct)). Units follow t (1/min if t in min)."""
+    t = np.asarray(t, float); cp = np.asarray(cp, float); dt = t[1] - t[0]
+    kep = ktrans / ve
+    k = np.exp(-kep * (t - t[0]))
+    conv = np.convolve(cp, k)[:len(t)] * dt
+    return vp * cp + ktrans * conv
+
+
+def fit_tofts_linear(t, ct, cp, extended=True):
+    """Linear least-squares (extended) Tofts fit (Murase 2004): Ct = (Ktrans + kep vp) int Cp - kep int Ct + vp Cp.
+    ct (..., n_t) tissue concentration, cp (n_t) plasma concentration. Returns (Ktrans, ve, vp) arrays."""
+    t = np.asarray(t, float); cp = np.asarray(cp, float); Y = np.atleast_2d(np.asarray(ct, float))
+    icp = np.concatenate([[0], np.cumsum((cp[1:] + cp[:-1]) / 2 * np.diff(t))])
+    ict = np.concatenate([np.zeros((len(Y), 1)), np.cumsum((Y[:, 1:] + Y[:, :-1]) / 2 * np.diff(t), 1)], 1)
+    out = []
+    for y, ic in zip(Y, ict):
+        A = np.stack([icp, -ic] + ([cp] if extended else []), 1)
+        c, *_ = np.linalg.lstsq(A, y, rcond=None)
+        kep = c[1]; vp = c[2] if extended else 0.0; ktrans = c[0] - kep * vp
+        out.append((ktrans, ktrans / kep if kep != 0 else np.nan, vp))
+    o = np.array(out).T
+    sh = np.shape(ct)[:-1]
+    return tuple(v.reshape(sh) for v in o)

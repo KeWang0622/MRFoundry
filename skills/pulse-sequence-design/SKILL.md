@@ -1,17 +1,17 @@
 ---
 name: pulse-sequence-design
 description: >-
-  MRI pulse-sequence and k-space trajectory design expert, vendor-aware. Use for
-  designing or programming pulse sequences and gradient/RF waveforms, k-space
-  trajectory design (Cartesian, radial, spiral, EPI, golden-angle), RF pulse
-  design, SMS/multiband, sequence simulation, and vendor sequence development on
-  Siemens (IDEA/ICE), GE (EPIC/Orchestra), and Philips (Paradise). Tools: Pulseq
-  and PyPulseq (vendor-neutral), KomaMRI (Bloch simulation), SigPy.RF (RF design).
-  Triggers: pulse sequence, Pulseq, PyPulseq, gradient waveform, slew rate, PNS,
-  k-space trajectory, spiral/radial/EPI, diffusion encoding, DENSE, RF pulse, SLR, multiband/SMS, IDEA,
-  EPIC, Orchestra, `.seq`. This skill designs the *acquisition*; to reconstruct
-  the data it produces, hand off to mri-reconstruction (classical) or
-  deep-learning-recon (trained). Also use for simulation studies that design a sequence, Bloch-simulate the exported file and reconstruct or fit maps: spoiled/multi-echo GRE, inversion recovery and T1 mapping, spin echo/CPMG T2, balanced SSFP; ships a tested exported-sequence checker (TE/TR/TI, spoiling, receive phase, balanced moments, slice selection, sampling) and an end-to-end example pipeline.
+  Read before designing, programming, exporting or simulating an MRI acquisition:
+  pulse sequences, RF pulses, gradient waveforms and k-space trajectories
+  (Cartesian, radial, spiral, EPI), Pulseq/PyPulseq .seq files, Bloch simulation
+  with KomaMRI, SMS, and vendor development (IDEA, EPIC, Paradise). Prevents
+  silent errors in realized timing (TE, TR, TI measured from RF centres), RF
+  spoiling and receive phase, gradient moments and balance, slice selection,
+  steady state and sampling, and simulating something other than the exported
+  file. Ships a tested exported-sequence checker and an end-to-end design,
+  simulate and reconstruct example. Reconstructing the data belongs to mri-
+  reconstruction (classical) or deep-learning-recon (trained); hardware limits and
+  safety to mri-hardware.
 metadata:
   author: Ke Wang
   version: "0.10.0"
@@ -43,7 +43,7 @@ For project experiments, read `.mrfoundry/INDEX.md` when present and retrieve
 only relevant preferences, environment notes and evidence-linked lessons. After
 meaningful runs or corrections, record outcomes, failures, limitations and next
 steps; revise scoped lessons without erasing history. Keep user preferences
-separate from scientific findings. Use the [project memory workflow](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/project-memory.md)
+separate from scientific findings. Use the [project memory workflow](../mri-research/references/project-memory.md)
 to initialize the folder or connect project `CLAUDE.md` / `AGENTS.md`. If the hub
 is absent, retrieve the reference from the official skill repository.
 
@@ -57,11 +57,11 @@ Start slow installs (for example Julia/KomaMRI) in the background while you writ
 Work from the installed skill first: its scripts and references cover routine work;
 fetch remote references only when something you need is missing locally.
 Work efficiently: write each stage as one script with built-in checks, run it end to
-end, and fix with targeted edits rather than many exploratory one-off commands. Do not leave routine setup
+end, and fix with targeted edits rather than many exploratory one-off commands. Keep effort proportionate: closed-form or linear fits need only numpy/scipy; install heavy toolboxes only for the steps that need them, and produce every requested deliverable before refining. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
-Read the [tool setup guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/tool-setup.md) when installing,
+Read the [tool setup guide](../mri-research/references/tool-setup.md) when installing,
 repairing, or choosing an execution environment. If the hub is not installed,
 retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 
@@ -102,7 +102,9 @@ retrieve that reference from the official `KeWang0622/MRFoundry` repository.
    reconstruction from the archive, orientation check, report). Swap in a family builder: spoiled GRE in
    `scripts/test_seqlib.py`; inversion-recovery GRE, balanced SSFP and spin echo in `scripts/test_check_exported_seq.py`.
 3. Run `python scripts/check_exported_seq.py sequence.seq` with EVERY requested parameter as an expectation
-   (flags below) and fix the build until all lines PASS before simulating.
+   (flags below) and fix the build until all lines PASS before simulating. Supply expectations until the
+   NOT CHECKED line is empty, and verify each VERIFY SEPARATELY item (steady state, preparation or inversion
+   cycle timing) with your own check or a Bloch simulation of the exported file.
 4. Put samples on the grid with `kspace_grid` (it uses the exported k, so line order and polarity cannot be
    mixed up), fit maps with `mri-reconstruction/scripts/qmri_fit.py`, and check orientation and values against
    the known object. Report values measured from the export.
@@ -152,7 +154,7 @@ reconstruction (NUFFT).
 
 ## EPI, diffusion preparation and DENSE
 
-Read the hub’s [sequence families and detailed guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/sequences-and-trajectories.md#sequence-families-contrast-encoding-and-readout)
+Read the hub’s [sequence families and detailed guide](../mri-research/references/sequences-and-trajectories.md#sequence-families-contrast-encoding-and-readout)
 for GRE, SE/FSE, inversion recovery, bSSFP, EPI and DENSE. Keep contrast,
 readout and fitted models distinct. Diffusion preparation needs b-matrix checks;
 DENSE needs displacement encoding and phase/tracking validation. Verify the
@@ -227,4 +229,4 @@ integration or features Pulseq can't express.
 - **Physics background and the citation trail:** the `mri-research` hub.
 
 Deeper reference:
-https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/sequences-and-trajectories.md
+../mri-research/references/sequences-and-trajectories.md

@@ -1,20 +1,16 @@
 ---
 name: mri-research
 description: >-
-  The generalist navigator and curated reference hub for MRI research — use it
-  for orientation, cross-domain questions, and the canonical paper / course /
-  dataset / toolbox across the whole MRI pipeline: MR physics and k-space,
-  acquisition, reconstruction, image analysis, quantitative MRI and
-  spectroscopy, hardware, data formats, and publishing. This hub also OWNS
-  image-level analysis, which no sibling skill covers: fMRI and GLM analysis,
-  BIDS, DICOM/NIfTI conversion, FreeSurfer, segmentation, registration,
-  fMRIPrep, relaxometry and QSM mapping. Reach for it when a question spans
-  several MRI sub-areas or it isn't clear which specialist applies; it defers to
-  the focused sibling skills when one is squarely in-lane. Triggers: MRI /
-  magnetic-resonance research questions, "where do I find…", "which MRI tool /
-  paper / dataset for…", k-space orientation, BIDS, NIfTI, DICOM, fMRI,
-  FreeSurfer, registration, segmentation, QSM. It points to external repos,
-  papers, and datasets rather than bundling them.
+  Start here when an MRI task does not clearly match a specialist skill, spans
+  several areas, or involves image-level analysis: DICOM/NIfTI/BIDS conversion and
+  orientation, registration, segmentation, FreeSurfer, fMRI and GLM analysis, QSM
+  and phase processing, spectroscopy, plus finding papers, datasets and tools.
+  Holds shared references used by every skill: tool setup, data formats,
+  evaluation and attribution, model calibration and project memory. Prevents
+  silent errors in image orientation and header conventions, units and analysis
+  choices. Routes to the specialist skills for sequences, reconstruction and
+  mapping, diffusion, hardware and safety, deep-learning reconstruction and study
+  statistics.
 metadata:
   author: Ke Wang
   version: "0.10.0"
@@ -65,7 +61,7 @@ Start slow installs (for example Julia/KomaMRI) in the background while you writ
 Work from the installed skill first: its scripts and references cover routine work;
 fetch remote references only when something you need is missing locally.
 Work efficiently: write each stage as one script with built-in checks, run it end to
-end, and fix with targeted edits rather than many exploratory one-off commands. Do not leave routine setup
+end, and fix with targeted edits rather than many exploratory one-off commands. Keep effort proportionate: closed-form or linear fits need only numpy/scipy; install heavy toolboxes only for the steps that need them, and produce every requested deliverable before refining. Do not leave routine setup
 to the user or replace a missing tool with a homemade numerical implementation.
 Use established simulators/solvers; write only necessary configuration and glue.
 If blocked, report the actual obstacle and an established alternative.
@@ -167,13 +163,15 @@ what you need):
 |---|---|
 | MR physics, k-space intuition, contrast, where to *learn* (courses, handbooks, free books) | [`references/foundations.md`](references/foundations.md) |
 | Designing/programming pulse sequences and k-space trajectories, RF pulse design, simulation | [`references/sequences-and-trajectories.md`](references/sequences-and-trajectories.md) |
-| DWI/DTI, ADC/FA/MD, gradients, diffusion preprocessing and model QC | [Diffusion skill and its DWI/DTI guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/diffusion-mri/SKILL.md) |
+| DWI/DTI, ADC/FA/MD, gradients, diffusion preprocessing and model QC | [Diffusion skill and its DWI/DTI guide](../diffusion-mri/SKILL.md) |
 | MRI hardware: low-field, open-source consoles, coils, gradients, safety | [`references/hardware.md`](references/hardware.md) |
 | Which reconstruction method/paper applies + the landmark reading list (parallel imaging → CS → low-rank → DL → diffusion → fingerprinting) | [`references/recon-methods.md`](references/recon-methods.md) |
 | Which reconstruction *software* to use and how (BART, SigPy, MIRT.jl, MRIReco.jl, torchkbnufft, DIRECT, Gadgetron) | [`references/tools.md`](references/tools.md) |
 | Raw & image data formats (ISMRMRD, twix/P-file/Philips, DICOM, NIfTI, BIDS) and where to get data | [`references/data-and-formats.md`](references/data-and-formats.md) |
 | Image analysis & processing: structural, fMRI, diffusion MRI, segmentation, registration, pipelines | [`references/analysis-processing.md`](references/analysis-processing.md) |
 | Quantitative MRI (relaxometry, QSM, perfusion/ASL, MT) and MR spectroscopy | [`references/quantitative-and-spectroscopy.md`](references/quantitative-and-spectroscopy.md) |
+| Choosing fixed settings of a model-based estimate (spectrum/compartment fractions, IVIM, multi-T2, MT, DCE): calibration on development data, identifiability, stratified recovery tests | [`references/model-calibration.md`](references/model-calibration.md) |
+| Making agents start MRI work from the right skill: an optional project `AGENTS.md`/`CLAUDE.md` pointer | [`references/agents-pointer.md`](references/agents-pointer.md) |
 | Programmatic access to papers/data — APIs, keys, and MCP servers | [`references/literature-access.md`](references/literature-access.md) |
 | Writing up & submitting — MR journals, LaTeX templates, reporting standards, abstracts, preprints | [`references/publishing.md`](references/publishing.md) |
 | How MR image contrast reads (T1/T2/FLAIR/DWI) — background orientation only | [`references/radiology-primer.md`](references/radiology-primer.md) |
