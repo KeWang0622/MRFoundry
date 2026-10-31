@@ -22,7 +22,7 @@ evidence: measure the export, simulate the export, reconstruct from the simulati
 
 1. Setup: `pip install pypulseq sigpy matplotlib` plus a Bloch simulator that reads Pulseq files. The tested
    route is KomaMRI through `komamripy` (`simulate_with_koma` in `scripts/mrfoundry_seqlib.py`): start
-   `python scripts/test_seqlib.py` in the background at once, because the first call installs and compiles
+   `python .agents/skills/pulse-sequence-design/scripts/test_seqlib.py` in the background at once, because the first call installs and compiles
    Julia (about 3.5 min on a fresh depot). If that warm-up fails or has not finished within about 6 minutes,
    switch to MRzeroCore (`pip install MRzeroCore`, pure Python) rather than waiting; never replace the
    simulator with a homemade Bloch routine or an ideal-signal formula.

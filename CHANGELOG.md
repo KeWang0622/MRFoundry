@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   silent-error checks and a single "before you finish" command; detail moved to on-demand references
   (mri-reconstruction `raw-data.md`, `bart-sigpy.md`, `quantitative-maps.md`; pulse-sequence-design
   `tools-and-families.md`; mri-hardware `landscape.md`; diffusion-mri `preprocessing-and-models.md`). Shared
-  boilerplate removed; tool setup is read only when an install fails. SKILL.md total 101 KB -> 36 KB.
+  boilerplate removed; tool setup is read only when an install fails; every helper module prints its API with
+  `--api`; descriptions shortened (catalog 5.4 KB -> 3.2 KB). SKILL.md total 88 KB -> 36 KB.
 - mri-research-workflow: `finish_check.py` (+ test): required deliverables in one folder, environment
   record, clean-folder rerun of the entrypoint, JSON keys, map-median unit ranges.
 - mri-reconstruction: `qmri_fit.py` adds exact piecewise-linear Tofts convolution and grid fit
