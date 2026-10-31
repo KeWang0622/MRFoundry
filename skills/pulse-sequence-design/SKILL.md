@@ -31,12 +31,13 @@ evidence: measure the export, simulate the export, reconstruct from the simulati
 2. Copy `scripts/example_pipeline.py` (build, read back, waveform figure, simulation of the exported file,
    archive with hashes, standalone reconstruction, orientation check, report) and swap in a family builder:
    spoiled GRE in `scripts/test_seqlib.py`; inversion-recovery GRE, balanced SSFP, spin echo and single-shot
-   EPI (`add_epi_readout`) in `scripts/test_check_exported_seq.py`. Helpers: `make_system`,
+   EPI (`add_epi_readout`) in `scripts/test_check_exported_seq.py`. `python .agents/skills/pulse-sequence-design/scripts/mrfoundry_seqlib.py --api`
+   lists signatures. Helpers: `make_system`,
    `slice_selective_excitation`, `centered_readout` (sample n//2 exactly at k = 0), `fill_delay` (exact
    intervals on the block raster), `RFSpoiler`, `spoiler_area`, `kspace_grid`, `plot_waveforms`.
 3. Run the checker with EVERY requested parameter until all lines PASS and NOT CHECKED is empty; verify each
    VERIFY SEPARATELY item yourself or by simulating the exported file:
-   `python scripts/check_exported_seq.py sequence.seq --te ... --tr ... --flip ... --matrix NX NY --fov F ...`
+   `python .agents/skills/pulse-sequence-design/scripts/check_exported_seq.py sequence.seq --te ... --matrix NX NY --fov F ...`
 4. Grid samples with `kspace_grid` (it uses the exported k, so line order and polarity cannot be mixed up),
    fit maps with `mri-reconstruction/scripts/qmri_fit.py`, check orientation on a simulated asymmetric
    object, and report values measured from the export.

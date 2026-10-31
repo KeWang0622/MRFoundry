@@ -100,3 +100,15 @@ def fit_tensor_lls(signals, bvals, g, b0_threshold=50.0):
     shape = S.shape[:-1]
     return D.reshape(shape + (3, 3)), w.reshape(shape + (3,)), V[..., :, 0].reshape(shape + (3,))
 
+
+def _print_api(namespace):
+    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
+    import inspect
+    for name, f in sorted(namespace.items()):
+        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
+            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
+            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
+
+
+if __name__ == '__main__' and '--api' in __import__('sys').argv:
+    _print_api(dict(globals()))

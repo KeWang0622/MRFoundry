@@ -19,7 +19,7 @@ metadata:
 # MRFoundry: Diffusion MRI
 
 Use the tested numpy helpers; a closed-form log-linear DTI fit needs no toolbox installation. Open only the
-row you need.
+row you need; `python .agents/skills/diffusion-mri/scripts/spectrum_fit.py --api` (or `gradient_frames.py`) lists signatures (do not cat the source).
 
 ## Route
 

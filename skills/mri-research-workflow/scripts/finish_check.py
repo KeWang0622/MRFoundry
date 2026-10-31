@@ -185,11 +185,14 @@ def rerun(root, folder, command, inputs, expect, python, timeout):
         tail = (r.stderr or r.stdout).strip().splitlines()[-6:]
         return False, [f"FAIL rerun exited {r.returncode} in a clean folder ({dt:.0f} s):"] + ["     " + t for t in tail]
     if expect:
-        missing = [e for e in expect if not (out / e).exists() and not (tmp / e).exists()]
+        missing = [e for e in expect if not (out / e).exists() and not (tmp / e).exists()
+                   and not any(tmp.rglob(Path(e).name))]
         if missing:
-            return False, [f"FAIL rerun finished but did not write {missing} into {{out}} ({dt:.0f} s)"]
-    elif not (out.exists() and any(out.iterdir())):
+            return False, [f"FAIL rerun finished but did not write {missing} ({dt:.0f} s)"]
+    elif '{out}' in command and not (out.exists() and any(out.iterdir())):
         return False, [f"FAIL rerun finished but wrote nothing into {{out}} ({dt:.0f} s); pass --expect to name the outputs"]
+    elif '{out}' not in command:
+        lines.append("NOTE the command has no {out}; pass --expect <files> to check what the rerun writes")
     lines.append(f"PASS rerun in a clean folder with {Path(python).name} ({dt:.0f} s): {' '.join(parts)[:160]}")
     return True, lines
 

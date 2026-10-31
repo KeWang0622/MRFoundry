@@ -155,3 +155,16 @@ def stratified_recovery_test(make_truth, fit_fn, bvals, sigma, n=2000, seed=0, n
         est2 = np.asarray(fit_fn(M2, b), float)
         out['retest_frac_over_tol'] = float(np.mean(np.abs(est2 - est) > retest_tol))
     return out
+
+
+def _print_api(namespace):
+    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
+    import inspect
+    for name, f in sorted(namespace.items()):
+        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
+            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
+            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
+
+
+if __name__ == '__main__' and '--api' in __import__('sys').argv:
+    _print_api(dict(globals()))

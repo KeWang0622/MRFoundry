@@ -331,3 +331,15 @@ def nrmse(ref, img, mask=None, fit_scale=True):
         a = np.real(a)
     return float(np.linalg.norm(a * x - r) / np.linalg.norm(r)), a
 
+
+def _print_api(namespace):
+    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
+    import inspect
+    for name, f in sorted(namespace.items()):
+        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
+            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
+            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
+
+
+if __name__ == '__main__' and '--api' in __import__('sys').argv:
+    _print_api(dict(globals()))

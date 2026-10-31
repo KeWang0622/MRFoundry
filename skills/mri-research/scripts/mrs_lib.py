@@ -136,3 +136,15 @@ def lcm_fit(fid, basis, dwell_s, f0_hz, carrier_ppm, ppm_range=(0.2, 4.2), basel
                 lorentz_1_s=float(abs(p[2])), gauss_1_s2=float(abs(p[3])), fit=fitc, baseline=base, residual=resid,
                 ppm=x, data=y, residual_sd=sd, crlb_like=dict(zip(names, crlb.tolist())))
 
+
+def _print_api(namespace):
+    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
+    import inspect
+    for name, f in sorted(namespace.items()):
+        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
+            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
+            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
+
+
+if __name__ == '__main__' and '--api' in __import__('sys').argv:
+    _print_api(dict(globals()))

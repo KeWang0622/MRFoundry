@@ -162,3 +162,16 @@ def plot_waveforms(seq_file, png, t_window=None):
         ax[j + 2].set_ylabel(name + ' mT/m')
     ax[0].set_ylabel('|RF| Hz, ADC red'); ax[1].set_ylabel('RF phase'); ax[-1].set_xlabel('time (ms)')
     fig.tight_layout(); fig.savefig(png, dpi=110); plt.close(fig); return png
+
+
+def _print_api(namespace):
+    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
+    import inspect
+    for name, f in sorted(namespace.items()):
+        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
+            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
+            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
+
+
+if __name__ == '__main__' and '--api' in __import__('sys').argv:
+    _print_api(dict(globals()))

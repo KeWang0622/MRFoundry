@@ -441,3 +441,15 @@ def snr_scale(snr_ref, b0_ratio=1.0, voxel_volume_ratio=1.0, time_ratio=1.0, ban
     (Hoult & Richards). Coil, relaxation and sequence changes are not included."""
     return snr_ref * b0_ratio ** b0_exponent * voxel_volume_ratio * np.sqrt(time_ratio / bandwidth_ratio)
 
+
+def _print_api(namespace):
+    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
+    import inspect
+    for name, f in sorted(namespace.items()):
+        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
+            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
+            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
+
+
+if __name__ == '__main__' and '--api' in __import__('sys').argv:
+    _print_api(dict(globals()))

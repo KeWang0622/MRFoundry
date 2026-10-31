@@ -35,8 +35,9 @@ solve left in scaled units).
 | Fixed settings of a fitted model (nuisance values, spectra, fractions) | | [model calibration](../mri-research/references/model-calibration.md) |
 
 Import with `sys.path.insert(0, '.agents/skills/mri-reconstruction/scripts')` (adjust if installed elsewhere).
-Each module's first docstring lists its functions; `python test_<module>.py` shows worked examples. Copy a
-helper into a standalone entrypoint when the task requires one file.
+`python .agents/skills/mri-reconstruction/scripts/qmri_fit.py --api` (or any module) prints every signature with a one-line summary (2-4 KB; reading the source costs
+5-10 times more); `scripts/test_<module>.py` shows worked examples. Copy a helper into a standalone entrypoint
+when the task requires one file.
 
 ## Checks that prevent silent errors
 

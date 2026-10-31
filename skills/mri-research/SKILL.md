@@ -39,7 +39,7 @@ Find the row that matches the task, open that one file or skill, and work from i
 | Papers, APIs, venues and writing; image contrast primer | [literature access](references/literature-access.md), [publishing](references/publishing.md), [radiology primer](references/radiology-primer.md), [reading list](references/reading-list.md) |
 | Project notes across sessions (only when `.mrfoundry/INDEX.md` exists or the user asks); optional `AGENTS.md` pointer | [project memory](references/project-memory.md), [agents pointer](references/agents-pointer.md) |
 
-## MR spectroscopy (`scripts/mrs_lib.py`, tested by `scripts/test_mrs_lib.py`)
+## MR spectroscopy (`scripts/mrs_lib.py`; `--api` lists signatures; worked example in `scripts/test_mrs_lib.py`)
 
 1. Put metabolite and water acquisitions in the same physical units: divide each by its stored scale factor
    (and by the number of transients if summed). Check the frequency convention (`ppm_axis`; conjugate if the

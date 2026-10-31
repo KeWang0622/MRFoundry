@@ -262,8 +262,21 @@ def run_pipeline(magnitude, phase_rad, te, mask, voxel_size_mm, b0_dir, b0_T, ro
     return dict(field_hz=f, local_hz=loc, chi_ppm=chi, reference_mean=ref)
 
 
+
+
+def _print_api(namespace):
+    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
+    import inspect
+    for name, f in sorted(namespace.items()):
+        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
+            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
+            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
+
+
 if __name__ == '__main__':
     import sys
+    if '--api' in sys.argv:
+        _print_api(dict(globals()))
     if '--selftest' in sys.argv:
         h = synthetic_head()
         out = run_pipeline(h['mag'], h['phase'], h['te'], h['mask'], h['voxel_size_mm'], h['b0_dir'], h['b0_T'], h['rois'], 5)

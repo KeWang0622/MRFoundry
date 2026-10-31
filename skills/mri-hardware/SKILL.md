@@ -18,8 +18,9 @@ metadata:
 # MRFoundry: MRI Hardware and Safety
 
 Hardware numbers are useful only with their units, conventions and a check. Use the tested helpers in
-`scripts/mrfoundry_hwlib.py` (numpy/scipy, SI units; `python scripts/test_hwlib.py` shows each one on an
-analytic case) and import them rather than re-deriving them.
+`scripts/mrfoundry_hwlib.py` (numpy/scipy, SI units) and import them rather than re-deriving them:
+`python .agents/skills/mri-hardware/scripts/mrfoundry_hwlib.py --api` lists signatures (do not cat the source); `scripts/test_hwlib.py` shows
+each helper on an analytic case.
 
 ## Route
 

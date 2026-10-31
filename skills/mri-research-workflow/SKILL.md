@@ -1,14 +1,14 @@
 ---
 name: mri-research-workflow
 description: >-
-  Read before finishing any MRI deliverable, and before designing, analysing or
-  reporting an MRI study with subjects, groups or repeated scans: development and
-  held-out splits, biomarker comparisons, repeatability (wCV, ICC), cutoffs and
-  classification, confidence intervals, analysis plans, reports and papers for
-  MRM, JMRI, TMI, MICCAI or CVPR. Prevents misplaced or missing deliverables,
-  entrypoints that fail on a clean rerun, test-data leakage, the wrong statistical
-  unit and numbers that do not match saved outputs. Ships a finish check and
-  tested study statistics. Measurements belong to the specialist skills.
+  Read before designing, analysing or reporting an MRI study with subjects,
+  groups or repeated scans: development and held-out splits, biomarker
+  comparisons, repeatability (wCV, ICC), cutoffs and classification, confidence
+  intervals, analysis plans, reports and papers for MRM, JMRI, TMI, MICCAI or
+  CVPR. Prevents test-data leakage, the wrong statistical unit and numbers that do
+  not match saved outputs. Ships tested study statistics and the finish check
+  (missing or split deliverables, entrypoints that fail on a clean rerun) that
+  every MRFoundry skill runs. Measurements belong to the specialist skills.
 metadata:
   author: Ke Wang
   version: "0.11.0"
