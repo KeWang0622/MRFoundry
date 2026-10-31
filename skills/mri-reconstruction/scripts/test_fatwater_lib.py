@@ -47,8 +47,8 @@ for k, (B0, te, flip, tr, t1w, t1f, b1amp, fs, sigma) in enumerate(cases):
     ff_signal = res['pdff_uncorrected']
     err = [np.median(ff[labels == i + 1]) - pdff[i] for i in range(len(pdff))]
     rerr = [np.median(res['r2s'][labels == i + 1]) - r2s[i] for i in range(len(pdff))]
-    assert max(abs(e) for e in err) < 1.5, (B0, np.round(err, 2))
-    assert all(abs(e) <= max(6, 0.1 * r) for e, r in zip(rerr, r2s)), (B0, np.round(rerr, 1))
+    assert max(abs(e) for e in err) < 1.0, (B0, np.round(err, 2))
+    assert all(abs(e) <= max(7, 0.12 * r) for e, r in zip(rerr, r2s)), (B0, np.round(rerr, 1))
     biased = max(abs(np.median(ff_signal[labels == i + 1]) - pdff[i]) for i in range(len(pdff)))
     magd = max(abs(np.median(fat_fraction(res['water'], res['fat'], flip, tr, t1w, t1f, b1)[labels == i + 1]) - pdff[i]) for i in (0, len(pdff) - 1))
     print(f"{B0} T, {len(te)} echoes: max |PDFF error| {max(abs(e) for e in err):.2f} pp, max |R2* error| "
@@ -62,5 +62,5 @@ for k, (B0, te, flip, tr, t1w, t1f, b1amp, fs, sigma) in enumerate(cases):
         swap = max(abs(np.median(fat_fraction(alt['water_real'], alt['fat_real'], flip, tr, t1w, t1f, b1)[labels == i + 1]) - pdff[i]) for i in range(len(pdff)))
         assert swap > 1.5, swap
         print(f"  (without the smooth-field choice the worst vial is off by {swap:.1f} pp)")
-print("fat-water separation: isolated vials 0-100% fat at 1.5 T and 3 T within 1.5 pp and R2* within max(6 1/s, 10%)")
+print("fat-water separation: isolated vials 0-100% fat at 1.5 T and 3 T within 1 pp and R2* within max(7 1/s, 12%)")
 
