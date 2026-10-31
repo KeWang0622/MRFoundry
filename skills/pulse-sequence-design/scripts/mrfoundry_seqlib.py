@@ -34,6 +34,38 @@ def centered_readout(system, n, fov_m, dwell_s, axis='x', center_index=None):
     pre_area = -(read.area - read.flat_area) / 2 - (c + 0.5) / fov_m
     return read, adc, pre_area
 
+def add_epi_readout(seq, system, nx, ny, fov_m, dwell_s, extra_blocks=(), read_axis='x', blip_axis='y', fov_y=None):
+    """Single-shot EPI train: prephaser block (plus any extra_blocks events, e.g. the slice rephaser) then ny lines
+    of alternating readout polarity, ADC on the flat top only (no ramp sampling), phase-encode blips during the
+    ramp-down. Chronological sample s of an even line j sits at kx = (s - nx//2)/fov, of an odd line at
+    kx = (nx//2 - 1 - s)/fov (the same grid traversed backwards); line j sits at ky = (j - ny//2)/fov_y.
+    The line period is constant. Returns timing: line_period, prephaser_duration and t_k0 = time from the start
+    of the prephaser block to the sample at kx = ky = 0 (TE = excitation centre -> that sample).
+    Verify the export with check_exported_seq.py --epi --matrix nx ny --fov F --te TE --echo-spacing ES."""
+    fov_y = fov_m if fov_y is None else fov_y
+    blip = pp.make_trapezoid(blip_axis, area=1.0 / fov_y, system=system)
+    ramp = max(np.ceil(pp.calc_duration(blip) / system.grad_raster_time - 1e-9) * system.grad_raster_time, 0)
+    read0, adc, _ = centered_readout(system, nx, fov_m, dwell_s, axis=read_axis)
+    ramp = max(ramp, read0.rise_time)
+    read = pp.make_trapezoid(read_axis, flat_area=nx / fov_m, flat_time=nx * dwell_s, rise_time=ramp, fall_time=ramp, system=system)
+    adc = pp.make_adc(nx, dwell=dwell_s, delay=read.rise_time, system=system)
+    pre_area = -(read.area - read.flat_area) / 2 - (nx // 2 + 0.5) / fov_m
+    gx_pre = pp.make_trapezoid(read_axis, area=pre_area, system=system)
+    gy_pre = pp.make_trapezoid(blip_axis, area=-(ny // 2) / fov_y, system=system)
+    pre_events = [gx_pre, gy_pre] + list(extra_blocks)
+    seq.add_block(*pre_events); t_pre = pp.calc_duration(*pre_events)
+    blip.delay = read.rise_time + read.flat_time
+    neg = pp.scale_grad(read, -1)
+    for j in range(ny):
+        g = read if j % 2 == 0 else neg
+        if j < ny - 1:
+            seq.add_block(g, adc, blip)
+        else:
+            seq.add_block(g, adc)
+    period = pp.calc_duration(read)
+    t_k0 = t_pre + (ny // 2) * period + adc_sample_time(adc, nx // 2 if (ny // 2) % 2 == 0 else nx // 2 - 1)
+    return dict(line_period=period, prephaser_duration=t_pre, t_k0=t_k0, read=read, adc=adc)
+
 def rf_center_time(rf):
     """Time from the start of the block containing rf to the RF centre (s)."""
     return rf.delay + pp.calc_rf_center(rf)[0]

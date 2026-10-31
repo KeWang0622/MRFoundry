@@ -88,3 +88,61 @@ assert np.median(sd2[inside]) > np.median(sd1[inside])
 print("pseudo-replica noise: accelerated SENSE noisier than full sampling (median ratio %.2f)" % (np.median(sd2[inside]) / np.median(sd1[inside])))
 print("all raw-data reconstruction tests passed")
 
+
+
+# ---- B5: SNR units with correlated complex noise, dwell scaling and averages; covariance convention; orientation
+rng = np.random.default_rng(7)
+Cc = 6
+G = rng.normal(size=(Cc, Cc)) + 1j * rng.normal(size=(Cc, Cc))
+psi_img = (G @ G.conj().T) / Cc + 0.5 * np.eye(Cc)             # complex, strongly correlated channels
+assert np.max(np.abs(psi_img.imag)) > 0.1
+sens6 = sens[:Cc] / np.sqrt(np.sum(np.abs(sens[:Cc]) ** 2, 0, keepdims=True))
+def cnoise(cov, shape):
+    L = np.linalg.cholesky(cov); z = (rng.normal(size=(cov.shape[0],) + shape) + 1j * rng.normal(size=(cov.shape[0],) + shape)) / np.sqrt(2)
+    return np.tensordot(L, z, axes=(1, 0))
+dwell_img, dwell_noise, navg, amp = 5e-6, 2.5e-6, 3, 40.0
+psi_noise = psi_img * dwell_img / dwell_noise                      # wider bandwidth -> more noise per sample
+noise_scan = cnoise(psi_noise, (20000,))
+psi_est = scale_noise_covariance(noise_covariance(noise_scan), dwell_noise, dwell_img)
+assert np.linalg.norm(psi_est - psi_img) / np.linalg.norm(psi_img) < 0.05
+X = noise_scan.T                                                   # samples as rows: the conjugation trap
+assert np.allclose(X.T @ X.conj() / X.shape[0], noise_covariance(noise_scan), atol=1e-2 * np.abs(psi_noise).max())
+assert np.linalg.norm(X.conj().T @ X / X.shape[0] - psi_noise) / np.linalg.norm(psi_noise) > 0.2
+kav = np.mean([fft2c(amp * sens6 * img) + cnoise(psi_img, (ny, nx)) for _ in range(navg)], axis=0)
+snr = snr_units_image(ifft2c(kav), psi_est, n_averages=navg, sens=sens6)
+q = np.real(np.einsum('cyx,cd,dyx->yx', sens6.conj(), np.linalg.inv(psi_img), sens6))
+truth_snr = np.sqrt(2 * navg) * amp * np.abs(img) * np.sqrt(q)
+hi = truth_snr > 25
+assert abs(np.median(np.abs(snr[hi]) / truth_snr[hi]) - 1) < 0.03
+pure = snr_units_image(ifft2c(np.mean([cnoise(psi_img, (ny, nx)) for _ in range(navg)], 0)), psi_est, navg, sens6)
+assert abs(np.std(pure.real) - 1) < 0.05 and abs(np.std(pure.imag) - 1) < 0.05
+low = np.abs(pure) < np.percentile(np.abs(pure), 15)
+print(f"snr_units_image: median SNR ratio {np.median(np.abs(snr[hi]) / truth_snr[hi]):.3f}; pure-noise real SD {np.std(pure.real):.3f}"
+      f" (SD in the lowest-15% magnitude pixels {np.std(pure.real[low]):.2f}: biased, never use it)")
+print("noise covariance: dwell scaling recovered; samples-as-rows conj(Psi) trap detected")
+
+ref = np.abs(img)
+name, sh, cc, _ = orientation_check(np.roll(ref[::-1, ::-1], (1, 1), (0, 1)), ref)
+assert name == 'flip_xy' and sh == (1, 1) and cc > 0.999
+assert orientation_check(ref, ref)[:2] == ('identity', (0, 0))
+assert orientation_check(ref.T, ref)[0] == 'transpose'
+print("orientation_check names the flip/transpose and shift that map a reconstruction onto the reference")
+print("all B5 raw-data tests passed")
+
+
+
+# ---- B5: choose the reconstruction by simulated error with realistic noise (not by data consistency)
+R3 = 3; acs3 = np.zeros(ny, bool); acs3[ny // 2 - 10: ny // 2 + 10] = True
+m3 = np.zeros(ny, bool); m3[::R3] = True; m3 |= acs3
+maps3 = coil_maps_from_acs(ksp * m3[None, :, None], acs3)
+assert np.median(np.abs(np.sum(maps3.conj() * sens, 0))[obj > 0]) > 0.95       # close to the true maps
+def grappa_rss(k):
+    return rss(ifft2c(grappa_2d(k, R3, k[:, acs3, :])))
+cands = {'grappa R3 (exact data consistency)': grappa_rss,
+         'cg-sense lam=0': lambda k: np.abs(sense_cg(k, m3, maps3, lamda=0.0, n_iter=60)),
+         'cg-sense lam=0.05': lambda k: np.abs(sense_cg(k, m3, maps3, lamda=0.05, n_iter=60))}
+ranked = rank_reconstructions(cands, obj, sens, m3, n_rep=2, region=obj > 0, noise_scale=0.08)
+assert ranked[-1][1] == 'cg-sense lam=0' and ranked[0][1] == 'cg-sense lam=0.05'   # noise amplification ranks last
+print("rank_reconstructions (R=3, noisy simulation): " + "; ".join(f"{n} NRMSE {e:.3f}" for e, n in ranked))
+print("all B5 reconstruction-selection tests passed")
+

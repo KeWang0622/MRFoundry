@@ -109,5 +109,41 @@ comb = roemer_combine(noise.reshape(C, 4000, 50), np.repeat(sens[:, None, :], 40
 assert abs(np.var(comb) - 1.0) < 0.02
 print("noise covariance, prewhitening and Roemer combination in SNR units (noise variance %.3f)" % np.var(comb))
 assert abs(snr_scale(10.0, b0_ratio=2.0, time_ratio=4.0) - 40.0) < 1e-12
-print("all hardware helper tests passed")
+print("core hardware helper tests passed")
+
+
+
+# ---- B5: absolute currents with acquisition currents, KKT optimality check, world coordinates, field map
+I_acq = np.array([0.4, -0.2, 0.1, 0.0, 0.3, -0.1, 0.2, 0.05])[:len(maps)]
+lim = 0.8
+I_true = np.clip(c_true, -lim, lim)
+measured = dist + np.tensordot(I_acq, np.array(maps), axes=(0, 0))          # field map acquired with I_acq switched on
+sa = shim_currents(measured, ball, maps, lower=-lim, upper=lim, current_during_acquisition=I_acq)
+sb = shim_currents(dist, ball, maps, lower=-lim, upper=lim)
+assert np.allclose(sa["absolute_currents"], sb["currents"], atol=1e-8) and abs(sa["frequency_adjust"] + sb["offset"]) < 1e-8
+assert sa["kkt"]["ok"] and abs(sa["std_before"] - np.std(measured[ball])) < 1e-9
+print("shim with acquisition currents: absolute currents and centre-frequency change match the zero-current problem; KKT ok")
+# a classic hand-written bug: scale columns for conditioning and forget to unscale the solution
+from scipy.optimize import lsq_linear
+Ab = np.stack([m_[ball] for m_ in maps], 1); bb = -dist[ball]
+sc = np.linalg.norm(Ab, axis=0)
+x_bug = lsq_linear(Ab * sc, bb, bounds=(-lim, lim)).x                 # bounds and solution in scaled units
+assert not bounded_lsq_kkt(Ab, bb, x_bug, -lim, lim)["ok"]
+x_fix = lsq_linear(Ab, bb, bounds=(-lim, lim), method="bvls").x
+assert bounded_lsq_kkt(Ab, bb, x_fix, -lim, lim)["ok"]
+print("bounded_lsq_kkt flags an unscaled column-scaled solution and accepts the true constrained optimum")
+
+aff = np.array([[1.8, 0.3, 0.0, -50.0], [-0.2, 1.9, 0.4, 20.0], [0.1, -0.3, 2.5, -10.0], [0, 0, 0, 1]])
+X, Y, Z = voxel_world_coords(aff, (4, 5, 6))
+assert np.allclose([X[1, 2, 3], Y[1, 2, 3], Z[1, 2, 3]], (aff @ [1, 2, 3, 1])[:3] * 1e-3)
+print("voxel_world_coords applies the full affine (oblique, off-centre) and converts mm to m")
+
+te_m = np.array([0.0021, 0.0034, 0.0057, 0.0081])
+f_true = rng.uniform(-300, 300, size=500); phi0 = rng.uniform(-np.pi, np.pi, size=500)
+ph = np.angle(np.exp(1j * (phi0[:, None] + 2 * np.pi * f_true[:, None] * te_m[None])))
+ph = ph + 0.01 * rng.normal(size=ph.shape)
+fm = fieldmap_multiecho(ph, te_m)
+assert np.max(np.abs(fm - f_true)) < 3.0
+print(f"fieldmap_multiecho: wrapped phase with nonzero phi0 and uneven TEs, max error {np.max(np.abs(fm - f_true)):.2f} Hz")
+print("all B5 hardware helper tests passed")
 

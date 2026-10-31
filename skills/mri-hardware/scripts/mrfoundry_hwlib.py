@@ -131,8 +131,76 @@ def fit_harmonics(field, x, y, z, mask=None, order=2, r0=1.0):
 
 
 # --------------------------------------------------------------------------- shimming
+def voxel_world_coords(affine, shape, mm_to_m=1e-3):
+    """World coordinates (x, y, z) of voxel centres from a NIfTI affine (RAS+ mm), converted to metres.
+    Use these (not voxel indices) to evaluate shim or harmonic basis polynomials when the basis is defined
+    in scanner/world coordinates; oblique or off-centre slabs make index-based bases wrong."""
+    ijk = np.indices(tuple(shape[:3]), dtype=float).reshape(3, -1)
+    xyz = np.asarray(affine, float)[:3, :3] @ ijk + np.asarray(affine, float)[:3, 3:4]
+    return tuple((xyz * mm_to_m).reshape((3,) + tuple(shape[:3])))
+
+
+def fieldmap_multiecho(phase, te, magnitude=None, max_abs_hz=None):
+    """Frequency offset (Hz) from multi-echo phase [..., n_echo] with phase(TE) = phi0 + 2 pi f TE.
+
+    Temporal unwrapping without spatial unwrapping: the first echo pair gives f0 (unambiguous for
+    |f| < 1/(2 dTE_min)); later echoes are unwrapped against the prediction phi(TE_1) + 2 pi f TE; then
+    f is the magnitude^2-weighted least-squares slope with a free intercept (phi0 need not be zero).
+    Echo times need not be uniform. If |f| can exceed 1/(2 dTE_min), also unwrap spatially (Laplacian or
+    region growing) or use a shorter echo spacing. max_abs_hz (optional): candidates beyond it are folded
+    back by one wrap of the first pair. Returns f with the shape of phase[..., 0]."""
+    te = np.asarray(te, float); order = np.argsort(te); te = te[order]
+    ph = np.asarray(phase, float)[..., order]
+    w = np.ones_like(ph) if magnitude is None else np.asarray(magnitude, float)[..., order] ** 2
+    d0 = np.angle(np.exp(1j * (ph[..., 1] - ph[..., 0])))
+    f = d0 / (2 * np.pi * (te[1] - te[0]))
+    if max_abs_hz is not None:
+        period = 1.0 / (te[1] - te[0])
+        f = np.where(f > max_abs_hz, f - period, np.where(f < -max_abs_hz, f + period, f))
+    unw = np.empty_like(ph); unw[..., 0] = ph[..., 0]
+    for e in range(1, len(te)):
+        pred = unw[..., 0] + 2 * np.pi * f * (te[e] - te[0])
+        unw[..., e] = pred + np.angle(np.exp(1j * (ph[..., e] - pred)))
+        sw = w[..., :e + 1].sum(-1); tb = (w[..., :e + 1] * te[:e + 1]).sum(-1) / sw
+        num = (w[..., :e + 1] * (te[:e + 1] - tb[..., None]) * unw[..., :e + 1]).sum(-1)
+        den = (w[..., :e + 1] * (te[:e + 1] - tb[..., None]) ** 2).sum(-1)
+        f = num / np.maximum(den, 1e-30) / (2 * np.pi)
+    return f
+
+
+def bounded_lsq_kkt(A, b, x, lower, upper, tol=1e-6):
+    """Optimality (KKT) check for min ||A x - b||^2 subject to lower <= x <= upper.
+
+    Run it on ANY bounded fit you wrote yourself (shim currents, nonnegative weights, box-constrained
+    parameters). With g = A^T (A x - b): free variables need g = 0, variables at the lower bound g >= 0
+    and at the upper bound g <= 0; the cost must not exceed scipy's BVLS reference. Typical bugs it
+    catches: solving a column-scaled problem and forgetting to unscale x, bounds applied to scaled
+    variables, a sign flip in the target, early solver termination. Returns a dict with ok, details
+    and the reference solution."""
+    from scipy.optimize import lsq_linear
+    A = np.asarray(A, float); b = np.asarray(b, float); x = np.asarray(x, float)
+    lo = np.broadcast_to(np.asarray(-np.inf if lower is None else lower, float), x.shape)
+    hi = np.broadcast_to(np.asarray(np.inf if upper is None else upper, float), x.shape)
+    g = A.T @ (A @ x - b)
+    scale = np.linalg.norm(A, axis=0) * max(np.linalg.norm(b), 1e-30)
+    gn = g / np.maximum(scale, 1e-30)
+    span = np.maximum(np.abs(hi - lo), 1.0); span[~np.isfinite(span)] = 1.0
+    at_lo = np.isfinite(lo) & (x - lo <= 1e-7 * span)
+    at_hi = np.isfinite(hi) & (hi - x <= 1e-7 * span)
+    free = ~(at_lo | at_hi)
+    viol = np.zeros_like(gn)
+    viol[free] = np.abs(gn[free]); viol[at_lo] = np.maximum(-gn[at_lo], 0); viol[at_hi] = np.maximum(gn[at_hi], 0)
+    outside = np.maximum(lo - x, 0) + np.maximum(x - hi, 0)
+    ref = lsq_linear(A, b, bounds=(lo, hi), method="bvls").x
+    cost, ref_cost = float(np.sum((A @ x - b) ** 2)), float(np.sum((A @ ref - b) ** 2))
+    ok = bool(viol.max(initial=0) <= tol and outside.max(initial=0) <= 1e-9 * span.max() and cost <= ref_cost * (1 + 1e-6) + 1e-30)
+    return {"ok": ok, "max_kkt_violation": float(viol.max(initial=0)), "bound_violation": float(outside.max(initial=0)),
+            "cost": cost, "reference_cost": ref_cost, "at_lower": np.flatnonzero(at_lo).tolist(),
+            "at_upper": np.flatnonzero(at_hi).tolist(), "reference_x": ref}
+
+
 def shim_currents(field, mask, channel_maps, lower=None, upper=None, total_abs_limit=None,
-                  free_offset=True, weights=None):
+                  free_offset=True, weights=None, current_during_acquisition=None):
     """Bounded least-squares shim currents.
 
     field: measured off-resonance map (Hz or T) to cancel; channel_maps: (C, ...) field
@@ -142,11 +210,20 @@ def shim_currents(field, mask, channel_maps, lower=None, upper=None, total_abs_l
     centre frequency), which costs no current. Minimizes
     || w * (field + sum_i c_i map_i + offset) ||_2 over the mask.
     Returns currents, offset and std/RMS of the field before and after inside the mask.
+
+    Absolute currents: if the measured map already contains the field of currents I_acq that were
+    on during the acquisition, pass current_during_acquisition=I_acq. The solver then minimizes
+    field + sum_i (I_new_i - I_acq_i) map_i + offset, the bounds apply to the ABSOLUTE new currents
+    I_new (returned as "currents" and "absolute_currents"), and "frequency_adjust" = -offset is the
+    centre-frequency change d for the convention residual = field + ... - d. "kkt" reports the
+    optimality check (bounded_lsq_kkt); a solution with kkt["ok"] False is not the constrained optimum.
     """
     from scipy.optimize import lsq_linear, minimize
     m = np.asarray(mask, bool)
     f = np.asarray(field, float)[m]
     A = np.stack([np.asarray(cm, float)[m] for cm in channel_maps], 1)
+    if current_during_acquisition is not None:
+        f = f - A @ np.asarray(current_during_acquisition, float)   # field with all shim channels at zero
     C = A.shape[1]
     w = np.ones_like(f) if weights is None else np.asarray(weights, float)[m]
     lo = np.full(C, -np.inf) if lower is None else np.broadcast_to(np.asarray(lower, float), (C,)).copy()
@@ -190,8 +267,12 @@ def shim_currents(field, mask, channel_maps, lower=None, upper=None, total_abs_l
     cur = sol[:C]
     off = float(sol[C]) if free_offset else 0.0
     after = f + A @ cur + off
-    return {"currents": cur, "offset": off, "std_before": float(np.std(f)), "std_after": float(np.std(after)),
-            "rms_before": float(np.sqrt(np.mean(f ** 2))), "rms_after": float(np.sqrt(np.mean(after ** 2))),
+    kkt = bounded_lsq_kkt(Aw, yw, sol, lo, hi) if total_abs_limit is None else None
+    f0 = f if current_during_acquisition is None else f + A @ np.asarray(current_during_acquisition, float)
+    return {"currents": cur, "absolute_currents": cur, "offset": off, "frequency_adjust": -off, "kkt": kkt,
+            "std_before": float(np.std(f0)), "std_after": float(np.std(after)),
+            "rms_after_with_offset": float(np.sqrt(np.mean(after ** 2))),
+            "rms_before": float(np.sqrt(np.mean(f0 ** 2))), "rms_after": float(np.sqrt(np.mean(after ** 2))),
             "at_bound": [bool(np.isclose(c, lo[i]) or np.isclose(c, hi[i])) for i, c in enumerate(cur)],
             "sum_abs_current": float(np.sum(np.abs(cur)))}
 

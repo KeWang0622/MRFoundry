@@ -7,6 +7,7 @@ Usage (all expectations optional; SI units, gradients in mT/m, slew in T/m/s):
   inversion recovery:  --ti 0.1 0.5 1.5 --min-inversion-spoil-cycles 2
   balanced SSFP:       --balanced --rf-phase-cycle 180 --te-half-tr
   spin echo / CPMG:    --te 0.08 --cpmg
+  EPI (one or more lines per excitation): --epi --te 0.03 --echo-spacing 0.0008 --matrix 64 64 --fov 0.22
 
 What is measured from the read-back file (fresh pp.Sequence().read):
   * RF roles: excitation (< 135 deg), inversion (large pulse not followed by an ADC before the next
@@ -20,7 +21,11 @@ What is measured from the read-back file (fresh pp.Sequence().read):
   * Net gradient area per axis between consecutive excitation centres (balanced sequences: ~0).
   * Spoiler area after each inversion (to the next excitation) and after the last ADC of each TR
     (to the next RF), per axis, in cycles/m; with --slice-thickness also cycles per slice.
-  * Cartesian sampling: per ADC, kx grid (i - n//2)/fov, readout polarity, ky line set and order.
+  * Cartesian sampling: per ADC, kx grid (i - n//2)/fov, readout polarity, ky line set and order; the kx error
+    is also reported separately for even and odd lines (EPI: an odd-only error means the ADC is not centred on the
+    flat top of reversed lines, or the ramp/prephaser area differs by polarity).
+  * --epi: TE per EXCITATION = its centre -> the sample closest to kx = ky = 0 over the whole echo train (without
+    --epi every ADC line counts as its own echo); echo spacing = start-to-start time of consecutive lines.
   * Peak gradient/slew per axis and Pulseq timing errors. Number of excitations before the first ADC.
 Prints a compact summary and one PASS/FAIL line per expectation (add --json for every measurement);
 exits 1 on any FAIL. From Python: rep, checks = measure('sequence.seq', te=..., ...).
@@ -71,7 +76,7 @@ def _uniq(x, nd=4):
 def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoil=None, max_grad=None, max_slew=None,
             gamma=42.576e6, ti=None, balanced=False, rf_phase_cycle=None, te_half_tr=False, cpmg=False,
             min_spoil_cycles=None, min_inversion_spoil_cycles=None, matrix=None, fov=None, monopolar=False,
-            balanced_tol=0.05):
+            balanced_tol=0.05, epi=False, echo_spacing=None):
     """Return (report, checks). te/ti: list or float (s); tr (s); flip (deg, excitations); matrix (nx, ny); fov m or (fx, fy)."""
     te = None if te is None else list(np.atleast_1d(te)); ti = None if ti is None else list(np.atleast_1d(ti))
     s = pp.Sequence(); s.read(str(seq_path)); rep = {}; checks = []
@@ -121,6 +126,18 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
             j = int(np.argmin(np.linalg.norm(seg, axis=1))); p = int(np.searchsorted(ec, tt[0], side='right') - 1)
             owner.append(p); tes.append(float(tt[j] - ec[p]) if p >= 0 else float('nan'))
             a.update(k=seg, t=tt, kmin_index=j, kmin=float(np.linalg.norm(seg[j])), owner=p)
+        if epi:                                       # TE per excitation: the k = 0 sample of the whole train
+            tes = []
+            for p in sorted(set(owner)):
+                if p < 0: continue
+                own = [a for a in adcs if a['owner'] == p]
+                kmins = [a['kmin'] for a in own]; a0 = own[int(np.argmin(kmins))]
+                tes.append(float(a0['t'][a0['kmin_index']] - ec[p]))
+            sp = []
+            for p in sorted(set(owner)):
+                st = np.array([a['t'][0] for a in adcs if a['owner'] == p])
+                if len(st) > 1: sp.extend(np.diff(st))
+            rep['echo_spacing_ms'] = _uniq(np.array(sp) * 1e3, 4)
         rep['adc_samples'] = _uniq([a['adc'].num_samples for a in adcs], 0)
         rep['excitations_before_first_adc'] = int(adcs[0]['owner'])   # unacquired (dummy/preparation) excitations
         rep['te_ms'] = _uniq(np.array(tes) * 1e3, 4)
@@ -171,13 +188,15 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
     # --- Cartesian sampling
     if matrix is not None and fov is not None and adcs:
         nx, ny = int(matrix[0]), int(matrix[-1]); fx, fy = (fov, fov) if np.isscalar(fov) else (fov[0], fov[-1])
-        exp_kx = (np.arange(nx) - nx // 2) / fx; errs = []; pol = []; kys = []
+        exp_kx = (np.arange(nx) - nx // 2) / fx; errs = []; pol = []; kys = []; par = {0: [], 1: []}; line = {}
         for a in adcs:
             if a['adc'].num_samples != nx: errs.append(np.inf); continue
             kx = a['k'][:, 0]; pol.append(np.sign(np.median(np.diff(kx))))
-            errs.append(float(min(np.max(abs(kx - exp_kx)), np.max(abs(kx[::-1] - exp_kx)))))
+            e = float(min(np.max(abs(kx - exp_kx)), np.max(abs(kx[::-1] - exp_kx))))
+            errs.append(e); j = line.get(a['owner'], 0); line[a['owner']] = j + 1; par[j % 2].append(e)
             kys.append(float(np.median(a['k'][:, 1])))
         rep['kx_grid_max_err_cycles_m'] = float(max(errs)); rep['readout_polarities'] = _uniq(pol, 0)
+        rep['kx_grid_max_err_by_line_parity'] = {'even': max(par[0]) if par[0] else None, 'odd': max(par[1]) if par[1] else None}
         rep['ky_lines'] = len(_uniq(kys, 3)); exp_ky = (np.arange(ny) - ny // 2) / fy
         rep['ky_set_max_err_cycles_m'] = float(max(min(abs(exp_ky - v)) for v in kys)) if kys else None
         rep['ky_order_first_lines'] = [round(v * fy, 3) for v in kys[:6]]
@@ -208,8 +227,13 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
         chk('post-readout z spoiler (cycles per slice)', rep['post_readout_z_spoiler_cycles_per_slice_min'] >= min_spoil_cycles - 1e-3, rep['post_readout_z_spoiler_cycles_per_slice_min'])
     if min_inversion_spoil_cycles is not None and slice_thickness:
         chk('post-inversion z spoiler (cycles per slice)', inv and rep.get('post_inversion_z_spoiler_cycles_per_slice_min', 0) >= min_inversion_spoil_cycles - 1e-3, rep.get('post_inversion_z_spoiler_cycles_per_slice_min'))
+    if echo_spacing is not None and adcs:
+        es = rep.get('echo_spacing_ms', [])
+        chk('EPI echo spacing: constant and <= requested', len(es) == 1 and es[0] <= echo_spacing * 1e3 + 1e-3, es)
     if matrix is not None and fov is not None and adcs:
-        chk('Cartesian kx grid (i - n//2)/fov', rep['kx_grid_max_err_cycles_m'] <= .01, rep['kx_grid_max_err_cycles_m'])
+        chk('Cartesian kx grid (i - n//2)/fov', rep['kx_grid_max_err_cycles_m'] <= .01,
+            {'max': rep['kx_grid_max_err_cycles_m'], 'by_line_parity': rep['kx_grid_max_err_by_line_parity'],
+             'hint': 'odd-only error: ADC not centred on reversed flat tops; both: prephaser or k=0 sample index'})
         chk('Cartesian ky line set', rep['ky_set_max_err_cycles_m'] is not None and rep['ky_set_max_err_cycles_m'] <= .01, rep['ky_set_max_err_cycles_m'])
         if monopolar: chk('monopolar readout', rep['readout_polarities'] == [1.0], rep['readout_polarities'])
     supplied = {'max_grad': max_grad, 'max_slew': max_slew, 'te': te, 'tr': tr, 'ti': ti, 'flip': flip,
@@ -217,6 +241,8 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
                 'min_spoil_cycles': min_spoil_cycles, 'matrix and fov': matrix if fov is not None else None}
     if ti is not None:
         supplied['min_inversion_spoil_cycles'] = min_inversion_spoil_cycles
+    if epi:
+        supplied['echo_spacing'] = echo_spacing
     rep['not_checked'] = [k for k, v in supplied.items() if v is None]
     rep['never_checked_here'] = ['steady state before the first acquired line (count and convergence of preparation repetitions)',
                                  'inversion or preparation cycle period and recovery between cycles',
@@ -234,13 +260,15 @@ def main():
     ap.add_argument('--min-spoil-cycles', type=float); ap.add_argument('--min-inversion-spoil-cycles', type=float)
     ap.add_argument('--matrix', type=int, nargs='+'); ap.add_argument('--fov', type=float, nargs='+'); ap.add_argument('--monopolar', action='store_true')
     ap.add_argument('--max-grad', type=float, help='mT/m'); ap.add_argument('--max-slew', type=float, help='T/m/s')
+    ap.add_argument('--epi', action='store_true', help='several lines per excitation: TE to the k=0 sample of the train')
+    ap.add_argument('--echo-spacing', type=float, help='EPI: maximum line period (s); must be constant')
     ap.add_argument('--gamma', type=float, default=42.576e6); ap.add_argument('--json', action='store_true', help='print all measurements')
     a = ap.parse_args()
     fov = None if a.fov is None else (a.fov[0] if len(a.fov) == 1 else a.fov)
     rep, checks = measure(a.seq, a.te, a.tr, a.flip, a.slice_thickness, a.rf_spoil, a.max_grad, a.max_slew, a.gamma, a.ti,
                           a.balanced, a.rf_phase_cycle, a.te_half_tr, a.cpmg, a.min_spoil_cycles, a.min_inversion_spoil_cycles,
-                          a.matrix, fov, a.monopolar)
-    keys = ['rf_roles', 'excitation_flip_deg', 'te_ms', 'tr_ms', 'ti_ms', 'refocusing_after_excitation_ms', 'excitations_before_first_adc',
+                          a.matrix, fov, a.monopolar, epi=a.epi, echo_spacing=a.echo_spacing)
+    keys = ['rf_roles', 'excitation_flip_deg', 'te_ms', 'echo_spacing_ms', 'tr_ms', 'ti_ms', 'refocusing_after_excitation_ms', 'excitations_before_first_adc',
             'adc_samples', 'excitation_slice_fwhm_mm', 'peak_grad_mT_m', 'peak_slew_T_m_s']
     out = rep if a.json else {k: rep[k] for k in keys if k in rep}
     print(json.dumps({k: v for k, v in out.items() if k != 'checks'}, default=float))

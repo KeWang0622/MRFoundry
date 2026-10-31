@@ -48,3 +48,80 @@ if __name__ == '__main__':
     test_extras()
     print('all extra quantitative model tests passed')
 
+
+
+# ---- B5 additions -------------------------------------------------------------------------------------------
+rng = np.random.default_rng(5)
+
+# DCE: exact piecewise-linear convolution vs fine-grid quadrature on NON-uniform frames
+t = np.sort(np.r_[0.0, rng.uniform(0, 300, 70), 300.0]); t = np.unique(np.round(t, 3))
+cp = 6.0 * (t / 30) * np.exp(1 - t / 30) * (t > 0) + 0.8 * (1 - np.exp(-t / 120))
+def ref_conv(t, x, k, up=400):
+    out = np.zeros_like(t)
+    for n in range(1, len(t)):
+        u = np.linspace(t[0], t[n], up * n + 1); xu = np.interp(u, t, x)
+        out[n] = np.trapezoid(xu * np.exp(-k * (t[n] - u)), u)
+    return out
+for k in (1e-6, 0.002, 0.05, 0.5):
+    assert np.allclose(conv_exp_pwlinear(t, cp, k), ref_conv(t, cp, k), rtol=2e-4, atol=2e-6)
+print("conv_exp_pwlinear matches fine-grid quadrature on non-uniform frames (k from 1e-6 to 0.5 /s)")
+
+# DCE: recover extended-Tofts parameters from curves simulated by quadrature (independent of the fitter)
+truth = [(0.25 / 60, 0.30, 0.05), (0.08 / 60, 0.15, 0.02), (0.6 / 60, 0.45, 0.10)]
+ct = np.array([kt * ref_conv(t, cp, kt / ve) + vp * cp for kt, ve, vp in truth])
+res = fit_tofts(t, ct, cp)
+for i, (kt, ve, vp) in enumerate(truth):
+    assert abs(res['ktrans'][i] / kt - 1) < 0.01 and abs(res['ve'][i] / ve - 1) < 0.01 and abs(res['vp'][i] - vp) < 0.002, (res, truth)
+print("fit_tofts recovers Ktrans, ve and vp within 1% from independently simulated, non-uniformly sampled curves")
+
+# DCE: SPGR signal -> concentration inversion
+t10 = np.array([1.4, 0.9]); tr, fa, r1 = 0.004, 15.0, 4.5
+conc = np.array([[0, 0, 0.5, 1.2, 0.8], [0, 0, 0.1, 0.3, 0.2]])
+r1t = 1 / t10[:, None] + r1 * conc; e1 = np.exp(-tr * r1t); a = np.deg2rad(fa)
+sig = 1234.0 * np.sin(a) * (1 - e1) / (1 - np.cos(a) * e1)
+c_est, m0_est = spgr_concentration(sig, t10, tr, fa, r1, n_baseline=2)
+assert np.allclose(c_est, conc, atol=1e-9) and np.allclose(m0_est, 1234.0)
+print("spgr_concentration inverts the SPGR equation exactly with M0 from the baseline frames")
+
+# ASL: GKM reduces to the consensus single-delay formula when PLD >= ATT; timing-convention trap
+pld = np.array([0.6, 1.1, 1.6, 2.1, 2.6]); tau = 1.8
+dm = asl_gkm_pcasl(2.0, 1.2, tau, cbf=55.0, m0=900.0)
+assert abs(asl_cbf_pcasl(dm, 900.0, pld=2.0, label_duration=tau) - 55.0) < 1e-9
+print("asl_gkm_pcasl equals the white-paper single-delay model for PLD >= ATT")
+cbf_t = rng.uniform(20, 90, 400); att_t = rng.uniform(0.7, 2.0, 400); m0v = rng.uniform(800, 1200, 400)
+slice_off = rng.choice([0.0, 0.1, 0.25, 0.4], 400)
+P = pld[None, :] + slice_off[:, None]
+Y = asl_gkm_pcasl(P, att_t[:, None], tau, cbf_t[:, None], m0v[:, None])
+cbf_e, att_e = fit_asl_multidelay(Y, m0v, P, tau)
+ident = att_t > P[:, 0]                                   # ATT longer than the shortest effective delay
+assert np.max(np.abs(cbf_e / cbf_t - 1)) < 0.01 and np.max(np.abs(att_e - att_t)[ident]) < 0.006
+assert np.all(att_e[~ident] >= att_t[~ident] - 1e-9) and np.all(att_e[~ident] <= P[~ident, 0] + 0.006)
+print("fit_asl_multidelay recovers CBF and ATT with per-voxel effective delays (PLD + slice timing);"
+      " ATT below the shortest delay is reported as its upper bound, CBF stays exact")
+# the frequent error: treating PLD as the time since the START of labelling (drops tau) shifts ATT and CBF
+Yw = asl_gkm_pcasl(P - tau, att_t[:, None] - tau, tau, cbf_t[:, None], m0v[:, None])
+assert np.allclose(Yw * np.exp(-tau / 1.65), Y)
+print(f"  (a model that uses PLD as time since label start matches these curves only with ATT shifted by -{tau} s and CBF scaled by exp(-tau/T1b))")
+
+# ASL: volume grouping by delay is independent of volume order
+vols = np.zeros((2, 8)); ty = ['control', 'label'] * 4; dl = [0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0]
+vols[:, [0, 4]] = 10; vols[:, [1, 5]] = 9; vols[:, [2, 6]] = 10; vols[:, [3, 7]] = 9.5
+perm = rng.permutation(8)
+u1, d1 = asl_pairs_by_delay(vols, ty, dl); u2, d2 = asl_pairs_by_delay(vols[:, perm], np.array(ty)[perm], np.array(dl)[perm])
+assert np.allclose(u1, [0.5, 1.0]) and np.allclose(d1, [[1.0, 0.5]] * 2) and np.allclose(d2, d1)
+assert abs(m0_finite_tr(1.0, 2.5, 1.3) - 1 / (1 - np.exp(-2.5 / 1.3))) < 1e-12
+print("asl_pairs_by_delay is order independent; m0_finite_tr applies the saturation-recovery correction")
+
+# Rician-aware dictionary matching at low SNR (EPG T2 with imperfect refocusing)
+esp, ne = 0.01, 16
+D, Pp = epg_t2_dictionary(ne, esp, np.geomspace(0.02, 0.3, 120), np.linspace(0.45, 1.0, 56))
+t2_true, b1_true, sigma = 0.07, 0.55, 0.04
+clean = epg_cpmg(ne, esp, t2_true, refocus_deg=180 * b1_true, excite_deg=90 * b1_true)
+noisy = np.abs(clean[None] + sigma * (rng.normal(size=(400, ne)) + 1j * rng.normal(size=(400, ne))))
+p_plain, _, _ = fit_dictionary(noisy, D, Pp)
+p_rice, _, _ = fit_dictionary(noisy, D, Pp, noise_sigma=sigma)
+b_plain = np.median(p_plain[:, 0]) / t2_true - 1; b_rice = np.median(p_rice[:, 0]) / t2_true - 1
+assert abs(b_rice) < abs(b_plain) and abs(b_rice) < 0.05, (b_plain, b_rice)
+print(f"fit_dictionary(noise_sigma=...) removes most of the noise-floor T2 bias at low SNR: {b_plain:+.1%} -> {b_rice:+.1%}")
+print("all B5 quantitative model tests passed")
+

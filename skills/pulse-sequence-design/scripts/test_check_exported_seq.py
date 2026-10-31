@@ -115,3 +115,44 @@ def main():
 if __name__ == '__main__':
     main()
 
+
+
+# ---- B5: single-shot EPI (add_epi_readout) and the EPI-aware checks ------------------------------------------
+from mrfoundry_seqlib import add_epi_readout
+def epi(path, n=16, fov=0.22, dwell=10e-6, te=0.02, odd_adc_shift=0.0):
+    sysm = make_system(); seq = pp.Sequence(sysm)
+    rf, gz, reph = slice_selective_excitation(sysm, 90, 5e-3); gzr = pp.make_trapezoid('z', area=reph, system=sysm)
+    probe = add_epi_readout(pp.Sequence(sysm), sysm, n, n, fov, dwell, extra_blocks=[gzr])
+    seq.add_block(rf, gz)
+    d = fill_delay(te, (pp.calc_duration(rf, gz) - rf_center_time(rf)) + probe['t_k0'], what='TE')
+    if d > 0: seq.add_block(pp.make_delay(d))
+    if not odd_adc_shift:
+        info = add_epi_readout(seq, sysm, n, n, fov, dwell, extra_blocks=[gzr])
+    else:                                               # broken variant: ADC delayed on reversed lines only
+        info = probe; read, adc = probe['read'], probe['adc']
+        pre = -(read.area - read.flat_area) / 2 - (n // 2 + 0.5) / fov
+        seq.add_block(pp.make_trapezoid('x', area=pre, system=sysm), pp.make_trapezoid('y', area=-(n // 2) / fov, system=sysm), gzr)
+        blip = pp.make_trapezoid('y', area=1 / fov, system=sysm); blip.delay = read.rise_time + read.flat_time
+        adc_odd = pp.make_adc(n, dwell=dwell, delay=adc.delay + odd_adc_shift, system=sysm)
+        for j in range(n):
+            ev = [read if j % 2 == 0 else pp.scale_grad(read, -1), adc if j % 2 == 0 else adc_odd]
+            seq.add_block(*(ev + ([blip] if j < n - 1 else [])))
+    ok, err = seq.check_timing(); assert ok, err[:2]; seq.write(path); return path, info
+
+with tempfile.TemporaryDirectory() as d:
+    p, info = epi(os.path.join(d, 'epi.seq'))
+    rep, checks = measure(p, te=0.02, matrix=(16, 16), fov=0.22, epi=True, echo_spacing=info['line_period'] + 1e-9,
+                          max_grad=32, max_slew=130, slice_thickness=5e-3)
+    assert all(c['pass'] for c in checks), [c for c in checks if not c['pass']]
+    assert len(rep['te_ms']) == 1 and abs(rep['te_ms'][0] - 20.0) < 1e-2, rep['te_ms']
+    rep2, _ = measure(p, te=0.02, matrix=(16, 16), fov=0.22)
+    assert len(rep2['te_ms']) == 16                     # without --epi every line counts as an echo
+    print(f"EPI ok: TE {rep['te_ms']} ms at the kx = ky = 0 sample, echo spacing {rep['echo_spacing_ms']} ms, kx grid exact on both parities")
+    p, info = epi(os.path.join(d, 'epi_bad.seq'), odd_adc_shift=10e-6)
+    rep, checks = measure(p, te=0.02, matrix=(16, 16), fov=0.22, epi=True)
+    kx = [c for c in checks if c['item'].startswith('Cartesian kx')][0]
+    par = rep['kx_grid_max_err_by_line_parity']
+    assert not kx['pass'] and par['even'] < 0.01 and par['odd'] > 1, par
+    print(f"EPI with a mis-timed ADC on reversed lines: kx FAIL, error only on odd lines {par}")
+print("all B5 sequence checks passed")
+

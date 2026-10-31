@@ -51,7 +51,9 @@ def direct_dft_signed(image, encoding_sign=-1):
 
 # ------------------------------------------------------------------ noise
 def noise_covariance(noise):
-    """Noise covariance (C x C) from noise-only samples [coil, samples] (any trailing shape)."""
+    """Noise covariance Psi = E[n n^H] (C x C) from noise-only samples [coil, samples] (any trailing shape).
+    Convention trap: with samples as ROWS (X of shape [samples, coil]) the same matrix is X.T @ X.conj() / N;
+    X.conj().T @ X gives conj(Psi), which whitens incorrectly whenever coils are correlated (complex Psi)."""
     n = np.asarray(noise).reshape(np.shape(noise)[0], -1)
     n = n - n.mean(axis=1, keepdims=True)
     return (n @ n.conj().T) / n.shape[1]
@@ -64,6 +66,56 @@ def prewhiten(data, psi):
     W = np.linalg.inv(np.linalg.cholesky(psi))
     d = np.asarray(data)
     return np.tensordot(W, d, axes=(1, 0))
+
+
+def scale_noise_covariance(psi_noise, noise_dwell, imaging_dwell):
+    """Per-sample noise covariance at the imaging dwell time from a noise scan at another dwell time.
+    Thermal noise variance per sample is proportional to the receiver bandwidth 1/dwell (ideal filter), so
+    Psi_imaging = Psi_noise * noise_dwell / imaging_dwell. Averaging N acquisitions divides it by N."""
+    return np.asarray(psi_noise) * (float(noise_dwell) / float(imaging_dwell))
+
+
+def snr_units_image(coil_images, psi, n_averages=1, sens=None):
+    """Coil combination in SNR units (Kellman & McVeigh, MRM 2005).
+
+    coil_images [coil, ...]: images from ORTHONORMAL transforms (ifft2c) of k-space that was averaged over
+    n_averages; psi: per-sample noise covariance of ONE acquisition at the imaging dwell. With sens given, the
+    result is the optimal B1-weighted combination sqrt(2) s^H Phi^-1 x / sqrt(s^H Phi^-1 s), Phi = psi/n_averages,
+    whose real and imaginary noise each have SD 1, so |image| is SNR (signal over the SD of one real noise
+    component). Without sens, the root-sum-of-squares of the prewhitened images times sqrt(2) is returned
+    (same scale at high SNR). Check with a pseudo-replica or pure-noise run: the noise SD of the real part must be
+    1. Never estimate the noise SD from low-magnitude pixels of the same image: selecting by magnitude biases it."""
+    x = np.asarray(coil_images, complex); phi = np.asarray(psi, complex) / float(n_averages)
+    W = np.linalg.inv(np.linalg.cholesky(phi))
+    xw = np.tensordot(W, x, axes=(1, 0))
+    if sens is None:
+        return np.sqrt(2.0) * np.sqrt(np.sum(np.abs(xw) ** 2, axis=0))
+    sw = np.tensordot(W, np.asarray(sens, complex), axes=(1, 0))
+    num = np.sum(np.conj(sw) * xw, axis=0); den = np.sqrt(np.sum(np.abs(sw) ** 2, axis=0))
+    return np.sqrt(2.0) * num / np.maximum(den, 1e-30)
+
+
+def orientation_check(image, reference, mask=None, max_shift=2):
+    """Which of the 8 flips/transposes (and small circular shifts) best matches a reference, by correlation of
+    magnitudes. Use after reconstructing data simulated from a known asymmetric object with an independent
+    forward model (direct_dft_signed, or direct_dft in mrfoundry_reconlib for non-Cartesian k): anything other
+    than ('identity', (0, 0)) means an axis-order, sign or centring error. Returns (name, shift, corr, table)."""
+    a = np.abs(np.asarray(image)); r = np.abs(np.asarray(reference))
+    cands = {'identity': a, 'flip_y': a[::-1], 'flip_x': a[:, ::-1], 'flip_xy': a[::-1, ::-1]}
+    if a.shape[0] == a.shape[1]:
+        cands.update({'transpose': a.T, 'transpose_flip_y': a.T[::-1], 'transpose_flip_x': a.T[:, ::-1],
+                      'transpose_flip_xy': a.T[::-1, ::-1]})
+    m = np.ones(r.shape, bool) if mask is None else np.asarray(mask, bool)
+    def corr(u, v):
+        u = u[m] - u[m].mean(); v = v[m] - v[m].mean()
+        return float(np.sum(u * v) / np.sqrt(np.sum(u * u) * np.sum(v * v) + 1e-30))
+    table = []
+    for name, c in cands.items():
+        for dy in range(-max_shift, max_shift + 1):
+            for dx in range(-max_shift, max_shift + 1):
+                table.append((corr(np.roll(c, (dy, dx), (0, 1)), r), name, (dy, dx)))
+    table.sort(key=lambda z: -z[0])
+    return table[0][1], table[0][2], table[0][0], table[:5]
 
 
 # ------------------------------------------------------------------ readout oversampling
@@ -223,6 +275,46 @@ def pseudo_replica(recon, ksp, psi=None, n_rep=50, seed=0, mask=None):
         reps.append(recon(ksp + z))
     reps = np.array(reps)
     return np.std(reps - base[None], axis=0)
+
+
+def coil_maps_from_acs(ksp, acs_mask, eps=1e-3):
+    """Smooth coil sensitivity estimate from the calibration region: images of the Hann-windowed ACS k-space
+    ([coil, ky, kx] with acs_mask [ky] or [ky, kx] marking calibration samples), normalized so that
+    sum_c |s_c|^2 = 1 (then a SENSE image is in RSS-like units). Use ESPIRiT (BART/SigPy) when available; this is
+    a dependable numpy fallback for CG-SENSE."""
+    k = np.asarray(ksp, complex); m = np.asarray(acs_mask, bool)
+    if m.ndim == 1:
+        m = np.repeat(m[:, None], k.shape[-1], 1)
+    rows = np.flatnonzero(m.any(1)); cols = np.flatnonzero(m.any(0))
+    w = np.zeros(m.shape)
+    w[np.ix_(rows, cols)] = np.outer(np.hanning(len(rows) + 2)[1:-1], np.hanning(len(cols) + 2)[1:-1])
+    low = ifft2c(k * (w * m)[None])
+    r = np.sqrt(np.sum(np.abs(low) ** 2, 0))
+    return low / np.maximum(r, eps * r.max())[None]
+
+
+def rank_reconstructions(candidates, truth, sens, mask, psi=None, n_rep=3, seed=0, region=None, noise_scale=1.0):
+    """Choose a reconstruction (method, regularization, iterations) by its error on SIMULATED data with your
+    sampling and your measured noise, not by data consistency: an exactly data-consistent result keeps all the
+    noise. candidates: dict name -> function(ksp [coil, ky, kx] with zeros at unsampled positions) -> image;
+    truth: complex or magnitude image on the output grid (e.g. a smooth phantom or a high-SNR reference);
+    sens: coil maps used to simulate; mask: sampled positions [ky, kx] or [ky]; psi: noise covariance
+    (prewhitened data: identity). Returns a list of (mean NRMSE, name) sorted best first (NRMSE with scale fit,
+    magnitudes, inside region)."""
+    rng = np.random.default_rng(seed); s = np.asarray(sens, complex); C = s.shape[0]
+    m = np.asarray(mask, bool)
+    if m.ndim == 1:
+        m = np.repeat(m[:, None], s.shape[-1], 1)
+    L = np.eye(C) if psi is None else np.linalg.cholesky(psi)
+    clean = fft2c(s * np.asarray(truth)[None]) * m[None]
+    reg = np.ones(m.shape, bool) if region is None else np.asarray(region, bool)
+    scores = {k: [] for k in candidates}
+    for _ in range(n_rep):
+        z = (rng.normal(size=clean.shape) + 1j * rng.normal(size=clean.shape)) / np.sqrt(2)
+        y = clean + noise_scale * np.tensordot(L, z, axes=(1, 0)) * m[None]
+        for k, f in candidates.items():
+            scores[k].append(nrmse(np.abs(truth), np.abs(f(y)), reg)[0])
+    return sorted((float(np.mean(v)), k) for k, v in scores.items())
 
 
 # ------------------------------------------------------------------ evaluation
