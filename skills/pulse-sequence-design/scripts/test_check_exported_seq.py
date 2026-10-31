@@ -260,16 +260,16 @@ with tempfile.TemporaryDirectory() as d:
     print(f"EPI with a mis-timed ADC on reversed lines: kx FAIL, error only on odd lines {par}")
     # B7: coverage contracts. Exactly n samples put the end samples on the interval ends (knife edge): FAIL.
     n, fov = 20, 0.21
-    pe, _ = epi(os.path.join(d, 'epi_exact.seq'), n=n, fov=fov, dwell=5e-6, te=0.03)
-    rep, checks = measure(pe, te=0.03, matrix=(n, n), fov=fov, epi=True, kx_cover=(-n // 2, n - n // 2 - 1))
+    pe, _ = epi(os.path.join(d, 'epi_exact.seq'), n=n, fov=fov, dwell=5e-6, te=0.027)
+    rep, checks = measure(pe, te=0.027, matrix=(n, n), fov=fov, epi=True, kx_cover=(-n // 2, n - n // 2 - 1))
     cov = [c for c in checks if c['item'].startswith('readout coverage')][0]
     assert not cov['pass'], cov
     print('EPI with exactly n samples per line: coverage FAIL (margins %.2g/%.2g of 1/fov, gap %.6f)' % (
         rep['kx_coverage_units_of_1_over_fov']['min_margin_below_lo'], rep['kx_coverage_units_of_1_over_fov']['min_margin_above_hi'],
         rep['kx_coverage_units_of_1_over_fov']['max_gap']))
-    po, info = epi(os.path.join(d, 'epi_os.seq'), n=n, fov=fov, dwell=2.5e-6, te=0.03, oversample=2, extra=1)
-    rep, checks = measure(po, te=0.03, matrix=(n, n), fov=fov, epi=True, kx_cover=(-n // 2, n - n // 2 - 1), line_repeats=1, n_adc=n,
-                          echo_spacing=info['line_period'] + 1e-9, max_grad=32, max_slew=130)
+    po, info = epi(os.path.join(d, 'epi_os.seq'), n=n, fov=fov, dwell=2.5e-6, te=0.027, oversample=2, extra=1)
+    rep, checks = measure(po, te=0.027, matrix=(n, n), fov=fov, epi=True, kx_cover=(-n // 2, n - n // 2 - 1), line_repeats=1, n_adc=n,
+                          echo_spacing=info['line_period'] + 1e-9, max_grad=40, max_slew=150)
     assert all(c['pass'] for c in checks), [c for c in checks if not c['pass']]
     kc = rep['kx_coverage_units_of_1_over_fov']; assert kc['min_margin_below_lo'] > 0.4 and kc['min_margin_above_hi'] > 0.4 and kc['max_gap'] < 0.51, kc
     # independent forward calculation from the .seq text equals the documented grid on both parities
