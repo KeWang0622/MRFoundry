@@ -2,6 +2,10 @@
 
 [MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
+**Summary.** Fit DTI on b <= 1000 s/mm² shells (DKI on all shells including the higher ones), convert gradient tables in one declared
+frame (FSL bvecs: array axes with x negated when det(affine) > 0) and verify with a forward phantom, report
+MD in stated units, and QC residuals and outliers. Helpers: `scripts/gradient_frames.py`.
+
 Read for diffusion-weighted data, tensor fitting, ADC/FA/MD maps or a diffusion
 study plan. Diffusion MRI measures water displacement statistics; it is not a
 generative diffusion model. DENSE measures coherent tissue displacement and

@@ -1,199 +1,61 @@
 ---
 name: mri-research
 description: >-
-  The generalist navigator and curated reference hub for MRI research — use it
-  for orientation, cross-domain questions, and the canonical paper / course /
-  dataset / toolbox across the whole MRI pipeline: MR physics and k-space,
-  acquisition, reconstruction, image analysis, quantitative MRI and
-  spectroscopy, hardware, data formats, and publishing. This hub also OWNS
-  image-level analysis, which no sibling skill covers: fMRI and GLM analysis,
-  BIDS, DICOM/NIfTI conversion, FreeSurfer, segmentation, registration,
-  fMRIPrep, relaxometry and QSM mapping. Reach for it when a question spans
-  several MRI sub-areas or it isn't clear which specialist applies; it defers to
-  the focused sibling skills when one is squarely in-lane. Triggers: MRI /
-  magnetic-resonance research questions, "where do I find…", "which MRI tool /
-  paper / dataset for…", k-space orientation, BIDS, NIfTI, DICOM, fMRI,
-  FreeSurfer, registration, segmentation, QSM. It points to external repos,
-  papers, and datasets rather than bundling them.
+  Start here when an MRI task matches no specialist skill, spans several
+  areas, or involves image analysis or spectroscopy: DICOM/NIfTI/BIDS and
+  orientation, registration, segmentation, FreeSurfer, fMRI/GLM, MRS
+  quantification (tested alignment, fitting and water referencing), papers,
+  datasets and tools. Holds shared references (tool setup, formats,
+  evaluation, model calibration, project memory) and routes to the specialist
+  skills.
 metadata:
   author: Ke Wang
-  version: "0.8.0"
+  version: "0.11.0"
 ---
 
 # MRFoundry: MRI Research Hub
 
+Find the row that matches the task, open that one file or skill, and work from it.
 
-## Papers and textbooks
+## Route
 
-See the [annotated reading list](references/reading-list.md) for primary papers,
-textbooks, publication details, direct source links and what each source supports.
-Use the [repo-wide reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md) to navigate across skills.
-When using a method, cite its specific source; distinguish paper evidence from
-software instructions and current venue/safety requirements.
+| Task | Go to |
+|---|---|
+| Pulse sequences, RF and gradient waveforms, Pulseq export, Bloch simulation | `pulse-sequence-design` skill |
+| k-space to images; T1/T2/T2*, EPG, ASL, DCE and QSM maps | `mri-reconstruction` skill (QSM: `scripts/qsm_lib.py`) |
+| Diffusion (ADC, DTI/DKI, fractions, tractography) | `diffusion-mri` skill |
+| Hardware, shimming, field maps, SAR, PNS, receiver noise | `mri-hardware` skill |
+| Trained reconstruction networks | `deep-learning-recon` skill |
+| Studies, statistics, deliverable checks, papers | `mri-research-workflow` skill (always run its finish check) |
+| **MR spectroscopy quantification** | `scripts/mrs_lib.py` here (below) and [quantitative MRI and spectroscopy](references/quantitative-and-spectroscopy.md) |
+| Image analysis: registration, segmentation, FreeSurfer, fMRI/GLM, fMRIPrep | [analysis and processing](references/analysis-processing.md) |
+| File formats (DICOM, NIfTI orientation, BIDS, ISMRMRD, twix, P-file) and datasets | [data and formats](references/data-and-formats.md) |
+| Fixed settings of a model-based estimate | [model calibration](references/model-calibration.md) |
+| Installing or repairing tools (only if an install fails) | [tool setup](references/tool-setup.md) |
+| Method comparisons, evidence and citation audits | [evaluation and attribution](references/evaluation-and-attribution.md) |
+| Physics and courses; sequences overview; reconstruction methods; software; hardware overview | [foundations](references/foundations.md), [sequences and trajectories](references/sequences-and-trajectories.md), [recon methods](references/recon-methods.md), [tools](references/tools.md), [hardware](references/hardware.md) |
+| Papers, APIs, venues and writing; image contrast primer | [literature access](references/literature-access.md), [publishing](references/publishing.md), [radiology primer](references/radiology-primer.md), [reading list](references/reading-list.md) |
+| Project notes across sessions (only when `.mrfoundry/INDEX.md` exists or the user asks); optional `AGENTS.md` pointer | [project memory](references/project-memory.md), [agents pointer](references/agents-pointer.md) |
 
+## MR spectroscopy (`scripts/mrs_lib.py`; `--api` lists signatures; worked example in `scripts/test_mrs_lib.py`)
 
-## Evaluation and original-source credit
-
-Before comparing methods or making scientific claims, identify the intended task
-and the evidence needed to support it. Use the [evaluation and attribution guide](references/evaluation-and-attribution.md)
-for evaluation planning, failure tests and auditing citations in the actual output.
-Report benchmark metrics when relevant; do not infer universal superiority or
-clinical validity from them. Cite original methods and software separately, and
-flag claims whose source or support could not be verified.
-
-## Project research memory
-
-If only the legacy `.mri-research/` notebook exists, migrate it with the project
-memory initializer before creating new notes; preserve existing evidence.
-For project experiments, read `.mrfoundry/INDEX.md` when present and retrieve
-only relevant preferences, environment notes and evidence-linked lessons. After
-meaningful runs or corrections, record outcomes, failures, limitations and next
-steps; revise scoped lessons without erasing history. Keep user preferences
-separate from scientific findings. Use the [project memory workflow](references/project-memory.md)
-to initialize the folder or connect project `CLAUDE.md` / `AGENTS.md`. If the hub
-is absent, retrieve the reference from the official skill repository.
-
-## Tool setup before execution
-
-For any application this skill uses, check for a compatible installation and
-follow the official upstream's setup instructions. Within the authorized task,
-install missing dependencies yourself in an isolated environment, run a small
-upstream example, then execute the user's workflow. Do not leave routine setup
-to the user or replace a missing tool with a homemade numerical implementation.
-Use established simulators/solvers; write only necessary configuration and glue.
-If blocked, report the actual obstacle and an established alternative.
-Read the [tool setup guide](references/tool-setup.md) when installing,
-repairing, or choosing an execution environment. If the hub is not installed,
-retrieve that reference from the official `KeWang0622/MRFoundry` repository.
-
-## What this is (and is not)
-
-A fluent, well-oriented guide to the whole MRI research landscape — from spins
-to statistics. It exists to make the MRI community's collective knowledge
-accessible to any researcher through their AI agent. Its job is **navigation and
-judgment**, not storage:
-
-- **It IS** a curated, verified map of the MRI ecosystem — the physics and
-  courses, the acquisition and pulse-sequence tools, the reconstruction methods
-  and toolboxes, the data formats and datasets, the analysis/processing
-  pipelines, quantitative MRI and spectroscopy, the hardware community, and how
-  to find literature — plus practical "which tool for which task" guidance.
-- **It is NOT** a copy of any dataset, textbook, or codebase. MRI datasets run
-  from hundreds of GB to multiple TB and are governed by data-use agreements;
-  textbooks are copyrighted. So this **points** to where things live and
-  teaches how to use them.
-
-Act like a knowledgeable lab-mate: someone who can say "for that, read Uecker's
-ESPIRiT paper and use `bart ecalib`," "that raw file is Siemens twix — convert
-with `siemens_to_ismrmrd`," or "preprocess that with fMRIPrep, then analyze in
-nilearn."
-
-## The expert team (sibling skills)
-
-This hub is the generalist. The repo also ships focused expert agents — install
-any with `npx skills add KeWang0622/MRFoundry --skill <name>`:
-
-- **mri-research-workflow** — end-to-end research assistant: idea → experiments →
-  paper (CVPR/MICCAI/MRM); orchestrates the experts below and helps write it.
-- **mri-reconstruction** — actionable BART/SigPy reconstruction ("reconstruct
-  this k-space" — it runs the pipeline).
-- **diffusion-mri** — DTI/DKI/NODDI, preprocessing (topup/eddy), tractography.
-- **pulse-sequence-design** — Pulseq/PyPulseq + Siemens/GE/Philips sequence dev.
-- **deep-learning-recon** — unrolled / self-supervised / diffusion recon, fastMRI.
-- **mri-hardware** — low-field, open-source consoles, coils, MR safety.
-
-Use this hub for orientation and cross-domain questions; hand off to an expert
-when the task is squarely in its lane.
+1. Put metabolite and water acquisitions in the same physical units: divide each by its stored scale factor
+   (and by the number of transients if summed). Check the frequency convention (`ppm_axis`; conjugate if the
+   data use the opposite sign).
+2. `spectral_registration` aligns transients (frequency and phase drift), then average.
+3. `lcm_fit(fid, basis, dwell, f0, carrier_ppm, ppm_range)`: global shift, phase, Lorentzian and Gaussian
+   broadening, nonnegative amplitudes, spline baseline; inspect the fit, residual and baseline figure.
+4. `water_amplitude` (time-zero water signal) and `water_referenced_concentration` (Gasparovic et al. 2006):
+   water content and relaxation per compartment, metabolite relaxation, protons, and division by the
+   metabolite-containing tissue fraction (CSF has water but no metabolites).
+5. Validate scaling on a simulated voxel built from the basis with known concentrations (the test shows how).
 
 ## Ground rules
 
-1. **Links can rot.** Every link here was verified when written, but repos move
-   and course pages change. When a link is load-bearing for the user's next
-   action, confirm it resolves (a quick fetch or `gh repo view`) before
-   presenting it as a step.
-2. **Respect dataset licenses.** Many datasets (fastMRI, HCP, UK Biobank, ADNI,
-   OASIS, BraTS) require registration or a data-use agreement. Never help
-   circumvent an access gate; point to the official application. OpenNeuro and
-   IXI are examples of fully-open sources.
-3. **Do not reproduce copyrighted text.** Summarize and cite; don't paste
-   textbook chapters or paywalled paper bodies.
-4. **Image reading is orientation, not diagnosis.** The reading primer helps
-   you follow research talk about contrast; it is not clinical or diagnostic
-   advice. Refer real-scan interpretation to a radiologist.
-5. **Prefer primary sources.** Cite the paper; use awesome-lists as living
-   indexes to discover what's new.
+Confirm load-bearing links resolve; respect dataset licences and access gates; summarize rather than copy
+copyrighted text; image reading here is orientation, not diagnosis; cite primary sources.
 
-## Core mental model (the MRI pipeline)
+## Before you finish
 
-Keep this spine in mind so you can place any MRI question:
-
-1. **Physics & contrast** — spins, RF excitation, T1/T2/T2\* relaxation, proton
-   density; a *sequence* weights these to create contrast.
-2. **Spatial encoding & k-space** — gradients encode position; the scanner
-   samples **k-space** (the Fourier transform of the image) along a
-   *trajectory* (Cartesian/radial/spiral/EPI). Center = contrast/SNR, edges =
-   detail.
-3. **Acquisition** — the *pulse sequence* (RF + gradient events) sets the
-   contrast and trajectory; runs on *hardware* (magnet, gradients, RF coils,
-   console).
-4. **Raw data** — stored in a vendor raw format (Siemens twix, GE P-file,
-   Philips raw) or the vendor-neutral **ISMRMRD**.
-5. **Reconstruction** — turn k-space into images. Undersampling speeds scans but
-   aliases; recon undoes it with parallel imaging, compressed sensing, low-rank,
-   or learned/diffusion priors. Formally: measured `y = A x + noise`, with
-   `A = (sampling) ∘ (Fourier/NUFFT) ∘ (coil sensitivities)`; solve
-   `argmin_x ||A x − y||² + λ R(x)` — each method is a choice of `A`, `R`, and
-   optimizer.
-6. **Images → analysis** — converted to DICOM/NIfTI, organized (BIDS), then
-   registered, segmented, and analyzed (structural, functional, diffusion).
-7. **Quantification** — parameter maps (relaxometry, QSM, perfusion, MT), MR
-   fingerprinting, and spectroscopy (metabolite concentrations).
-8. **Interpretation & applications** — contrast reading, neuro/cardiac/body/MSK
-   applications (research orientation, not diagnosis).
-
-## How to route a question
-
-Open the reference file matching the need (each is self-contained; open only
-what you need):
-
-| If the user is asking about… | Open |
-|---|---|
-| MR physics, k-space intuition, contrast, where to *learn* (courses, handbooks, free books) | [`references/foundations.md`](references/foundations.md) |
-| Designing/programming pulse sequences and k-space trajectories, RF pulse design, simulation | [`references/sequences-and-trajectories.md`](references/sequences-and-trajectories.md) |
-| DWI/DTI, ADC/FA/MD, gradients, diffusion preprocessing and model QC | [Diffusion skill and its DWI/DTI guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/diffusion-mri/SKILL.md) |
-| MRI hardware: low-field, open-source consoles, coils, gradients, safety | [`references/hardware.md`](references/hardware.md) |
-| Which reconstruction method/paper applies + the landmark reading list (parallel imaging → CS → low-rank → DL → diffusion → fingerprinting) | [`references/recon-methods.md`](references/recon-methods.md) |
-| Which reconstruction *software* to use and how (BART, SigPy, MIRT.jl, MRIReco.jl, torchkbnufft, DIRECT, Gadgetron) | [`references/tools.md`](references/tools.md) |
-| Raw & image data formats (ISMRMRD, twix/P-file/Philips, DICOM, NIfTI, BIDS) and where to get data | [`references/data-and-formats.md`](references/data-and-formats.md) |
-| Image analysis & processing: structural, fMRI, diffusion MRI, segmentation, registration, pipelines | [`references/analysis-processing.md`](references/analysis-processing.md) |
-| Quantitative MRI (relaxometry, QSM, perfusion/ASL, MT) and MR spectroscopy | [`references/quantitative-and-spectroscopy.md`](references/quantitative-and-spectroscopy.md) |
-| Programmatic access to papers/data — APIs, keys, and MCP servers | [`references/literature-access.md`](references/literature-access.md) |
-| Writing up & submitting — MR journals, LaTeX templates, reporting standards, abstracts, preprints | [`references/publishing.md`](references/publishing.md) |
-| How MR image contrast reads (T1/T2/FLAIR/DWI) — background orientation only | [`references/radiology-primer.md`](references/radiology-primer.md) |
-| **Actually running a reconstruction** on real k-space (BART/SigPy, `.cfl`, twix, ISMRMRD) | hand off to the **mri-reconstruction** skill — this hub explains, that skill executes |
-
-**What this hub owns outright:** image-level analysis has no sibling expert, so
-fMRI/GLM, BIDS organization, DICOM↔NIfTI conversion, FreeSurfer, segmentation,
-registration, fMRIPrep, and relaxometry/QSM mapping are *this* skill's
-responsibility — answer them here via
-[`references/analysis-processing.md`](references/analysis-processing.md) and
-[`references/quantitative-and-spectroscopy.md`](references/quantitative-and-spectroscopy.md)
-rather than looking for a specialist that doesn't exist. (Diffusion MRI is the
-exception: `diffusion-mri` owns it.)
-
-Cross-cutting requests pull from several files — e.g., "reproduce this spiral CS
-paper on real scanner data" → `recon-methods` (method) + `tools` (BART/SigPy) +
-`data-and-formats` (read the raw file) + `sequences-and-trajectories` (spiral).
-
-## Living indexes (when this is stale)
-
-MRI research moves fast. When you need something newer or a topic not covered
-here, these community-maintained lists are the best next hop:
-
-- Awesome MRI Reconstruction — https://github.com/Joyies/Awesome-MRI-Reconstruction
-- Awesome DL-based CS-MRI — https://github.com/mosaf/Awesome-DL-based-CS-MRI
-- Awesome MRI (broad) — https://github.com/dangom/awesome-mri
-- ISMRM (the field's professional society & annual meeting) — https://www.ismrm.org
-
-For finding papers programmatically, use the APIs/MCP servers in
-`references/literature-access.md`.
+    python .agents/skills/mri-research-workflow/scripts/finish_check.py --require <every deliverable name> \
+        --rerun "python <entrypoint> <documented arguments with {inputs} and {out}>" --inputs <input folder>

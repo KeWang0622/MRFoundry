@@ -2,6 +2,9 @@
 
 [MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
+**Summary.** Background and citations for sequence families and trajectories; to build, check and simulate a
+sequence use the `pulse-sequence-design` skill (tested builders and the exported-sequence checker).
+
 Use this when the user wants to design/program a pulse sequence, define or
 analyze a k-space trajectory, or simulate an acquisition. Sequence design and
 trajectory design are two sides of the same coin: the gradient waveforms in the

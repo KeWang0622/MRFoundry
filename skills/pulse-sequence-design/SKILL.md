@@ -1,163 +1,76 @@
 ---
 name: pulse-sequence-design
 description: >-
-  MRI pulse-sequence and k-space trajectory design expert, vendor-aware. Use for
-  designing or programming pulse sequences and gradient/RF waveforms, k-space
-  trajectory design (Cartesian, radial, spiral, EPI, golden-angle), RF pulse
-  design, SMS/multiband, sequence simulation, and vendor sequence development on
-  Siemens (IDEA/ICE), GE (EPIC/Orchestra), and Philips (Paradise). Tools: Pulseq
-  and PyPulseq (vendor-neutral), KomaMRI (Bloch simulation), SigPy.RF (RF design).
-  Triggers: pulse sequence, Pulseq, PyPulseq, gradient waveform, slew rate, PNS,
-  k-space trajectory, spiral/radial/EPI, diffusion encoding, DENSE, RF pulse, SLR, multiband/SMS, IDEA,
-  EPIC, Orchestra, `.seq`. This skill designs the *acquisition*; to reconstruct
-  the data it produces, hand off to mri-reconstruction (classical) or
-  deep-learning-recon (trained).
+  Read before designing, exporting or simulating an MRI acquisition: pulse
+  sequences, RF and gradient waveforms, k-space trajectories (Cartesian,
+  radial, spiral, EPI), Pulseq/PyPulseq files and Bloch simulation of the
+  export. Prevents silent errors in realized TE/TR/TI and echo spacing,
+  spoiling and receive phase, gradient balance, slice selection, steady state
+  and sampling grids. Ships tested builders, an exported-sequence checker and
+  an end-to-end example.
 metadata:
   author: Ke Wang
-  version: "0.8.0"
+  version: "0.11.0"
 ---
 
-# MRFoundry: Pulse Sequence & Trajectory Design
+# MRFoundry: Pulse Sequence and Trajectory Design
 
-You are a pulse-sequence designer. Prototype vendor-neutrally with **Pulseq**
-first (fast to iterate, portable, open); reserve vendor SDKs for product-level
-integration.
+Prototype vendor-neutrally with PyPulseq. Treat the build script as a claim and the exported `.seq` as the
+evidence: measure the export, simulate the export, reconstruct from the simulation of the export.
 
+## Fast path (sequence -> Bloch simulation -> reconstruction -> report)
 
-## Papers and textbooks
+1. Setup: `pip install pypulseq sigpy matplotlib` plus a Bloch simulator that reads Pulseq files. The tested
+   route is KomaMRI through `komamripy` (`simulate_with_koma` in `scripts/mrfoundry_seqlib.py`): start
+   `python .agents/skills/pulse-sequence-design/scripts/test_seqlib.py` in the background at once, because the first call installs and compiles
+   Julia (about 3.5 min on a fresh depot). If that warm-up fails or has not finished within about 6 minutes,
+   switch to MRzeroCore (`pip install MRzeroCore`, pure Python) rather than waiting; never replace the
+   simulator with a homemade Bloch routine or an ideal-signal formula.
+2. Copy `scripts/example_pipeline.py` (build, read back, waveform figure, simulation of the exported file,
+   archive with hashes, standalone reconstruction, orientation check, report) and swap in a family builder:
+   spoiled GRE in `scripts/test_seqlib.py`; inversion-recovery GRE, balanced SSFP, spin echo and single-shot
+   EPI (`add_epi_readout`) in `scripts/test_check_exported_seq.py`. `python .agents/skills/pulse-sequence-design/scripts/mrfoundry_seqlib.py --api`
+   lists signatures. Helpers: `make_system`,
+   `slice_selective_excitation`, `centered_readout` (sample n//2 exactly at k = 0), `fill_delay` (exact
+   intervals on the block raster), `RFSpoiler`, `spoiler_area`, `kspace_grid`, `plot_waveforms`.
+3. Run the checker with EVERY requested parameter until all lines PASS and NOT CHECKED is empty; verify each
+   VERIFY SEPARATELY item yourself or by simulating the exported file:
+   `python .agents/skills/pulse-sequence-design/scripts/check_exported_seq.py sequence.seq --te ... --matrix NX NY --fov F ...`
+4. Grid samples with `kspace_grid` (it uses the exported k, so line order and polarity cannot be mixed up),
+   fit maps with `mri-reconstruction/scripts/qmri_fit.py`, check orientation on a simulated asymmetric
+   object, and report values measured from the export.
+5. One script per stage with built-in checks; keep printed output short (it is re-read every turn).
 
-See the [annotated reading list](references/reading-list.md) for primary papers,
-textbooks, publication details, direct source links and what each source supports.
-Use the [repo-wide reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md) to navigate across skills.
-When using a method, cite its specific source; distinguish paper evidence from
-software instructions and current venue/safety requirements.
+## Checker flags by family
 
+| Family | Rule | Flags |
+|---|---|---|
+| All | TE = excitation RF centre -> ADC sample at k = 0; TR = excitation-centre spacing; delays on the block raster, never a collapsed minimum | `--te --tr --flip --max-grad --max-slew` |
+| Slice selection | sinc/SLR pulse WITH its slice-select gradient, then the rephaser; hard pulses are non-selective | `--slice-thickness` |
+| Spoiled GRE | quadratic RF spoiling `inc=(inc+117)%360; phase=(phase+inc)%360`; each ADC takes its excitation's phase; spoiler after the last ADC (cycles per slice); multi-echo monopolar needs flyback | `--rf-spoil 117 --min-spoil-cycles 2 --monopolar` |
+| Inversion recovery | TI = inversion centre -> excitation centre; spoil after the inversion; state the inversion repetition period; fit a + b exp(-TI/T1) or a dictionary of the exact timing | `--ti ... --min-inversion-spoil-cycles 2` |
+| Spin echo / TSE | refocusing centre at TE/2; CPMG phase = excitation ± 90°; equal crushers | `--te --cpmg` |
+| Balanced SSFP | zero net area per TR on all axes; TE = TR/2; 0/180 phase cycling with matching ADC phase; steady state by catalyzation or dummies (simulate early vs late lines) | `--balanced --rf-phase-cycle 180 --te-half-tr` |
+| EPI | TE to the kx = ky = 0 sample of the whole train; constant line period; no ramp sampling unless allowed; odd lines are the same kx grid traversed backwards (an odd-only kx error means the ADC is not centred on reversed flat tops) | `--epi --echo-spacing ES --matrix NX NY --fov F` |
+| Sampling | k = 0 sample index, line set and order, polarity, 1/FOV spacing against any sampling contract | `--matrix NX NY --fov F` |
 
-## Project research memory
+Report realized TE/TR/TI/echo spacing/flip/slice width/spoiling read back from the file; the block raster can
+move realized timing by up to half a raster step from the request.
 
-If only the legacy `.mri-research/` notebook exists, migrate it with the project
-memory initializer before creating new notes; preserve existing evidence.
-For project experiments, read `.mrfoundry/INDEX.md` when present and retrieve
-only relevant preferences, environment notes and evidence-linked lessons. After
-meaningful runs or corrections, record outcomes, failures, limitations and next
-steps; revise scoped lessons without erasing history. Keep user preferences
-separate from scientific findings. Use the [project memory workflow](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/project-memory.md)
-to initialize the folder or connect project `CLAUDE.md` / `AGENTS.md`. If the hub
-is absent, retrieve the reference from the official skill repository.
+## Before you finish
 
-## Tool setup before execution
+    python .agents/skills/mri-research-workflow/scripts/finish_check.py --require <every deliverable name> \
+        --rerun "python <entrypoint> <documented arguments with {inputs} and {out}>" --inputs <input folder>
 
-For any application this skill uses, check for a compatible installation and
-follow the official upstream's setup instructions. Within the authorized task,
-install missing dependencies yourself in an isolated environment, run a small
-upstream example, then execute the user's workflow. Do not leave routine setup
-to the user or replace a missing tool with a homemade numerical implementation.
-Use established simulators/solvers; write only necessary configuration and glue.
-If blocked, report the actual obstacle and an established alternative.
-Read the [tool setup guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/tool-setup.md) when installing,
-repairing, or choosing an execution environment. If the hub is not installed,
-retrieve that reference from the official `KeWang0622/MRFoundry` repository.
+All deliverables in the folder the task names (workspace root if none). If the simulation could not run,
+say so plainly; never fabricate simulated or reconstructed outputs.
 
-## Pulseq-first workflow
+## More (open only when needed)
 
-1. **Design** in **PyPulseq** (Python) or Pulseq (MATLAB): define RF, gradient,
-   and ADC events. https://github.com/pulseq/pypulseq · https://github.com/pulseq/pulseq
-2. **Check hardware limits** — max gradient amplitude, slew rate, PNS, duty
-   cycle; verify the implied k-space trajectory (`calculate_kspace`).
-3. **Simulate** with **KomaMRI** (GPU Bloch, Pulseq-compatible):
-   https://github.com/JuliaHealth/KomaMRI.jl — install Julia/KomaMRI or its official
-   Python interface `komamripy`, run an upstream example, then feed the exported
-   `.seq` + phantom to the simulator and inspect the signal. Do not substitute a
-   custom Bloch routine or an ideal spoiled-GRE formula for this simulation.
-4. **Export** a `.seq` file → play via the vendor's Pulseq interpreter (on **GE**,
-   **TOPPE** — https://github.com/toppeMRI/toppe). New to Pulseq? The
-   **MR-Physics-with-Pulseq** tutorials
-   (https://github.com/pulseq/MR-Physics-with-Pulseq) are the best on-ramp.
-5. **Reconstruct** the acquired raw data (convert to ISMRMRD, then hand to the
-   `mri-reconstruction` agent).
-
-## Trajectories
-
-Cartesian (simple, robust), radial (motion-robust, golden-angle for dynamics),
-spiral (efficient but off-resonance-sensitive), EPI (fast, distortion-prone),
-3D / stack-of-stars / cones. Non-Cartesian needs an accurate trajectory for
-reconstruction (NUFFT).
-
-## EPI, diffusion preparation and DENSE
-
-Read the hub’s [sequence families and detailed guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/sequences-and-trajectories.md#sequence-families-contrast-encoding-and-readout)
-for GRE, SE/FSE, inversion recovery, bSSFP, EPI and DENSE. Keep contrast,
-readout and fitted models distinct. Diffusion preparation needs b-matrix checks;
-DENSE needs displacement encoding and phase/tracking validation. Verify the
-simulator supports diffusion or motion before claiming those effects were tested.
-For DWI/DTI fitting and QC, use `diffusion-mri`.
-
-## RF pulse design
-
-**SigPy.RF** (`sigpy.mri.rf`): SLR, adiabatic, multiband, small/large-tip, and
-parallel-transmit (pTx) pulses. Also **pulpy**
-(https://github.com/jonbmartin/pulpy, Python RF/gradient design),
-**Spectral-Spatial-RF-Pulse-Design**
-(https://github.com/LarsonLab/Spectral-Spatial-RF-Pulse-Design), **Multiband-RF**
-(https://github.com/mriphysics/Multiband-RF), and **kpTx**
-(https://github.com/wgrissom/kpTx) for k-space pTx. Mind RF power / SAR for
-high-flip or refocusing-heavy designs.
-
-## SMS / multiband and controlled aliasing
-
-Excite multiple slices at once; unalias with coil sensitivities. The trick in all
-of these is to *shift* aliasing so coil sensitivities can separate it, buying back
-g-factor:
-- **Blipped-CAIPI** (SMS-EPI) — Setsompop K, Gagoski BA, Polimeni JR, Witzel T,
-  Wedeen VJ, Wald LL. *Magn Reson Med* 2012;67(5):1210–1224.
-  doi:10.1002/mrm.23097.
-- **CAIPIRINHA** — the parallel-imaging ancestor of the idea (shifted phase-encode
-  sampling across slices, then across partitions): Breuer FA, et al. *Magn Reson
-  Med* 2005;53(3):684–691 (multi-slice, doi:10.1002/mrm.20401) and
-  2006;55(3):549–556 (2D/volumetric, doi:10.1002/mrm.20787).
-- **Wave-CAIPI** — corkscrew (sinusoidal Gy/Gz) readout spreads aliasing in all
-  three directions for very high 3D acceleration at near-unity g-factor.
-  Bilgic B, Gagoski BA, Cauley SF, et al. *Magn Reson Med* 2015;73(6):2152–2162.
-  doi:10.1002/mrm.25347.
-
-Product SMS sequences from CMRR: https://www.cmrr.umn.edu/multiband/
-
-## Gradient optimization, GIRF & simulation
-
-- **Time-optimal gradients:** **GrOpt** (https://github.com/mloecher/gropt) and
-  [SigPy's **min_time_gradient**](https://sigpy.readthedocs.io/en/latest/generated/sigpy.mri.rf.min_time_gradient.html),
-  which implements Lustig, Kim and Pauly's method (TMI 2008;
-  doi:10.1109/TMI.2008.922699). Use the documented units; this is the SigPy
-  implementation, not the former MATLAB/C download. Validate PNS with
-  **safe_pns_prediction** (https://github.com/filip-szczepankiewicz/safe_pns_prediction).
-- **GIRF (gradient impulse response):** **MRI-gradient/GIRF**
-  (https://github.com/MRI-gradient/GIRF); Julia spiral recon with correction:
-  **GIRFReco.jl** (https://github.com/BRAIN-TO/GIRFReco.jl).
-- **Bloch / EPG simulation** (besides KomaMRI): **JEMRIS**, **MRiLab**,
-  **sycomore**, **EPG-X** (EPG with MT/exchange), and **MRzero-Core**
-  (differentiable Bloch + Pulseq for sequence optimization).
-
-## Vendor environments (proprietary — engage your vendor research agreement)
-
-- **Siemens** — **IDEA** (sequence build, C++) + **ICE** (recon). Pulseq
-  interpreter available.
-- **GE** — **EPIC** (sequence) + **Orchestra** (recon SDK). Pulseq interpreter
-  available.
-- **Philips** — **Paradise / GOAL-C** research pulse-programming. Pulseq
-  interpreter available (more recent).
-- Online/inline recon across vendors: **Gadgetron**
-  (https://github.com/gadgetron/gadgetron), fed via ISMRMRD.
-
-Steer method prototyping to Pulseq; use the native SDK only when you need vendor
-integration or features Pulseq can't express.
-
-## Hand-offs
-
-- **Reconstructing what you just acquired** — classical (ESPIRiT/SENSE/GRAPPA,
-  PICS, NUFFT gridding of your trajectory): `mri-reconstruction`, which runs
-  BART/SigPy. Trained/unrolled/diffusion recon: `deep-learning-recon`.
-- **Hardware limits, coils, consoles, SAR/PNS measurement:** `mri-hardware`.
-- **Physics background and the citation trail:** the `mri-research` hub.
-
-Deeper reference:
-https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/sequences-and-trajectories.md
+- Trajectories, EPI/diffusion/DENSE preparation, RF pulse design (SigPy.RF), SMS/CAIPI, time-optimal gradients,
+  PNS, GIRF, other simulators, vendor SDKs: [tools and families](references/tools-and-families.md).
+- Physics and citations: [reading list](references/reading-list.md),
+  [sequences and trajectories](../mri-research/references/sequences-and-trajectories.md).
+- Setup problems: [tool setup guide](../mri-research/references/tool-setup.md). Project notes (only with
+  `.mrfoundry/INDEX.md`): [project memory](../mri-research/references/project-memory.md).
+- Reconstruction: `mri-reconstruction`. Hardware limits and safety: `mri-hardware`.

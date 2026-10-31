@@ -12,7 +12,8 @@ for workflow explanations. `logo.svg` remains a compatible default-symbol alias.
 
 See [BRAND.md](BRAND.md) for all variants, colors and usage. Exact image-edit
 prompts and the native SVG design specification are saved alongside the assets.
-The PNGs were edited using the built-in OpenAI image generation tool; the compact
-vector emblem was authored directly in SVG. These are decorative illustrations,
+The PNGs were edited using the built-in OpenAI image generation tool. The compact
+flat vector emblem was restored on 2026-10-30 from the two-tone identity, because it
+reads more cleanly beside the wordmark than the three-quarter emblem. These are decorative illustrations,
 not scanner photographs, patient data or scientific simulations. Preserve their
 aspect ratios and the substantial magnet depth when reusing them.

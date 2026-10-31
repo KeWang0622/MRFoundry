@@ -2,6 +2,10 @@
 
 [MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
+**Summary.** For images (not k-space): convert with dcm2niix, keep the affine and orientation, organize as
+BIDS, then use established pipelines (fMRIPrep, FreeSurfer, ANTs/FSL registration, nilearn for GLMs). Report
+the statistical unit and the exact pipeline versions.
+
 Use this once you have **images** (not raw k-space): organizing, converting,
 registering, segmenting, and analyzing MR data. This is the "after
 reconstruction" half of MRI research — structural, functional, and diffusion

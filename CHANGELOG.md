@@ -5,6 +5,70 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] — 2026-10-31: lean retrieval, finish check and tested helpers
+
+- All skills 0.11.0: SKILL.md files rewritten as short route tables (task -> one helper or reference),
+  silent-error checks and a single "before you finish" command; detail moved to on-demand references
+  (mri-reconstruction `raw-data.md`, `bart-sigpy.md`, `quantitative-maps.md`; pulse-sequence-design
+  `tools-and-families.md`; mri-hardware `landscape.md`; diffusion-mri `preprocessing-and-models.md`). Shared
+  boilerplate removed; tool setup is read only when an install fails; every helper module prints its API with
+  `--api`; descriptions shortened (catalog 5.4 KB -> 3.2 KB). SKILL.md total 88 KB -> 36 KB.
+- mri-research-workflow: `finish_check.py` (+ test): required deliverables in one folder, environment
+  record, clean-folder rerun of the entrypoint, JSON keys, map-median unit ranges.
+- mri-reconstruction: `qmri_fit.py` adds exact piecewise-linear Tofts convolution and grid fit
+  (`conv_exp_pwlinear`, `fit_tofts`), SPGR signal-to-concentration, ASL general kinetic model with explicit
+  time origin and multi-delay fit, M0 finite-TR correction, order-independent ASL pairing, Rician-aware
+  dictionary matching; `mrfoundry_rawrecon.py` adds SNR units, dwell-time noise scaling, coil maps from ACS,
+  reconstruction ranking by simulated error, orientation check; new `qsm_lib.py` (+ test): Laplacian/temporal
+  field estimation, PDF and V-SHARP, CG and TKD dipole inversion, synthetic head, analytic-sphere kernel test.
+- mri-hardware: absolute shim currents with acquisition currents, `bounded_lsq_kkt` optimality check,
+  `voxel_world_coords`, `fieldmap_multiecho`.
+- pulse-sequence-design: `add_epi_readout`; checker `--epi` (TE to the train's k = 0 sample, echo spacing,
+  kx error by line parity); simulator fallback to MRzeroCore when KomaMRI warm-up stalls.
+- mri-research: `mrs_lib.py` (+ test): spectral registration, linear-combination fit, water referencing.
+
+Motivated by A/B development trials (skill-hurt and both-fail cases); no task instance values. On six new held-out
+tasks (spectroscopy, ASL, CEST, fat-water, EPI diffusion, fMRI; interim), 0.11.0 completed more paired trials
+than 0.9-0.10 and than the agent without skills.
+
+## [0.10.0] — 2026-10-30: detail checks, tested pipelines and study statistics (not released separately)
+
+- pulse-sequence-design 0.10.0: `check_exported_seq.py` classifies excitation/inversion/refocusing pulses and checks
+  TE, TR, TI, spin-echo refocusing timing and CPMG phase, quadratic RF spoiling or 0/180 phase cycling with receive
+  phase, balanced moments per TR, inversion and post-readout spoilers, slice selection, Cartesian sampling and
+  hardware limits (compact PASS/FAIL output; tests cover spoiled GRE, inversion-recovery GRE, bSSFP and spin echo,
+  each with failing variants). New tested `example_pipeline.py` (build, check, waveforms, KomaMRI simulation of the
+  export, archive, standalone reconstruction, orientation check, report); `kspace_grid` and `plot_waveforms`
+  helpers; fast-path and per-family checklists; description covers simulation and relaxometry studies.
+- mri-reconstruction 0.10.0: `qmri_fit.py` (+ test): mono-exponential, 3-parameter inversion recovery with
+  polarity restoration, VFA, dictionary fits; Ernst, inversion-recovery and bSSFP (Bloch fixed point) signals.
+- diffusion-mri 0.10.0: `adc_fit` with an explicit b-range (conventional b <= 1000) and `fixed_compartment_fraction`;
+  biomarker-study checklist.
+- mri-research-workflow 0.10.0: `study_stats.py` (+ test): subject-level AUC, subject bootstrap CIs, ICC(3,1),
+  wCV/repeatability coefficient, development-only thresholds.
+- All skills 0.10.0.
+
+Motivated by development failure modes and token sinks (turn count) in A/B evaluations; no held-out task content.
+
+
+## [0.9.0] — 2026-10-29: evaluation-driven detail guidance (not released separately)
+
+- pulse-sequence-design 0.9.0: verify the exported sequence (realized TE/TR, slice-selective
+  excitation and width, wrapped quadratic RF spoiling with matching ADC phase, sampling) and
+  `scripts/check_exported_seq.py`.
+- diffusion-mri 0.9.0: signal-fraction and diffusivity-spectrum models (well-posed models,
+  recovery tests, noise floor); description now covers ADC and RSI-type studies.
+- mri-research-workflow 0.9.0: check deliverables against the requested interface.
+
+- Tested helper libraries: pulse-sequence-design `scripts/mrfoundry_seqlib.py` (+ `test_seqlib.py`),
+  mri-reconstruction `scripts/mrfoundry_reconlib.py` (+ test), diffusion-mri `scripts/spectrum_fit.py`
+  (+ test), mri-research-workflow `scripts/check_deliverables.py`.
+- All skills 0.9.0: run the skill's tests or a small upstream example, start slow installs in the
+  background, work from local skill content first, write each stage as one checked script;
+  project memory only for ongoing projects.
+
+Motivated by detail-level failures and token/time sinks in development A/B evaluations; no task content.
+
 ## Unreleased
 
 ### Changed

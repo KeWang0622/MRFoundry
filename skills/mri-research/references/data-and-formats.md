@@ -2,6 +2,9 @@
 
 [MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
+**Summary.** Identify the format first (DICOM, NIfTI with its affine, BIDS sidecars, ISMRMRD HDF5, twix, P-file,
+`.cfl`), convert with the established reader, and keep orientation metadata; respect dataset licences.
+
 Use this when the user has (or wants) MR data — raw k-space or reconstructed
 images: to identify a format, convert it to something workable, or find an open
 dataset. Always respect each dataset's license / data-use agreement (see ground

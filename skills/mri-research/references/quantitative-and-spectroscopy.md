@@ -2,6 +2,11 @@
 
 [MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
+**Summary.** This file is orientation (methods, tools, citations). For computation use the tested helpers:
+`mri-reconstruction/scripts/qmri_fit.py` (relaxometry, EPG T2 with B1, ASL kinetic model, DCE Tofts),
+`mri-reconstruction/scripts/qsm_lib.py` (QSM: field, PDF background removal, dipole inversion) and this hub's
+`scripts/mrs_lib.py` (MRS alignment, linear-combination fit, water-referenced concentrations).
+
 Use this when the goal is **parameter maps or metabolite concentrations**, not a
 single qualitative image — relaxometry, susceptibility, perfusion, magnetization
 transfer, and spectroscopy. These methods pair a specialized acquisition with a

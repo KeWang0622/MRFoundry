@@ -1,13 +1,7 @@
-MRFoundry vector emblem revision — 2026-10-29
+Mode: built-in OpenAI imagegen; design concept, then rebuilt as a native SVG identity.
 
-Native SVG design specification, not an image-generation prompt:
-Replace the shallow frontal ring with a three-quarter view of an elongated MRI
-magnet housing. Show the continuous barrel behind the entrance, a deep patient
-bore with visible inner wall, small upper service housing, and a patient table
-aligned to the bore axis with a supporting pedestal. Preserve the existing
-outlined Avenir Next Heavy / Baskerville Bold wordmark paths, palette and
-789.48 × 122 lockup dimensions. Use simplified solid shapes readable at favicon
-size. The symbol is decorative identity artwork, not an engineering diagram.
+Use case: logo-brand. Create an elegant identity study for the exact research software name "MRFoundry". This is a scientific MRI research toolbox for coding agents. Produce one polished typographic logo lockup on a pure white background, with a small standalone symbol to its left. Exact word: MRFoundry, one line, capital M R F and lowercase oundry. The MR letters should be bold geometric sans-serif in clear cobalt blue #2876E8; Foundry should use a distinctive refined contemporary serif in near-black #132536, visually balanced with MR, not calligraphy and not a generic tech font. A compact blue symbol should subtly evoke the open circular bore of an MRI scanner and a path of knowledge through it, clean continuous line, recognizable at favicon scale. No rounded-square app tile, no brain illustration, no hospital cross, no robot, no literal furnace, no complex molecular network. Sophisticated research-lab identity, crisp vector-like forms, restrained small blue/teal accent. Excellent kerning, confident and calm, generous but not excessive whitespace. No gradients, no shadow, no 3D, no extra slogans, no mockup objects. The design must be suitable for a GitHub README, a dark lecture cover and an academic paper. Deliver a single logo design, not a moodboard or grid of alternatives.
 
-The file name mrfoundry-logo-prompt.txt is retained for compatibility. The current
-emblem was authored directly in SVG; it was not generated with an image model.
+Restored 2026-10-30 at the repository owner's request: this flat, front-view bore emblem
+(concept generated with built-in OpenAI imagegen, then rebuilt as native SVG) replaces the
+2026-10-29 three-quarter emblem. The long-bore mascot illustrations are unchanged.

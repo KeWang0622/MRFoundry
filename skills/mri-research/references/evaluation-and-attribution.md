@@ -2,6 +2,10 @@
 
 [MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
+**Summary.** Match the evidence to the task: state the endpoint, compare against a tuned baseline on identical
+data, test failure cases, report uncertainty, and cite original methods and software separately. A format
+conversion or a single analysis needs a correctness check, not a clinical study.
+
 Use this guide when choosing reconstruction evidence, comparing methods, or
 writing scientific claims. Scale the evaluation to the stated task; a format
 conversion or demonstration does not require a clinical study.

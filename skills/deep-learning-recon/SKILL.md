@@ -1,20 +1,15 @@
 ---
 name: deep-learning-recon
 description: >-
-  Deep-learning MRI reconstruction expert. Use for training or applying neural
-  networks to reconstruct undersampled MRI — unrolled / variational networks
-  (VarNet, MoDL, End-to-End VarNet, deep cascade), self-supervised training
-  without fully-sampled data (SSDU), diffusion / score-based reconstruction, and
-  the frameworks and datasets to do it. Tools: DIRECT, fastMRI, ATOMMIC,
-  torchkbnufft; datasets fastMRI / mridata. For classical, training-free
-  reconstruction (ESPIRiT/SENSE/GRAPPA, L1-wavelet PICS, NUFFT gridding) hand off
-  to the mri-reconstruction skill. Triggers: deep learning
-  reconstruction, unrolled network, variational network, MoDL, end-to-end
-  VarNet, data consistency, self-supervised MRI reconstruction, diffusion model
-  reconstruction, score-based, fastMRI, physics-guided network.
+  Read before training, fine-tuning, applying or evaluating a neural network
+  for MRI reconstruction: unrolled and variational networks, self-supervised
+  training (SSDU), diffusion or score-based priors, fastMRI, DIRECT,
+  torchkbnufft. Prevents silent errors from train/test leakage, inconsistent
+  normalization and masks, unfair classical baselines and metrics on the wrong
+  region or scale. Classical reconstruction belongs to mri-reconstruction.
 metadata:
   author: Ke Wang
-  version: "0.8.0"
+  version: "0.11.0"
 ---
 
 # MRFoundry: Deep-Learning MRI Reconstruction
@@ -25,52 +20,6 @@ the forward model and data consistency, but do not treat consistency as proof
 of feature fidelity: undersampling leaves information unconstrained, and priors
 can influence that information even when measurement residuals are small.
 
-
-## Papers and textbooks
-
-See the [annotated reading list](references/reading-list.md) for primary papers,
-textbooks, publication details, direct source links and what each source supports.
-Use the [repo-wide reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md) to navigate across skills.
-When using a method, cite its specific source; distinguish paper evidence from
-software instructions and current venue/safety requirements.
-
-
-## Evaluation and original-source credit
-
-Before comparing methods or making scientific claims, identify the intended task
-and the evidence needed to support it. Use the [evaluation and attribution guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/evaluation-and-attribution.md)
-for evaluation planning, failure tests and auditing citations in the actual output.
-Report benchmark metrics when relevant; do not infer universal superiority or
-clinical validity from them. Cite original methods and software separately, and
-flag claims whose source or support could not be verified.
-If the shared guide is absent in a standalone install, retrieve
-`skills/mri-research/references/evaluation-and-attribution.md` from the
-[official repository](https://github.com/KeWang0622/MRFoundry).
-
-## Project research memory
-
-If only the legacy `.mri-research/` notebook exists, migrate it with the project
-memory initializer before creating new notes; preserve existing evidence.
-For project experiments, read `.mrfoundry/INDEX.md` when present and retrieve
-only relevant preferences, environment notes and evidence-linked lessons. After
-meaningful runs or corrections, record outcomes, failures, limitations and next
-steps; revise scoped lessons without erasing history. Keep user preferences
-separate from scientific findings. Use the [project memory workflow](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/project-memory.md)
-to initialize the folder or connect project `CLAUDE.md` / `AGENTS.md`. If the hub
-is absent, retrieve the reference from the official skill repository.
-
-## Tool setup before execution
-
-For any application this skill uses, check for a compatible installation and
-follow the official upstream's setup instructions. Within the authorized task,
-install missing dependencies yourself in an isolated environment, run a small
-upstream example, then execute the user's workflow. Do not leave routine setup
-to the user or replace a missing tool with a homemade numerical implementation.
-Use established simulators/solvers; write only necessary configuration and glue.
-If blocked, report the actual obstacle and an established alternative.
-Read the [tool setup guide](https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/tool-setup.md) when installing,
-repairing, or choosing an execution environment. If the hub is not installed,
-retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 
 ## Method families (with citations)
 
@@ -116,6 +65,20 @@ prototyping: mridata.org.
   metrics with their conventions when useful, alongside task-relevant evidence.
   Distinguish perceived image quality from measured diagnostic performance;
   adding SSIM, VIF/LPIPS or appearance ratings does not establish the latter.
+- **Split before anything is fitted.** Split by subject (or by volume when only one
+  subject exists), tune on validation only, and touch the test set once at the end.
+  Slices of the same volume in both training and test sets is leakage.
+- **Same pipeline for every method and split.** Use one k-space normalization, one
+  mask generator with recorded seeds, the same coil handling and the same test masks
+  for the network and every baseline; normalize with statistics available at test
+  time (for example from the undersampled data), not from the fully sampled target.
+- **Fair classical baseline.** Compare against a tuned classical reconstruction
+  (CG-SENSE or ESPIRiT with L1-wavelet, regularization tuned on validation) on the
+  identical data and masks; hand its implementation to mri-reconstruction.
+- **Metrics with conventions.** Compute NRMSE/PSNR/SSIM on magnitude images with the
+  same scaling and within a stated region; state the data range used for PSNR/SSIM
+  and report per-subject values with spread. On CPU, prefer small unrolled models
+  with few cascades, and check data consistency of the output.
 - **Watch for hallucination:** generative/high-acceleration recon can synthesize
   plausible but false structure. Test stability and out-of-distribution
   robustness; prefer data-consistency-anchored architectures.
@@ -125,15 +88,19 @@ prototyping: mridata.org.
   comparator; reviewers will ask, so address it in related work even though the
   implementations are proprietary.
 
-## Hand-offs
+## Before you finish
 
-- **Classical / training-free recon** — ESPIRiT, SENSE, GRAPPA, L1-wavelet PICS,
-  NUFFT gridding, or "just get me an image from this k-space": use the
-  `mri-reconstruction` skill, which executes BART/SigPy pipelines. You also want
-  it for the *baseline* your network is compared against.
-- **Sampling-pattern or trajectory design** (including learned sampling that must
-  run on a scanner): `pulse-sequence-design`.
-- **Theory, citations, and the wider landscape:** the `mri-research` hub.
+    python .agents/skills/mri-research-workflow/scripts/finish_check.py --require <every deliverable name> \
+        --rerun "python <entrypoint> <documented arguments with {inputs} and {out}>" --inputs <input folder>
 
-Deeper reference:
-https://github.com/KeWang0622/MRFoundry/blob/main/skills/mri-research/references/recon-methods.md
+## Setup, scope and hand-offs
+
+- Use the workspace interpreter (`.venv/bin/python` if present); on CPU prefer small unrolled models with few
+  cascades. Read the [tool setup guide](../mri-research/references/tool-setup.md) only if an install fails.
+- Citations: [reading list](references/reading-list.md); evidence and claims:
+  [evaluation guide](../mri-research/references/evaluation-and-attribution.md); theory:
+  [recon methods](../mri-research/references/recon-methods.md). Project notes (only with `.mrfoundry/INDEX.md`):
+  [project memory](../mri-research/references/project-memory.md).
+- Classical reconstruction and the classical baseline (ESPIRiT, SENSE, GRAPPA, PICS, NUFFT), including
+  `mri-reconstruction/scripts/mrfoundry_rawrecon.py` (`sense_cg`, `coil_maps_from_acs`, `rank_reconstructions`):
+  `mri-reconstruction`. Sampling or trajectory design: `pulse-sequence-design`.
