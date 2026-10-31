@@ -11,7 +11,7 @@ description: >-
   MRFoundry skill runs.
 metadata:
   author: Ke Wang
-  version: "0.13.0"
+  version: "0.14.0"
 ---
 
 # MRFoundry: MRI Research Workflow (studies, statistics, write-ups, reviews, deliverables)
@@ -64,13 +64,15 @@ overrides these defaults.
 ## Finish check (every task with files to deliver)
 
     python .agents/skills/mri-research-workflow/scripts/finish_check.py \
-        --require <every deliverable name the task lists> \
+        --require <every deliverable name the task lists; for a kind of script, your actual files> \
         --rerun "python <entrypoint> <documented arguments with {inputs} and {out}>" --inputs <input folder> \
         [--expect <files the entrypoint must write>] [--json report.json:key1,key2/sub] [--range FILE:LOW:HIGH]
 
-It fails on missing or misnamed deliverables, an entrypoint stored apart from its outputs, no environment
-record when code is delivered, an entrypoint that fails in a fresh folder, and map medians outside the
-expected range. Without code, use `--require` only. `--help` lists the flags of either checker: run them, do not
+Deliver every listed output, scripts and the helper modules they import included, directly in the
+delivery folder (the folder the task names, else the workspace root), never in a subfolder the task does not name.
+The check fails on missing or misnamed deliverables, listed files in a subfolder, a script whose imported helper
+lies elsewhere (or only under `.agents`), an entrypoint stored apart from its outputs, no environment record when
+code is delivered, an entrypoint that fails in a fresh folder, and map medians outside the expected range. Without code, use `--require` only. `--help` lists the flags of either checker: run them, do not
 read their sources. A standalone single-file entrypoint takes tested helpers with
 `python .agents/skills/mri-research-workflow/scripts/inline_helpers.py <module.py> <functions> --into <entrypoint.py>`.
 

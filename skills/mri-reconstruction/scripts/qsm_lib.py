@@ -8,7 +8,8 @@ Pipeline, each step validated in the test:
 Conventions: arrays are [i, j, k] in ARRAY axis order; voxel_size_mm along those axes (anisotropic is fine);
 b0_dir is the unit vector of B0 in the array-axis frame (oblique slabs: not (0, 0, 1)); fields in Hz, chi in ppm,
 f = gamma_bar * B0 * 1e-6 * (d * chi) with D(k) = 1/3 - (k.b)^2/|k|^2 and k in cycles/mm per axis.
-Quick check of your data and geometry: python qsm_lib.py --selftest (synthetic head; prints correlations and scale).
+Test the chain with YOUR acquisition first (synthetic head; must PASS):
+python qsm_lib.py --selftest --shape NI NJ NK --voxel VI VJ VK --b0-dir BI BJ BK --b0 T --te TE1 TE2 ...
 """
 if __name__ == '__main__' and '--api' in __import__('sys').argv:  # signatures only; works without numpy
     import ast as _ast, sys as _sys
@@ -84,8 +85,8 @@ def erode(mask, voxel_size_mm, radius_mm):
 
 def laplacian_unwrap(phase, voxel_size_mm, pad=1.25):
     """Laplacian phase unwrapping (Schofield & Zhu 2003): returns the unwrapped phase up to a harmonic function,
-    which background-field removal discards. Works through noise-only regions (they add harmonic terms inside
-    the brain). Physical voxel sizes are used in the Laplacian."""
+    which background-field removal discards in theory; in practice it spreads errors from noise and steep fields
+    into the brain (test 4 of test_qsm_lib.py), so mask_unwrap is the default."""
     sh = phase.shape; ps = padded_shape(sh, pad)
     k = kspace_grid(ps, voxel_size_mm); k2 = (2 * np.pi) ** 2 * sum(c ** 2 for c in k)
     lap = lambda u: np.real(np.fft.ifftn(-k2 * np.fft.fftn(u)))
@@ -96,27 +97,71 @@ def laplacian_unwrap(phase, voxel_size_mm, pad=1.25):
     return _crop(np.real(np.fft.ifftn(inv * np.fft.fftn(L))), sh)
 
 
-def multiecho_field_hz(magnitude, phase_rad, te, voxel_size_mm, mask=None, method='laplacian'):
+def mask_unwrap(phase, mask, n_iter=3000, tol=1e-6):
+    """Unwrap using mask voxels only: least squares on wrapped neighbour differences (CG), then congruent with
+    the data (phase + 2 pi n). Exact where true neighbour steps stay below pi; one offset per mask."""
+    m = np.asarray(mask, bool); ph = np.asarray(phase, float); nd = ph.ndim; pairs = []
+    for ax in range(nd):
+        s0 = tuple(slice(0, -1) if a == ax else slice(None) for a in range(nd))
+        s1 = tuple(slice(1, None) if a == ax else slice(None) for a in range(nd))
+        both = m[s0] & m[s1]
+        pairs.append((s0, s1, both, np.where(both, np.angle(np.exp(1j * (ph[s1] - ph[s0]))), 0.0)))
+    def DtD(u, use_data=False):
+        out = np.zeros(ph.shape)
+        for s0, s1, both, d in pairs:
+            g = d if use_data else np.where(both, u[s1] - u[s0], 0.0)
+            out[s1] += g; out[s0] -= g
+        return out
+    b = DtD(None, use_data=True); x = np.where(m, ph, 0.0)
+    r = (b - DtD(x)) * m; p = r.copy(); rs = np.sum(r * r); b2 = max(np.sum(b * b), 1e-30)
+    for _ in range(n_iter):
+        if rs < tol ** 2 * b2:
+            break
+        Ap = DtD(p) * m; a = rs / max(np.sum(p * Ap), 1e-30); x += a * p; r -= a * Ap; rn = np.sum(r * r)
+        p = r + (rn / rs) * p; rs = rn
+    x = x + np.angle(np.mean(np.exp(1j * (ph - x))[m]))
+    return (ph + 2 * np.pi * np.round((x - ph) / (2 * np.pi))) * m
+
+
+def multiecho_field_hz(magnitude, phase_rad, te, voxel_size_mm, mask=None, method='spatial'):
     """Field offset (Hz) from multi-echo GRE [i, j, k, echo] with phase(TE) = phase0(r) + 2 pi f TE.
-    phase0 is removed by complex division by the first echo. method='laplacian' (default): each echo difference
-    is Laplacian-unwrapped and f is the magnitude-weighted least-squares slope through the origin; the result
-    equals the true field up to smooth harmonic terms, which background removal (pdf_background) absorbs.
-    method='temporal': no spatial unwrapping; exact when |f| < 1/(2 dTE_min) everywhere (short echo spacing).
-    Echo times need not be uniform. Values outside mask (if given) are set to 0."""
+    phase0 is removed by complex division by the first echo; f is the magnitude-weighted least-squares slope
+    through the origin. method='spatial' (default): first echo difference by mask_unwrap, later ones temporally;
+    'temporal': exact only when |f| < 1/(2 dTE_min); 'laplacian': legacy. Zero outside mask."""
     te = np.asarray(te, float); o = np.argsort(te); te = te[o]
     mag = np.asarray(magnitude, float)[..., o]; ph = np.asarray(phase_rad, float)[..., o]
+    m = np.ones(mag.shape[:3], bool) if mask is None else np.asarray(mask, bool)
     z0 = mag[..., 0] * np.exp(1j * ph[..., 0])
     num = np.zeros(mag.shape[:3]); den = np.zeros(mag.shape[:3]); f_prev = None
     for e in range(1, len(te)):
         d = np.angle(mag[..., e] * np.exp(1j * ph[..., e]) * np.conj(z0)); dt = te[e] - te[0]
-        if method == 'temporal':
+        if method == 'spatial' and f_prev is None:
+            du = mask_unwrap(d, m)
+        elif method in ('temporal', 'spatial'):
             du = d if f_prev is None else d + 2 * np.pi * np.round((2 * np.pi * f_prev * dt - d) / (2 * np.pi))
         else:
             du = laplacian_unwrap(d, voxel_size_mm)
         w = (mag[..., e] * mag[..., 0]) ** 2
         num += w * dt * du; den += w * dt ** 2
         f_prev = num / np.maximum(den, 1e-30) / (2 * np.pi)
-    return f_prev if mask is None else f_prev * np.asarray(mask, bool)
+    return f_prev if mask is None else f_prev * m
+
+
+def phase_misfit_fraction(magnitude, phase_rad, te, field_hz, mask, tol_rad=1.0):
+    """Self-check of a field map, want < 0.01: fraction of mask voxels where 2 pi f dTE misses a measured echo
+    phase by > tol_rad, or f jumps by > 1/(2 dTE_min) to a neighbour (unwrap errors, aliasing, harmonic offsets)."""
+    te = np.asarray(te, float); o = np.argsort(te); te = te[o]
+    mag = np.asarray(magnitude, float)[..., o]; ph = np.asarray(phase_rad, float)[..., o]
+    m = np.asarray(mask, bool); bad = np.zeros(m.shape, bool); z0 = mag[..., 0] * np.exp(1j * ph[..., 0])
+    for e in range(1, len(te)):
+        z = mag[..., e] * np.exp(1j * ph[..., e]) * np.conj(z0) * np.exp(-2j * np.pi * field_hz * (te[e] - te[0]))
+        bad |= np.abs(np.angle(z)) > tol_rad
+    lim = 0.5 / np.min(np.diff(te)); f = np.asarray(field_hz, float)
+    for ax in range(m.ndim):
+        s0 = tuple(slice(0, -1) if a == ax else slice(None) for a in range(m.ndim))
+        s1 = tuple(slice(1, None) if a == ax else slice(None) for a in range(m.ndim))
+        j = m[s0] & m[s1] & (np.abs(f[s1] - f[s0]) > lim); bad[s0] |= j; bad[s1] |= j
+    return float(bad[m].mean())
 
 
 def vsharp(field_hz, mask, voxel_size_mm, radii_mm=None, threshold=0.05):
@@ -261,7 +306,8 @@ def _corr(a, b):
 
 def run_pipeline(magnitude, phase_rad, te, mask, voxel_size_mm, b0_dir, b0_T, rois=None, reference_label=None,
                  lam=5e-4, gamma_bar=GAMMA_BAR_1H):
-    """Default chain: field -> PDF -> CG-L2 -> optional reference. Returns dict(field_hz, local_hz, chi_ppm, ref)."""
+    """Default chain: field -> PDF -> CG-L2 -> optional reference. Returns dict(field_hz, local_hz, chi_ppm,
+    reference_mean, phase_misfit_fraction); a misfit above 1% means the field map is wrong."""
     f = multiecho_field_hz(magnitude, phase_rad, te, voxel_size_mm, mask)
     w = np.sqrt(np.mean(np.asarray(magnitude, float) ** 2, -1)) * mask
     loc, _ = pdf_background(f, mask, voxel_size_mm, b0_dir, weights=w / max(w.max(), 1e-30))
@@ -269,7 +315,8 @@ def run_pipeline(magnitude, phase_rad, te, mask, voxel_size_mm, b0_dir, b0_T, ro
     ref = 0.0
     if rois is not None and reference_label is not None:
         chi, ref = reference_to_roi(chi, rois, reference_label, mask)
-    return dict(field_hz=f, local_hz=loc, chi_ppm=chi, reference_mean=ref)
+    return dict(field_hz=f, local_hz=loc, chi_ppm=chi, reference_mean=ref,
+                phase_misfit_fraction=phase_misfit_fraction(magnitude, phase_rad, te, f, mask))
 
 
 
@@ -277,10 +324,15 @@ def run_pipeline(magnitude, phase_rad, te, mask, voxel_size_mm, b0_dir, b0_T, ro
 if __name__ == '__main__':
     import sys
     if '--selftest' in sys.argv:
-        h = synthetic_head()
+        o = {a.split()[0]: [float(v) for v in a.split()[1:]] for a in ' '.join(sys.argv[1:]).split('--') if a.strip()}
+        kw = {n: o[k] for k, n in (('voxel', 'voxel_size_mm'), ('b0-dir', 'b0_dir'), ('te', 'te')) if k in o}
+        kw.update({'shape': tuple(int(v) for v in o['shape'])} if 'shape' in o else {}, **({'b0_T': o['b0'][0]} if 'b0' in o else {}))
+        h = synthetic_head(**kw)
         out = run_pipeline(h['mag'], h['phase'], h['te'], h['mask'], h['voxel_size_mm'], h['b0_dir'], h['b0_T'], h['rois'], 5)
-        deep = erode(h['mask'], h['voxel_size_mm'], 12)
+        deep = erode(h['mask'], h['voxel_size_mm'], 10)
         rm = roi_means(out['chi_ppm'], h['rois'], h['mask']); tm = roi_means(h['chi_ppm'], h['rois'], h['mask'])
         est = np.array([rm[k][0] for k in sorted(rm) if k != 5]); tru = np.array([tm[k][0] for k in sorted(tm) if k != 5])
-        print(f"deep local field corr {_corr(out['local_hz'][deep], h['local_hz'][deep]):.3f}; "
+        c = _corr(out['local_hz'][deep], h['local_hz'][deep])
+        print(f"{'PASS' if c >= 0.9 and out['phase_misfit_fraction'] < 0.01 else 'FAIL'} deep local field corr {c:.3f} "
+              f"(want >= 0.9), phase misfit {out['phase_misfit_fraction']:.3f} (want < 0.01); "
               f"ROI slope {np.sum(est * tru) / np.sum(tru * tru):.2f}, corr {_corr(est, tru):.3f}")

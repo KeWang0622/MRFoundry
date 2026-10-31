@@ -118,6 +118,17 @@ def small_tip_fwhm(r, wz, extent):
     while hi < len(z) - 1 and resp[hi] >= half: hi += 1
     return None if lo == 0 or hi == len(z) - 1 else float(z[hi] - z[lo])
 
+def centre_gradient_fraction(r, wz):
+    """|slice gradient at the RF centre| / max |slice gradient| while the RF plays (None: no slice gradient).
+    A half pulse that ends, with its centre, where its gradient has ramped to 0 gives about 0."""
+    rf = r['rf']; rt = np.asarray(rf.t); sig = np.asarray(rf.signal)
+    if not len(wz[0]):
+        return None
+    g = np.interp(r['block_start'] + rf.delay + rt, wz[0], wz[1], left=0, right=0)[abs(sig) > .05 * abs(sig).max()]
+    if not g.size or np.max(abs(g)) <= 1.:
+        return None
+    return float(abs(np.interp(r['center'], wz[0], wz[1], left=0, right=0)) / np.max(abs(g)))
+
 COVER_MARGIN = 0.05     # in units of 1/fov: samples must lie at least this far beyond each end of a coverage interval
 GAP_MARGIN = 0.01       # fractional margin below a maximum gap
 
@@ -223,6 +234,8 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
     fw = [small_tip_fwhm(r, waves[2], 2 * (slice_thickness or 0.01)) for r in exc]
     rep['excitation_slice_selective_all'] = bool(exc) and all(f is not None for f in fw)
     rep['excitation_slice_fwhm_mm'] = _uniq([f * 1e3 for f in fw if f is not None], 3)
+    cg = [centre_gradient_fraction(r, waves[2]) for r in rfs]
+    rep['rf_centre_slice_gradient_fraction_min'] = min([c for c in cg if c is not None], default=None)
     rep['tr_ms'] = _uniq(np.diff(ec) * 1e3, 4)
     # --- ADC timing, TE, receive phase, sampling
     tes = []; owner = []
@@ -389,6 +402,11 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
         chk('excitation flip angle (acquired TRs)', len(exc) > 0 and np.allclose([exc[p]['flip'] for p in acq if p >= 0], flip, atol=.25), rep['excitation_flip_deg'])
     if slice_thickness:
         chk('slice-selective excitation with small-tip FWHM within 20%', rep['excitation_slice_selective_all'] and all(abs(f - slice_thickness) <= .2 * slice_thickness for f in fw if f is not None), rep['excitation_slice_fwhm_mm'])
+    if rep['rf_centre_slice_gradient_fraction_min'] is not None:
+        chk('selective RF pulses peak under their slice-select gradient (gradient at the RF centre >= 10% of its maximum during the pulse)',
+            rep['rf_centre_slice_gradient_fraction_min'] >= 0.1,
+            {'min_fraction': rep['rf_centre_slice_gradient_fraction_min'],
+             'hint': 'half pulse: end the RF, with its centre, before the slice gradient ramps down; rewind afterwards'})
     if rf_spoil is not None and len(ph) >= 3:
         e = wrap_deg(np.diff(ph, 2) - rf_spoil); chk('quadratic RF spoiling increment', np.max(abs(e)) < .1, {'max_error_deg': float(np.max(abs(e))), 'hint': 'wrap increment and phase to [0,360) each update'})
     if rf_phase_cycle is not None and len(ph) >= 2:

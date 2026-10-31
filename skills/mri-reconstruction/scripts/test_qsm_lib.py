@@ -42,19 +42,39 @@ H = np.stack([np.ones_like(X), X, Y, Z, X * Y, Y * Z, X * Z, X ** 2 - Y ** 2, Y 
 res = d - H @ np.linalg.lstsq(H, d, rcond=None)[0]
 assert np.std(res) < 0.05 * np.std(f_true[inner])        # the difference is a smooth harmonic term
 print("multiecho_field_hz: temporal unwrapping exact for short echo spacing; Laplacian result differs by a smooth term")
+f_big = 3 * f_true                                        # beyond 1/(2 dTE): temporal aliasing, spatial still exact
+phase = np.stack([np.angle(np.exp(1j * (ph0 + 2 * np.pi * f_big * t))) for t in te], -1)
+allm = np.ones(f_big.shape, bool)
+fs = multiecho_field_hz(mag, phase, te, (1, 1, 1), allm)
+ft = multiecho_field_hz(mag, phase, te, (1, 1, 1), allm, method='temporal')
+assert np.abs(fs - f_big).max() < 1e-6 and np.abs(ft - f_big).max() > 50, (np.abs(fs - f_big).max(), np.abs(ft - f_big).max())
+assert phase_misfit_fraction(mag, phase, te, fs, allm) == 0 and phase_misfit_fraction(mag, phase, te, ft, allm) > 0.05
+print("field beyond 1/(2 dTE): spatial default exact; temporal aliases, misfit flags it")
 
 # 3) full pipeline on a synthetic head with strong air and sinus fields, oblique B0 and anisotropic voxels
 h = synthetic_head()
 out = run_pipeline(h['mag'], h['phase'], h['te'], h['mask'], h['voxel_size_mm'], h['b0_dir'], h['b0_T'], h['rois'], 5)
-deep = erode(h['mask'], h['voxel_size_mm'], 12)
+deep = erode(h['mask'], h['voxel_size_mm'], 10)
 c = np.corrcoef(out['local_hz'][deep], h['local_hz'][deep])[0, 1]
 rm = roi_means(out['chi_ppm'], h['rois'], h['mask']); tm = roi_means(h['chi_ppm'], h['rois'], h['mask'])
 est = np.array([rm[k][0] for k in sorted(rm) if k != 5]); tru = np.array([tm[k][0] for k in sorted(tm) if k != 5])
 slope = np.sum(est * tru) / np.sum(tru * tru); rc = np.corrcoef(est, tru)[0, 1]
-assert c > 0.85 and rc > 0.97 and 0.7 < slope < 1.1, (c, rc, slope)
-print(f"pipeline (Laplacian unwrap -> PDF -> CG-L2 -> CSF reference): deep local-field corr {c:.3f}, ROI corr {rc:.3f}, slope {slope:.2f}")
+assert c > 0.9 and rc > 0.97 and 0.7 < slope < 1.1 and out['phase_misfit_fraction'] < 0.01, (c, rc, slope, out['phase_misfit_fraction'])
+print(f"pipeline (mask unwrap -> PDF -> CG-L2 -> CSF reference): deep local-field corr {c:.3f}, ROI corr {rc:.3f}, slope {slope:.2f}")
 v_loc, v_valid = vsharp(out['field_hz'], h['mask'], h['voxel_size_mm'])
 cv = np.corrcoef(v_loc[deep], h['local_hz'][deep])[0, 1]
 print(f"  (V-SHARP on the same field: deep corr {cv:.3f}; prefer PDF when air/sinus fields are strong)")
+
+# 4) Laplacian unwrapping loses the local field here; the misfit check flags it
+h = synthetic_head(shape=(52, 64, 36), voxel_size_mm=(1.7, 1.25, 2.4), b0_dir=(-0.43, -0.28, 0.86),
+                   te=(0.0032, 0.009, 0.0148, 0.0206), noise=0.02, seed=3)
+deep = erode(h['mask'], h['voxel_size_mm'], 10); w = np.sqrt(np.mean(h['mag'] ** 2, -1)) * h['mask']
+cc = {}
+for meth in ('laplacian', 'spatial'):
+    f = multiecho_field_hz(h['mag'], h['phase'], h['te'], h['voxel_size_mm'], h['mask'], method=meth)
+    loc, _ = pdf_background(f, h['mask'], h['voxel_size_mm'], h['b0_dir'], weights=w / w.max())
+    cc[meth] = (np.corrcoef(loc[deep], h['local_hz'][deep])[0, 1], phase_misfit_fraction(h['mag'], h['phase'], h['te'], f, h['mask']))
+assert cc['spatial'][0] > 0.9 and cc['spatial'][1] < 0.01 and cc['laplacian'][0] < 0.7 and cc['laplacian'][1] > 0.5, cc
+print('deep local-field corr and misfit, mask unwrap vs Laplacian:', cc)
 print("all qsm_lib tests passed")
 

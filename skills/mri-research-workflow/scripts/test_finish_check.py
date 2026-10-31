@@ -82,5 +82,19 @@ assert code == 0 and 'environment record not required' in out, out
 code, out = run(['--root', str(w), '--require', 'notes.json', 'notes.md'])
 assert code == 1 and 'no environment record' in out, out
 print('write-up without code: no environment record needed; with a script it is required')
+
+d = project(); (d / 'scripts').mkdir(); (d / 'scripts' / 'build.py').write_text('import helpers\nprint(1)')
+(d / 'scripts' / 'helpers.py').write_text('X = 1')
+code, out = run(['--root', str(d), '--require', *req, 'scripts/build.py'])
+assert code == 1 and 'filed in a subfolder' in out, out
+code, out = run(['--root', str(d), '--require', *req, 'scripts/build.py', '--nested-ok'])
+assert code == 0, out
+(d / 'scripts' / 'build.py').rename(d / 'build.py')
+code, out = run(['--root', str(d), '--require', *req, 'build.py'])
+assert code == 1 and 'imports helpers, found only at scripts/helpers.py' in out, out
+(d / 'scripts' / 'helpers.py').rename(d / 'helpers.py')
+code, out = run(['--root', str(d), '--require', *req, 'build.py', 'helpers.py'])
+assert code == 0, out
+print('listed script in a subfolder or apart from its helper: FAIL')
 print('all finish_check tests passed')
 

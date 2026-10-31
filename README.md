@@ -11,7 +11,7 @@
 
 **MRI research guidance for your coding agent — from the question to the paper.**
 
-[![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/MRFoundry/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/MRFoundry/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](LICENSE) ![Version](https://img.shields.io/badge/version-0.13.0-1f6feb?style=flat-square&labelColor=000000) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/MRFoundry)
+[![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/MRFoundry/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/MRFoundry/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](LICENSE) ![Version](https://img.shields.io/badge/version-0.14.0-1f6feb?style=flat-square&labelColor=000000) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/MRFoundry)
 
 </div>
 
@@ -209,7 +209,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md) an
 ## Updates
 
 - **On main:** agent-owned application setup and project research memory across all seven skills.
-- **[v0.13.0](CHANGELOG.md):** coverage-safe EPI and Cartesian readouts, exact sub-raster timing, block-boundary gradient continuity and acquired-line checks for exported sequences; a lean KomaMRI install and a replay check for delivered simulations; claim-ledger source checks.
+- **[v0.14.0](CHANGELOG.md):** coverage-safe EPI and Cartesian readouts, exact sub-raster timing, block-boundary gradient continuity and acquired-line checks for exported sequences; a lean KomaMRI install and a replay check for delivered simulations; claim-ledger source checks.
 - **[v0.12.0](CHANGELOG.md):** a writing checker for results sections, reviews, proposals and study plans; ICC confidence intervals and sample-size helpers; GRAPPA from a sampling mask, noise-floor-aware T2 fits, water-fat separation, off-resonance-corrected spiral reconstruction; crusher and safety measurements of exported sequences.
 - **[v0.11.0](CHANGELOG.md):** lean skill files with route tables, a finish check, and tested helpers for QSM, MRS, ASL, DCE, SNR units, shimming and EPI.
 - **v0.8.0:** venue-specific paper writing, evidence-linked project memory, diffusion/sequence guidance and annotated references.
@@ -240,7 +240,7 @@ If this helps your research or tooling, please cite it (GitHub's
   author  = {Wang, Ke},
   title   = {MRFoundry: MRI research guidance for coding agents},
   year    = {2026},
-  version = {0.13.0},
+  version = {0.14.0},
   url     = {https://github.com/KeWang0622/MRFoundry}
 }
 ```

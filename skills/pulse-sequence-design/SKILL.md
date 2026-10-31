@@ -11,7 +11,7 @@ description: >-
   exported-sequence checker, a KomaMRI replay check and an end-to-end example.
 metadata:
   author: Ke Wang
-  version: "0.13.0"
+  version: "0.14.0"
 ---
 
 # MRFoundry: Pulse Sequence and Trajectory Design
@@ -46,7 +46,9 @@ evidence: measure the export, simulate the export, reconstruct from the simulati
 5. Grid samples with `kspace_grid` (exported k; `drop_off_grid=True` for oversampled lines), fit maps with
    `mri-reconstruction/scripts/qmri_fit.py`, check orientation on a simulated asymmetric object, and report values
    measured from the export and endpoint values from the delivered image, applying the task's region definition as
-   written in every image dimension. One script per stage; keep printed output short.
+   written in every image dimension. If a region rule can be read in more than one way, compute each reading on the
+   delivered image, report the plainest and note the others.
+   One script per stage, in the workspace root; keep printed output short.
 
 ## Rules the checker enforces
 
@@ -61,7 +63,7 @@ evidence: measure the export, simulate the export, reconstruct from the simulati
 | Spoiled GRE | quadratic RF spoiling; each ADC takes its excitation's phase; spoiler after the last ADC; multi-echo monopolar needs flyback | `--rf-spoil 117 --min-spoil-cycles 2 --monopolar` |
 | Inversion recovery, MP-RAGE | TI = inversion centre -> excitation centre (MP-RAGE: the excitation of the central k-space line); the same timing in every cycle, dummies too; spoil after the inversion; simulate one column of spins through the slab to verify a tissue null and that the signal no longer changes from one acquired cycle to the next (point isochromats can keep coherent echoes under a constant spoiler: vary the spoiler moment or the RF increment if the null fails); fit a + b exp(-TI/T1) or a dictionary of the exact timing | `--ti ... --tr TRAIN_TR CYCLE_GAP --min-inversion-spoil-cycles 2` |
 | Spin echo, TSE, CPMG | refocusing centre at TE/2 (ESP/2); CPMG phase = excitation +/- 90 deg; rewind each phase encode before the next refocusing pulse; crusher moments equal on both sides and inside the range with margin; reach steady state before acquiring (dummy shots without ADC; confirm by simulating one column of spins) | `--te --cpmg --crusher-range LOW HIGH` |
-| UTE half-pulse | two half-pulse acquisitions per spoke with opposite slice-gradient polarity, added as complex signals; each half pulse stops when its slice gradient has ramped to 0; the ADC delay respects the ADC dead time and the readout starts at k = 0 with its first sample; simulate single spins along z through both acquisitions to measure the summed slice response | `--n-adc` |
+| UTE half-pulse | two half-pulse acquisitions per spoke with opposite slice-gradient polarity, added as complex signals. Play each half pulse on the gradient plateau and set `center=` to its last sample, so the slice gradient is at full strength at the RF centre (a pulse that continues into the ramp-down peaks where the gradient is nearly 0); one lobe then ramps down and cancels the slice-gradient area that follows the RF centre, so the readout starts with kz = 0. The ADC delay respects the ADC dead time and the readout starts at k = 0 with its first sample; simulate single spins along z through both acquisitions to measure the summed slice response | `--n-adc`; gradient at each RF centre always checked |
 | Diffusion (SE-EPI) | b-matrix from the exported waveforms using the effective gradient (sign inverted after each refocusing pulse); the same crushers around the refocusing pulse in every volume (b = 0 too) and a refocusing slab wider than the excited slice when spins extend beyond it; dummy repetitions before the first acquired volume unless TR >> T1. Point isochromats do not diffuse: a simulation without diffusion weighting must give the same signal in every volume (check it; differences bias the fit) | `--te --crusher-range` |
 | Balanced SSFP | zero net area per TR; TE = TR/2; 0/180 phase cycling with matching ADC phase; catalyze or use dummies | `--balanced --rf-phase-cycle 180 --te-half-tr` |
 | EPI | TE to the kx = ky = 0 sample of the train; constant line period; odd lines traverse the same grid backwards; no ramp sampling unless allowed; with ramp sampling the first and last samples must still pass the coverage ends | `--epi --echo-spacing ES` |
@@ -75,8 +77,8 @@ WARNs within 2 %). Report safety and timing values measured from the export: `--
     python .agents/skills/mri-research-workflow/scripts/finish_check.py --require <every deliverable name> \
         --rerun "python <entrypoint> <documented arguments with {inputs} and {out}>" --inputs <input folder>
 
-All deliverables in the folder the task names (workspace root if none). If the simulation could not run,
-say so plainly; never fabricate simulated or reconstructed outputs.
+Every listed output, build and simulation scripts and their imported helpers included, goes directly in the folder
+the task names (workspace root if none), never in `scripts/`; name the actual script files in `--require`. If the simulation could not run, say so plainly; never fabricate simulated or reconstructed outputs.
 
 ## More (open only when needed)
 

@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] — 2026-10-31: deliverable layout, half-pulse RF centre, robust QSM field map
+
+- All skills 0.14.0. mri-research-workflow: deliver every listed output, scripts and the helper modules they
+  import included, directly in the delivery folder (no `scripts/` subfolder unless the task
+  names it). `finish_check.py` FAILS a required name inside a subfolder (`--nested-ok` when the task names that
+  path) and a required script whose imported local module lies in another folder or only under `.agents`, and
+  NOTEs code left in subfolders; for a generic item (a kind of script) the actual files go in `--require`.
+- pulse-sequence-design: the UTE half-pulse row now plays each half pulse on the slice-gradient plateau with its
+  centre on its last sample and cancels the remaining slice-gradient area with one ramp-down lobe before the ADC (a
+  pulse that continues into the ramp-down peaks where the slice gradient is nearly 0). `check_exported_seq.py` always measures the slice-select gradient at
+  the centre of each selective RF pulse as a fraction of its maximum during the pulse
+  (`rf_centre_slice_gradient_fraction_min`) and fails below 10 %. Endpoint guidance: compute reported endpoints with the code that
+  measures the delivered image and state the reading of an ambiguous region rule; one script per stage in the
+  workspace root.
+- mri-reconstruction: `qsm_lib.multiecho_field_hz` defaults to `method='spatial'`: the shortest echo difference is
+  unwrapped inside the mask only (`mask_unwrap`, least squares on wrapped neighbour differences of mask voxels, then
+  made congruent with the data), later echoes temporally. The old Laplacian default spread errors from noise-only
+  regions and steep fields into the brain (deep local-field correlation 0.43 against 0.94 on a test head with longer
+  echo spacing and an oblique anisotropic grid). New self-check `phase_misfit_fraction` (returned by
+  `run_pipeline`; field must reproduce every echo phase and not jump by 1/(2 dTE) between neighbours) and
+  `qsm_lib.py --selftest --shape --voxel --b0-dir --b0 --te` to test the chain with the data's own acquisition.
+
 ## [0.13.0] — 2026-10-31: sampling requirements, exact timing and KomaMRI replay
 
 - All skills 0.13.0. pulse-sequence-design: `centered_readout` and `add_epi_readout` take `oversample` and `extra`
