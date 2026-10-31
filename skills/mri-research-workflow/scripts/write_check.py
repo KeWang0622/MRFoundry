@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Writing check: run before finishing any write-up, proposal, review or plan (standard library only).
+This docstring is the whole manual (also printed by --help); the code below need not be read.
 
 Each flag adds one family of checks; every check prints PASS, FAIL or WARN and the exit code is 1 if any
 check FAILs. Run it, fix every FAIL in the files (not in the checker), and run it again.

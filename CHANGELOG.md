@@ -28,7 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `slice_delays`; new `fatwater_lib.py` (+ test): multi-peak water-fat separation with common R2*, field-map choice
   regularized by a smooth field (prevents swaps in isolated high-fat regions), common-phase real amplitudes and
   T1/flip-angle corrected PDFF, tested on 0-100 % vials at 1.5 T and 3 T; `mrfoundry_reconlib.py` adds
-  `offres_encoding`, `offres_least_squares` (exact off-resonance model for spiral/EPI) and `smooth_field`.
+  `offres_encoding`, `offres_least_squares` (exact off-resonance model for spiral/EPI) and `smooth_field`
+  (local-plane normalized convolution, exact for linear fields at edges); deep-learning-recon notes that a
+  classical candidate tuned to zero regularization is zero filling.
 - diffusion-mri: shells for ADC/DTI come from the study or task model (the former "b <= 1000" default made
   entrypoints fail on other schemes); `adc_fit` uses every b-value unless `bmax` is given.
 - pulse-sequence-design: checker `--crusher-range` (spin-echo crusher moments in cycles/m on both sides of

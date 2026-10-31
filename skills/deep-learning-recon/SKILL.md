@@ -48,7 +48,8 @@ and datasets with citations and licences: [methods, frameworks and data](referen
 - **Quantitative endpoints** (R2*, T2, field, PDFF, ROI means): tune lambda, checkpoints and the method choice
   by the endpoint error on validation subjects (`rank_reconstructions(..., metric=endpoint_error)`), not by image
   NRMSE; use the structure shared across echoes or contrasts (all echoes as channels, joint or low-rank
-  reconstruction); compute reported values from the exact saved reconstructions.
+  reconstruction); compute reported values from the exact saved reconstructions. A classical candidate whose
+  tuning picks zero regularization is zero filling: widen the grid or use a stronger prior (TV, wavelets).
 - **Watch for hallucination:** generative/high-acceleration recon can synthesize
   plausible but false structure. Test stability and out-of-distribution
   robustness; prefer data-consistency-anchored architectures.

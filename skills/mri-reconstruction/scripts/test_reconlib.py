@@ -37,6 +37,13 @@ wrong, _ = offres_least_squares(data2, kk, t_from_exc, fmap, fov2, phase_sign=+1
 assert cerr(corr, oracle) < 0.05 and cerr(nocorr, oracle) > 0.3 and cerr(wrong, oracle) > 0.3, (cerr(corr, oracle), cerr(nocorr, oracle), cerr(wrong, oracle))
 print('offres_least_squares: complex NRMSE vs the noise-free exact reconstruction %.3f (no field %.2f, wrong phase sign %.2f)'
       % (cerr(corr, oracle), cerr(nocorr, oracle), cerr(wrong, oracle)))
-sm = smooth_field(np.where(obj2 > 0, fmap, 0.0), (obj2 > 0).astype(float), 1.0)
-assert np.abs(sm - fmap)[obj2 > 0].max() < 15
-print('smooth_field extends a field map into empty voxels (weighted normalized smoothing)')
+lin = 40 + 3.0 * (np.arange(n2)[None, :] - 10) - 2.0 * (np.arange(n2)[:, None] - 12) + 0 * obj2   # linear field (Hz)
+w2 = (obj2 > 0).astype(float)
+s1 = smooth_field(np.where(w2 > 0, lin, 0.0), w2, 1.5); s0 = smooth_field(np.where(w2 > 0, lin, 0.0), w2, 1.5, order=0)
+e1 = np.abs(s1 - lin)[w2 > 0].max(); e0 = np.abs(s0 - lin)[w2 > 0].max()
+assert e1 < 1e-3 and e0 > 1.0, (e1, e0)
+noisy_f = lin + rng.normal(0, 2.0, lin.shape)
+sn = smooth_field(np.where(w2 > 0, noisy_f, 0.0), w2, 1.0)
+assert np.std((sn - lin)[w2 > 0]) < 0.75 * np.std((noisy_f - lin)[w2 > 0])
+print('smooth_field (local plane): linear field exact at edges (plain weighted mean off by %.1f Hz); noise SD reduced %.2fx'
+      % (e0, np.std((noisy_f - lin)[w2 > 0]) / np.std((sn - lin)[w2 > 0])))

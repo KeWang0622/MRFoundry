@@ -67,11 +67,13 @@ axes (ky, kx) in grid units: swapping them transposes the image. Use density com
 calibrate absolute scale on a simulated object of known magnitude, and for radial data estimate gradient
 delays from the data (opposed or orthogonal spokes; BART `estdelay` implements RING) before the final
 reconstruction. EPI is Cartesian: regrid ramp samples and correct Nyquist ghosts, then reconstruct as Cartesian.
-Off-resonance during long readouts (spiral, EPI): `offres_least_squares(samples, kxy, t, fieldmap_hz, fov, phase_sign)` solves
-with the exact encoding including exp(phase_sign i 2 pi f t), t from the excitation centre; take the sign from
-the data convention and confirm it on a simulated point; estimate the field map from multi-echo phase
-(`mri-hardware` `fieldmap_multiecho`), smooth it with `smooth_field` (magnitude-squared weights), choose lamda by
-simulated error. Conjugate-phase or segmented approximations leave residual blur for large fields.
+Off-resonance during long readouts (spiral, EPI): `offres_least_squares(samples, kxy, t, fieldmap_hz, fov, phase_sign)`
+solves with the exact encoding including exp(phase_sign i 2 pi f t), t from the excitation centre (take the sign
+from the data convention and confirm it on a simulated point), in double precision to convergence. Estimate the
+field from multi-echo phase (`mri-hardware` `fieldmap_multiecho`); a two-echo map is noisy, and its noise goes
+straight into the image: smooth it with `smooth_field` (local-plane normalized convolution with magnitude^2
+weights, exact for linear fields at object edges). Choose sigma and lambda by simulated error against the
+exact reconstruction with the true field, on an object and field unlike the public one.
 
 ## Standalone entrypoints
 

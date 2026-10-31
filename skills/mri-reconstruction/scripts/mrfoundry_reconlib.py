@@ -87,10 +87,12 @@ def offres_least_squares(samples, kxy_cycles_per_m, t_s, fieldmap_hz, fov_m, pha
     return x.reshape(np.shape(fieldmap_hz)), res
 
 
-def smooth_field(values, weights, sigma_vox):
-    """Weighted (normalized) Gaussian smoothing of a field map: sum(w f) * G / sum(w) * G. Extends the field into
-    low-signal voxels and the background; use magnitude^2 or a mask as weights. Keep sigma small (1-2 voxels)
-    where the field varies quickly; check the effect on simulated data."""
+def smooth_field(values, weights, sigma_vox, order=1):
+    """Weighted Gaussian smoothing of a field map by normalized convolution (Knutsson & Westin 1993).
+    order=1 (default) fits a local plane a + b x + c y with weights w(r') G(r - r'), so a linear field is kept
+    exactly, also at object edges and across empty voxels (order=0, the plain weighted mean, pulls edge values
+    toward the interior). Use magnitude^2 or a mask as weights; extrapolates into the background. Choose sigma
+    (about 0.5-1.5 voxels for two-echo maps) by simulated error of the final image or endpoint."""
     from numpy.fft import fft2, ifft2
     v = np.asarray(values, float); w = np.asarray(weights, float); ny, nx = v.shape; p = int(3 * sigma_vox) + 1
     sh = (ny + 2 * p, nx + 2 * p)
@@ -99,4 +101,18 @@ def smooth_field(values, weights, sigma_vox):
     def conv(a):
         z = np.zeros(sh); z[p:p + ny, p:p + nx] = a
         return np.real(ifft2(fft2(z) * K))[p:p + ny, p:p + nx]
-    return conv(w * v) / np.maximum(conv(w), 1e-12 * max(w.max(), 1e-30))
+    if order == 0:
+        return conv(w * v) / np.maximum(conv(w), 1e-12 * max(w.max(), 1e-30))
+    yy, xx = np.mgrid[0:ny, 0:nx].astype(float)
+    basis = [np.ones_like(v), xx, yy]
+    G = np.empty((ny, nx, 3, 3)); r = np.empty((ny, nx, 3))
+    for i in range(3):
+        r[..., i] = conv(w * v * basis[i])
+        for j in range(i, 3):
+            G[..., i, j] = G[..., j, i] = conv(w * basis[i] * basis[j])
+    G = G + 1e-9 * np.max(G[..., 0, 0]) * np.eye(3)
+    coef = np.linalg.solve(G, r[..., None])[..., 0]
+    out = coef[..., 0] + coef[..., 1] * xx + coef[..., 2] * yy
+    low = conv(w) < 1e-6 * max(conv(w).max(), 1e-30)
+    out[low] = 0.0
+    return out

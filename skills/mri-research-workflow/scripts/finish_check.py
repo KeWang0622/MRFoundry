@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Finish check: run this before you report a task as done.
+"""Finish check: run this before you report a task as done. This docstring (--help) is the whole manual.
 
 It catches the packaging failures that most often make correct work unusable:
 missing or misnamed deliverables, an entrypoint stored apart from its outputs, a missing
