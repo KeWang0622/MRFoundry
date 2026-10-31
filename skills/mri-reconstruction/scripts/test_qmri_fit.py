@@ -150,3 +150,14 @@ ew = fit_dictionary(np.abs(sig_t1)[None], Dw, Pw)[0][0, 0] / 0.15 - 1; er = fit_
 assert abs(ew) > 0.03 and abs(er) < 0.015, (ew, er)
 print(f"EPG dictionary T1: default T1 gives a T2 error of {ew:+.1%} at 110 deg refocusing; the sample's T1 gives {er:+.1%}")
 
+
+# B6: background-suppression efficiency and per-slice delays for 2D multislice pCASL
+assert abs(asl_effective_efficiency(0.85, 2, 0.95) - 0.85 * 0.95 ** 2) < 1e-12 and asl_effective_efficiency(0.85) == 0.85
+d = slice_delays(1.8, [0, 2, 4, 1, 3, 5], 0.05)
+assert np.allclose(d, [1.8, 1.95, 1.85, 2.0, 1.9, 2.05]), d
+cbf_true = 60.0; m0v = 1000.0; t1b = 1.65; tau = 1.8; aeff = asl_effective_efficiency(0.85, 4, 0.95)
+dm = cbf_true * 2 * aeff * t1b * m0v * (1 - np.exp(-tau / t1b)) * np.exp(-d / t1b) / (6000 * 0.9)
+cbf = asl_cbf_pcasl(dm, m0v, d, tau, efficiency=aeff)
+naive = asl_cbf_pcasl(dm, m0v, 1.8, tau, efficiency=0.85)
+assert np.allclose(cbf, cbf_true) and naive.max() / cbf_true - 1 < -0.05 and naive.min() / cbf_true - 1 < -0.15
+print("asl_effective_efficiency and slice_delays: exact CBF; without them the error is %.0f%% to %.0f%%" % (100 * (naive.max() / cbf_true - 1), 100 * (naive.min() / cbf_true - 1)))

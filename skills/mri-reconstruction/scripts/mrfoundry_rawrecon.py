@@ -362,14 +362,15 @@ def coil_maps_from_acs(ksp, acs_mask, eps=1e-3):
     return low / np.maximum(r, eps * r.max())[None]
 
 
-def rank_reconstructions(candidates, truth, sens, mask, psi=None, n_rep=3, seed=0, region=None, noise_scale=1.0):
+def rank_reconstructions(candidates, truth, sens, mask, psi=None, n_rep=3, seed=0, region=None, noise_scale=1.0, metric=None):
     """Choose a reconstruction (method, regularization, iterations) by its error on SIMULATED data with your
     sampling and your measured noise, not by data consistency: an exactly data-consistent result keeps all the
     noise. candidates: dict name -> function(ksp [coil, ky, kx] with zeros at unsampled positions) -> image;
     truth: complex or magnitude image on the output grid (e.g. a smooth phantom or a high-SNR reference);
     sens: coil maps used to simulate; mask: sampled positions [ky, kx] or [ky]; psi: noise covariance
-    (prewhitened data: identity). Returns a list of (mean NRMSE, name) sorted best first (NRMSE with scale fit,
-    magnitudes, inside region)."""
+    (prewhitened data: identity). Returns a list of (mean error, name) sorted best first. Default error: NRMSE
+    with scale fit, magnitudes, inside region. When the endpoint is a parameter map (R2*, T2, PDFF, ROI means),
+    pass metric(recon, truth) -> error of THAT endpoint: the best image NRMSE is often not the best endpoint."""
     rng = np.random.default_rng(seed); s = np.asarray(sens, complex); C = s.shape[0]
     m = np.asarray(mask, bool)
     if m.ndim == 1:
@@ -382,7 +383,8 @@ def rank_reconstructions(candidates, truth, sens, mask, psi=None, n_rep=3, seed=
         z = (rng.normal(size=clean.shape) + 1j * rng.normal(size=clean.shape)) / np.sqrt(2)
         y = clean + noise_scale * np.tensordot(L, z, axes=(1, 0)) * m[None]
         for k, f in candidates.items():
-            scores[k].append(nrmse(np.abs(truth), np.abs(f(y)), reg)[0])
+            rec = f(y)
+            scores[k].append(float(metric(rec, truth)) if metric is not None else nrmse(np.abs(truth), np.abs(rec), reg)[0])
     return sorted((float(np.mean(v)), k) for k, v in scores.items())
 
 

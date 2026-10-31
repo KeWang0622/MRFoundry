@@ -172,3 +172,12 @@ comb = sense_combine(coil, sens)
 assert np.allclose(comb, img, atol=1e-10)
 print("sense_combine returns the complex image (linear in the data)")
 
+
+# B6: rank by the endpoint, not the image: a biased-scale candidate wins on NRMSE (scale fitted) but loses on ROI mean
+cand2 = {'exact': lambda k: rss(ifft2c(k)), 'scaled': lambda k: 0.8 * rss(ifft2c(k))}
+mfull = np.ones(ny, bool)
+roi_err = lambda rec, tr: abs(np.mean(np.abs(rec)[obj > 0]) / np.mean(np.abs(tr)[obj > 0]) - 1)
+r_img = rank_reconstructions(cand2, rss(coil), sens, mfull, n_rep=1, region=obj > 0, noise_scale=0.0)
+r_end = rank_reconstructions(cand2, rss(coil), sens, mfull, n_rep=1, noise_scale=0.0, metric=roi_err)
+assert abs(r_img[0][0] - r_img[1][0]) < 1e-9 and r_end[0][1] == 'exact' and r_end[1][0] > 0.15, (r_img, r_end)
+print("rank_reconstructions(metric=...) ranks by the endpoint (ROI mean error %.2f for a scaled candidate)" % r_end[1][0])

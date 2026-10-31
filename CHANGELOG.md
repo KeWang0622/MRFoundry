@@ -5,6 +5,42 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased — writing checker, study-design statistics and fixes from held-out trials (0.12.0, B6)
+
+- All skills 0.12.0. mri-research-workflow: new `write_check.py` (+ test, standard library): word limits,
+  closed citation sets (.bib keys or corpus record IDs; DOIs, URLs and author-year citations fail), verbatim
+  review quotes filed under the right paragraph, IDs mentioned in the report, claim ledger against the texts
+  (every number in each listed text, same rounding, no-difference phrase in the sentence of a CI that includes
+  0, interpretation consistent with the CI, exploratory label in every clause, percentage points), task language
+  rules (`--require-in`, `--forbid-in`, word lists read from task.json), numbers traceable to the source with unit
+  conversions, JSON numbers stated in the prose, and prose schemas (keys, lists, integers, vocabularies).
+  Four short procedures (`write-results.md`, `write-review.md`, `write-proposal.md`, `plan-sample-size.md`)
+  replace the long route to the paper-writing guide for these tasks; SKILL.md lists six rules for every
+  write-up. `study_stats.py` adds `icc_ci` (F-based CIs for all six ICC forms, checked against psych::ICC),
+  `two_sample_t` (pooled or Welch, Hedges g), `n_per_group`, `n_paired` (normal or exact t),
+  `sd_of_differences`, `n_enrol`, `combined_fraction`, `n_total_unbalanced`. `inline_helpers.py` (+ test) copies
+  tested helpers with their dependencies into a one-file entrypoint. `finish_check.py` asks for an environment
+  record only when code is delivered. Description covers write-ups, reviews and proposals.
+- mri-reconstruction: `sampling_pattern` and `grappa_from_mask` (R, offset and ACS read from the mask; a
+  hand-derived R was wrong in a held-out run), `sense_combine`, `rank_reconstructions(metric=)` for endpoint-based
+  selection, noise-floor model in `fit_monoexp(noise_sigma=, n_channels=)` (RSS T2 bias +19 % -> -1 % in the
+  test), EPG dictionary built with the sample's T1, `asl_effective_efficiency` (background suppression) and
+  `slice_delays`; new `fatwater_lib.py` (+ test): multi-peak water-fat separation with common R2*, field-map choice
+  regularized by a smooth field (prevents swaps in isolated high-fat regions), common-phase real amplitudes and
+  T1/flip-angle corrected PDFF, tested on 0-100 % vials at 1.5 T and 3 T; `mrfoundry_reconlib.py` adds
+  `offres_encoding`, `offres_least_squares` (exact off-resonance model for spiral/EPI) and `smooth_field`.
+- diffusion-mri: shells for ADC/DTI come from the study or task model (the former "b <= 1000" default made
+  entrypoints fail on other schemes); `adc_fit` uses every b-value unless `bmax` is given.
+- pulse-sequence-design: checker `--crusher-range` (spin-echo crusher moments in cycles/m on both sides of
+  every refocusing pulse), `--safety` (B1+rms, B1 peak, gradient rms, ramp PNS from the exported file with
+  limits) and margin warnings within 2 % of a limit; CPMG builder in the tests; Pulseq units stated.
+- mri-hardware: routes safety numbers of exported sequences and off-resonance correction; design-with-margin
+  rule. deep-learning-recon: catalogue moved to `references/methods-and-frameworks.md`; endpoint-based tuning;
+  manuscripts routed to mri-research-workflow.
+- Every helper module prints `--api` without importing numpy.
+
+Motivated by held-out A/B trials (skill-hurt and both-fail cases); no task instance values.
+
 ## Unreleased — lean retrieval, finish check and tested helpers (0.11.0, B5)
 
 - All skills 0.11.0: SKILL.md files rewritten as short route tables (task -> one helper or reference),

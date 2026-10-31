@@ -22,43 +22,8 @@ of feature fidelity: undersampling leaves information unconstrained, and priors
 can influence that information even when measurement residuals are small.
 
 
-## Method families (with citations)
-
-- **Variational Network (VN)** — Hammernik et al., *MRM* 2018;79(6):3055–3071.
-  Code: https://github.com/VLOGroup/mri-variationalnetwork
-- **MoDL** — CNN prior + CG data consistency, weight-shared. Aggarwal et al.,
-  *IEEE TMI* 2019. Code: https://github.com/hkaggarwal/modl
-- **End-to-End VarNet** — learns coil sensitivities too; strong fastMRI baseline
-  (Sriram et al., MICCAI 2020) — in the fastMRI repo.
-- **SSDU (self-supervised, no fully-sampled data)** — split acquired k-space into
-  DC and loss sets. Yaman et al., *MRM* 2020. Code:
-  https://github.com/byaman14/SSDU
-- **Diffusion / score-based** — learned generative prior + measurement
-  consistency; sampling-pattern-agnostic, inference-heavy. Chung & Ye, *MedIA*
-  2022 (https://github.com/hyungjin-chung/score-MRI); Jalal et al., NeurIPS 2021
-  (https://github.com/utcsilab/csgm-mri-langevin).
-- **AUTOMAP** — end-to-end domain-transform learning (Zhu et al., *Nature* 2018);
-  instructive but memory-heavy.
-
-## Frameworks & building blocks
-
-- **DIRECT** — https://github.com/NKI-AI/direct — many baselines + training loops.
-- **fastMRI** — https://github.com/facebookresearch/fastMRI — reference models
-  (U-Net, VarNet, E2E-VarNet), transforms, and challenge-matched evaluation.
-  **Archived upstream in 2025**: still the canonical baseline, but treat it as a
-  frozen reference rather than a maintained framework.
-- **ATOMMIC** — https://github.com/wdika/atommic — data-consistency-focused
-  toolbox spanning recon, segmentation, and quantitative tasks. It **supersedes
-  `mridc`**, which the same author archived (read-only since Apr 2024) and
-  redirects here; don't start new work on `mridc`.
-- **torchkbnufft** — https://github.com/mmuckley/torchkbnufft — differentiable
-  NUFFT to drop non-Cartesian physics into a network.
-
-## Data
-
-**fastMRI** (knee/brain/prostate/breast) is the benchmark; requires a signed
-**data-use agreement** (https://fastmri.med.nyu.edu). Fully-open alternative for
-prototyping: mridata.org.
+Method families (VN, MoDL, E2E-VarNet, SSDU, score-based), frameworks (DIRECT, fastMRI, ATOMMIC, torchkbnufft)
+and datasets with citations and licences: [methods, frameworks and data](references/methods-and-frameworks.md).
 
 ## Training & evaluation
 
@@ -80,6 +45,10 @@ prototyping: mridata.org.
   same scaling and within a stated region; state the data range used for PSNR/SSIM
   and report per-subject values with spread. On CPU, prefer small unrolled models
   with few cascades, and check data consistency of the output.
+- **Quantitative endpoints** (R2*, T2, field, PDFF, ROI means): tune lambda, checkpoints and the method choice
+  by the endpoint error on validation subjects (`rank_reconstructions(..., metric=endpoint_error)`), not by image
+  NRMSE; use the structure shared across echoes or contrasts (all echoes as channels, joint or low-rank
+  reconstruction); compute reported values from the exact saved reconstructions.
 - **Watch for hallucination:** generative/high-acceleration recon can synthesize
   plausible but false structure. Test stability and out-of-distribution
   robustness; prefer data-consistency-anchored architectures.

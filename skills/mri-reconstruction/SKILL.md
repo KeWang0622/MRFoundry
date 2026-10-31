@@ -16,10 +16,8 @@ metadata:
 
 # MRFoundry: MRI Reconstruction and Quantitative Maps
 
-Do the work with the tested helpers below; import them instead of re-deriving their maths. Open only the
-row you need. Hand-written versions of exactly these steps failed silently in evaluation runs (a conjugated
-noise covariance, a convolution missing the interval width, PLD used as time since label start, a bounded
-solve left in scaled units).
+Do the work with the tested helpers below instead of re-deriving their maths; open only the row you need.
+Hand-written versions of these steps failed silently in evaluation runs.
 
 ## Route
 
@@ -30,16 +28,16 @@ solve left in scaled units).
 | Water-fat separation, PDFF, R2* (multi-echo GRE, multi-peak fat) | `fatwater_lib.py`: `fat_offsets_hz`, `fit_fat_water`, `fat_fraction` | [quantitative maps](references/quantitative-maps.md#water-fat) |
 | BART or SigPy pipelines; twix, ISMRMRD, `.cfl` files | `bart_recon.sh` | [BART and SigPy](references/bart-sigpy.md) |
 | T1, T2, T2*, VFA, dictionaries, multi-echo spin echo with B1 (EPG) | `qmri_fit.py` | [quantitative maps](references/quantitative-maps.md) |
-| ASL CBF and arrival time, single or multiple delays | `qmri_fit.py`: `asl_pairs_by_delay`, `m0_finite_tr`, `fit_asl_multidelay` | [ASL](references/quantitative-maps.md#asl) |
+| ASL CBF and arrival time, single or multiple delays | `qmri_fit.py`: `asl_pairs_by_delay`, `slice_delays`, `asl_effective_efficiency` (background suppression), `m0_finite_tr`, `asl_cbf_pcasl`, `fit_asl_multidelay` | [ASL](references/quantitative-maps.md#asl) |
 | DCE: signal to concentration, extended Tofts | `qmri_fit.py`: `spgr_concentration`, `fit_tofts` | [DCE](references/quantitative-maps.md#dce) |
 | QSM: phase to field, background removal, dipole inversion, reference region | `qsm_lib.py`: `run_pipeline` | [QSM](references/quantitative-maps.md#qsm) |
 | Fixed settings of a fitted model (nuisance values, spectra, fractions) | | [model calibration](../mri-research/references/model-calibration.md) |
 | One-file standalone entrypoint | `python .agents/skills/mri-research-workflow/scripts/inline_helpers.py <module.py> <functions> --into <entrypoint.py>` copies the tested helpers | |
 
-Import with `sys.path.insert(0, '.agents/skills/mri-reconstruction/scripts')` (adjust if installed elsewhere).
-`python .agents/skills/mri-reconstruction/scripts/qmri_fit.py --api` (or any module) prints every signature with a one-line summary (2-4 KB; reading the source costs
-5-10 times more); `scripts/test_<module>.py` shows worked examples. Never retype a helper into a standalone entrypoint: copy it
-with `inline_helpers.py` (a retyped GRAPPA derived R = 2 for R = 3 data and still gave plausible maps).
+Import with `sys.path.insert(0, '.agents/skills/mri-reconstruction/scripts')`. `python <module>.py --api` prints the
+signatures (do not read the sources); `scripts/test_<module>.py` has worked examples. Never retype a helper into a
+standalone entrypoint: copy it with `inline_helpers.py` (a retyped GRAPPA used R = 2 for R = 3 data and still gave
+plausible maps).
 
 ## Checks that prevent silent errors
 
@@ -55,7 +53,8 @@ with `inline_helpers.py` (a retyped GRAPPA derived R = 2 for R = 3 data and stil
    `snr_units_image`; confirm the real-part noise SD is 1 on a pure-noise or pseudo-replica run, never from
    low-magnitude pixels of the image.
 4. **Choose the reconstruction by simulated error** (`rank_reconstructions` with your sampling and measured
-   noise): exact data consistency is not image quality; at R >= 3 it keeps or amplifies noise.
+   noise; `metric=` the endpoint error when the deliverable is a parameter map): exact data consistency is not
+   image quality; at R >= 3 it keeps or amplifies noise.
 5. **Fits**: use the stated model and time origin. Multi-echo magnitude at low SNR: combine coils with the SAME
    phase-preserving weights for every echo (`sense_combine`), then pass `noise_sigma` (and `n_channels` for RSS)
    to `fit_monoexp` or `fit_dictionary`; an RSS log-linear fit overestimates T2 by several percent. Water-fat:

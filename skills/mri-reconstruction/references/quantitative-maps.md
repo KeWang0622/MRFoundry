@@ -36,7 +36,10 @@ phase (unbiased near 0 % and 100 %, unlike |F| / (|W| + |F|)) and spoiled-GRE T1
 
 - Group control and label volumes by their own delay (BIDS aslcontext, per-volume PLD) with
   `asl_pairs_by_delay`; volume order and pairing vary between datasets.
-- 2-D multi-slice: the effective delay of slice z is PLD + SliceTiming[z]; pass per-voxel delays.
+- 2-D multi-slice: the effective delay of slice z is PLD + SliceTiming[z] (`slice_delays(pld, slice_order,
+  interval)` for an acquisition order); pass per-voxel delays.
+- Background suppression: `asl_effective_efficiency(alpha, n_bs_pulses, eta_per_pulse)` (alpha x eta^n, consensus
+  convention); M0 has no background suppression.
 - M0 acquired with a finite TR: `m0_finite_tr(m0, tr, t1_tissue)`; blood M0 = M0 / λ inside the model.
 - Single delay: `asl_cbf_pcasl` / `asl_cbf_pasl` (consensus formula, Alsop et al. 2015).
 - Multiple delays: `fit_asl_multidelay(delta_m, m0, pld, tau)` with `asl_gkm_pcasl` (Buxton general kinetic

@@ -539,7 +539,12 @@ def check_desc(out, desc, task, path, errs):
             if k in ("other keys",) or (isinstance(sub, str) and "optional" in sub.lower()[:40]):
                 continue
             if k not in out:
-                errs.append(f"{path + '.' if path else ''}{k}: missing"); continue
+                note = isinstance(sub, str) and not re.search(r"\b(string|list|int|integer|number|float|bool|boolean|value|values|object|array|code|id|ids)\b|[{\[]", sub)
+                if note:
+                    say("WARN", f"schema: '{k}' looks like a note ({sub[:50]!r}); add the key only if the task wants it")
+                else:
+                    errs.append(f"{path + '.' if path else ''}{k}: missing")
+                continue
             check_desc(out[k], sub, task, f"{path + '.' if path else ''}{k}", errs)
         return
     if not isinstance(desc, str):

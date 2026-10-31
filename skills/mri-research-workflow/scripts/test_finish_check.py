@@ -74,5 +74,13 @@ try:
     print('median range check catches a unit error (x1000)')
 except ImportError:
     print('numpy not installed: range check test skipped')
+import tempfile as _tf
+w = Path(_tf.mkdtemp()); (w / 'review.json').write_text('{}'); (w / 'review.md').write_text('report')
+code, out = run(['--root', str(w), '--require', 'review.json', 'review.md'])
+assert code == 0 and 'environment record not required' in out, out
+(w / 'calc.py').write_text('print(1)')
+code, out = run(['--root', str(w), '--require', 'review.json', 'review.md'])
+assert code == 1 and 'no environment record' in out, out
+print('write-up without code: no environment record needed; with a script it is required')
 print('all finish_check tests passed')
 

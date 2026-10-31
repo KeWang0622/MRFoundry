@@ -69,8 +69,9 @@ overrides these defaults.
         [--expect <files the entrypoint must write>] [--json report.json:key1,key2/sub] [--range FILE:LOW:HIGH]
 
 It fails on missing or misnamed deliverables, an entrypoint stored apart from its outputs, no environment
-record, an entrypoint that fails in a fresh folder, and map medians outside the expected range. Without code,
-use `--require` only. A standalone single-file entrypoint takes tested helpers with
+record when code is delivered, an entrypoint that fails in a fresh folder, and map medians outside the
+expected range. Without code, use `--require` only. `--help` lists the flags of either checker: run them, do not
+read their sources. A standalone single-file entrypoint takes tested helpers with
 `python .agents/skills/mri-research-workflow/scripts/inline_helpers.py <module.py> <functions> --into <entrypoint.py>`.
 
 Citations: [reading list](references/reading-list.md).

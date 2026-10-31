@@ -212,9 +212,31 @@ def epg_t2_dictionary(n_echoes, esp, t2_grid, b1_grid, t1=1.0, refocus_deg=180.0
 def asl_cbf_pcasl(delta_m, m0, pld, label_duration, t1_blood=1.65, efficiency=0.85, partition=0.9):
     """PCASL CBF in ml/100 g/min: 6000 * lambda * dM * exp(PLD/T1b) / (2 alpha T1b M0 (1 - exp(-tau/T1b))).
     delta_m = control - label (same scaling as m0); times in s; t1_blood 1.65 s is the 3 T consensus value;
-    m0 must be the equilibrium (proton-density) signal, corrected if its TR was short."""
+    m0 must be the equilibrium (proton-density) signal, corrected if its TR was short (m0_finite_tr with the
+    tissue T1 map); efficiency must include background suppression (asl_effective_efficiency); pld may be an
+    array broadcast over slices (slice_delays)."""
     return 6000 * partition * np.asarray(delta_m) * np.exp(pld / t1_blood) / (
         2 * efficiency * t1_blood * np.asarray(m0) * (1 - np.exp(-label_duration / t1_blood)))
+
+
+def asl_effective_efficiency(labeling_efficiency, n_bs_pulses=0, bs_efficiency_per_pulse=1.0):
+    """Labelling efficiency seen at readout with background suppression: alpha x eta_BS^n (consensus convention,
+    Alsop et al. 2015: each BS inversion pulse multiplies the label by its efficiency, typically 0.93-0.97).
+    Omitting it underestimates CBF by the factor eta^n. Use the protocol's own definition of the per-pulse efficiency."""
+    return float(labeling_efficiency) * float(bs_efficiency_per_pulse) ** int(n_bs_pulses)
+
+
+def slice_delays(pld_first_s, slice_order, slice_interval_s, n_slices=None):
+    """Post-labelling delay of every slice INDEX for 2D multislice readouts: the slice acquired r-th (position r in
+    slice_order, 0-based) has PLD + r x slice_interval. slice_order lists slice indices in acquisition order
+    (interleaved orders included). Returns an array indexed by slice index."""
+    order = [int(i) for i in slice_order]; n = int(n_slices or (max(order) + 1))
+    out = np.full(n, np.nan)
+    for r, z in enumerate(order):
+        out[z] = float(pld_first_s) + r * float(slice_interval_s)
+    if np.isnan(out).any():
+        raise ValueError('slice_order does not cover every slice index')
+    return out
 
 
 def asl_cbf_pasl(delta_m, m0, ti, ti1, t1_blood=1.65, efficiency=0.98, partition=0.9):

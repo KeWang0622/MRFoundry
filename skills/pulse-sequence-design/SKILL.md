@@ -28,11 +28,10 @@ evidence: measure the export, simulate the export, reconstruct from the simulati
    simulator with a homemade Bloch routine or an ideal-signal formula.
 2. Copy `scripts/example_pipeline.py` (build, read back, waveform figure, simulation of the exported file,
    archive with hashes, standalone reconstruction, orientation check, report) and swap in a family builder:
-   spoiled GRE in `scripts/test_seqlib.py`; inversion-recovery GRE, balanced SSFP, spin echo and single-shot
-   EPI (`add_epi_readout`) in `scripts/test_check_exported_seq.py`. `python .agents/skills/pulse-sequence-design/scripts/mrfoundry_seqlib.py --api`
-   lists signatures. Helpers: `make_system`,
-   `slice_selective_excitation`, `centered_readout` (sample n//2 exactly at k = 0), `fill_delay` (exact
-   intervals on the block raster), `RFSpoiler`, `spoiler_area`, `kspace_grid`, `plot_waveforms`.
+   spoiled GRE in `scripts/test_seqlib.py`; inversion-recovery GRE, balanced SSFP, spin echo, CPMG and EPI
+   (`add_epi_readout`) in `scripts/test_check_exported_seq.py`. Helpers (`mrfoundry_seqlib.py --api`): `make_system`,
+   `slice_selective_excitation`, `centered_readout` (sample n//2 at k = 0), `fill_delay`, `RFSpoiler`, `spoiler_area`,
+   `kspace_grid`, `plot_waveforms`.
 3. Run the checker with EVERY requested parameter until all lines PASS and NOT CHECKED is empty; verify each
    VERIFY SEPARATELY item yourself or by simulating the exported file:
    `python .agents/skills/pulse-sequence-design/scripts/check_exported_seq.py sequence.seq --te ... --matrix NX NY --fov F ...`
@@ -49,8 +48,7 @@ evidence: measure the export, simulate the export, reconstruct from the simulati
 | Slice selection | sinc/SLR pulse WITH its slice-select gradient, then the rephaser; hard pulses are non-selective | `--slice-thickness` |
 | Spoiled GRE | quadratic RF spoiling `inc=(inc+117)%360; phase=(phase+inc)%360`; each ADC takes its excitation's phase; spoiler after the last ADC (cycles per slice); multi-echo monopolar needs flyback | `--rf-spoil 117 --min-spoil-cycles 2 --monopolar` |
 | Inversion recovery | TI = inversion centre -> excitation centre; spoil after the inversion; state the inversion repetition period; fit a + b exp(-TI/T1) or a dictionary of the exact timing | `--ti ... --min-inversion-spoil-cycles 2` |
-| Spin echo / TSE | refocusing centre at TE/2; CPMG phase = excitation ± 90°; equal crushers | `--te --cpmg` |
-| Echo trains under safety limits | crusher moments equal on both sides of every refocusing pulse and inside the allowed range WITH margin; report the safety values measured from the file; fit with an EPG dictionary of the actual flip angles and each sample's T1 (`qmri_fit.epg_t2_dictionary`) | `--cpmg --crusher-range LOW HIGH --safety --b1rms-max --b1peak-max --grms-max --pns-rheobase --pns-chronaxie --pns-max` |
+| Spin echo, TSE, CPMG | refocusing centre at TE/2 (ESP/2); CPMG phase = excitation ± 90°; crusher moments equal on both sides of every refocusing pulse and inside the allowed range with margin; fit echo trains with an EPG dictionary of the actual flip angles and each sample's T1 | `--te --cpmg --crusher-range LOW HIGH` |
 | Balanced SSFP | zero net area per TR on all axes; TE = TR/2; 0/180 phase cycling with matching ADC phase; steady state by catalyzation or dummies (simulate early vs late lines) | `--balanced --rf-phase-cycle 180 --te-half-tr` |
 | EPI | TE to the kx = ky = 0 sample of the whole train; constant line period; no ramp sampling unless allowed; odd lines are the same kx grid traversed backwards (an odd-only kx error means the ADC is not centred on reversed flat tops) | `--epi --echo-spacing ES --matrix NX NY --fov F` |
 | Sampling | k = 0 sample index, line set and order, polarity, 1/FOV spacing against any sampling contract | `--matrix NX NY --fov F` |
@@ -58,10 +56,10 @@ evidence: measure the export, simulate the export, reconstruct from the simulati
 Report realized TE/TR/TI/echo spacing/flip/slice width/spoiling read back from the file; the block raster can
 move realized timing by up to half a raster step from the request.
 
-**Units and margins.** PyPulseq gradient amplitudes are Hz/m (mT/m x 42.576e3), areas and moments 1/m
-(cycles/m), RF amplitudes Hz: passing T/m gives moments near 1e-5 cycles/m. Design 2-5 % inside every limit and
-range (raster rounding moves areas, timing and slew); the checker prints WARN within 2 % of a limit. Report
-safety and timing numbers measured from the exported file (`--safety --json`), never the build script's request.
+**Units and margins.** PyPulseq gradients are Hz/m (mT/m x 42.576e3), areas and moments 1/m (cycles/m), RF Hz:
+T/m passed as Hz/m gives moments near 1e-5 cycles/m. Design 2-5 % inside every limit and range (raster rounding
+moves areas, timing and slew; the checker WARNs within 2 %). Report safety and timing values measured from the
+export: `--safety` with `--b1rms-max --b1peak-max --grms-max --pns-rheobase --pns-chronaxie --pns-max` and `--json`.
 
 ## Before you finish
 
