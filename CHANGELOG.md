@@ -5,7 +5,31 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased — writing checker, study-design statistics and fixes from held-out trials (0.12.0, B6)
+## Unreleased — sampling contracts, exact timing and KomaMRI replay (0.13.0, B7)
+
+- All skills 0.13.0. pulse-sequence-design: `centered_readout` and `add_epi_readout` take `oversample` and `extra`
+  (readouts that cover an interval with samples beyond both ends and a step below the gap limit; exactly n samples
+  put the end samples on the interval ends, and the 6-digit amplitudes of a .seq move them inside about half the
+  time) and `adc_shift` (sub-raster k = 0 sample time); `slice_selective_excitation(center_shift=)` and
+  `split_interval` hit TE/TI/TR within the RF raster where `fill_delay` leaves up to half a block raster;
+  `kspace_grid(drop_off_grid=True)` for oversampled lines; `simulate_with_koma(backend='julia')` with
+  `koma_sim.jl` and `setup_koma_julia.sh` (lean Julia 1.10 + KomaMRICore install inside the workspace when the
+  komamripy install stalls; same signal as komamripy in the test); `replay_check` and
+  `relative_difference_after_global_phase` re-simulate the delivered file and compare; documented and tested
+  KomaMRI sign convention (never conjugate). The MRzero fallback is removed from the guidance. Checker: TE/TR/TI
+  tolerance 1 us by default (`--time-tol`, several `--tr` intervals), `--kx-cover`/`--max-gap` coverage contracts
+  with a margin, oversampled readouts accepted by the grid check, 3D `--matrix NX NY NZ`, `--line-repeats` and
+  `--n-adc` (dummy repetitions with an ADC), acquisitions with and without ADC, and gradient continuity at block
+  and event boundaries (arbitrary gradients with extrapolated first/last values). Tests include an independent
+  integration of the trapezoids in the .seq text.
+- mri-research-workflow: `write_check.py --claims` with `--trace`/`--ids` FAILS claim records whose source field is
+  not an entry of the source data; write-results asks for one record per source entry; write-proposal: controls
+  supported only by records whose analysis varies the factor, sample-size inputs printed per record and matched
+  to population, protocol and endpoint unit.
+- mri-hardware: size the design from the safety limit before building; simulated signals via KomaMRI with the
+  replay check. mri-research tool setup: lean KomaMRI install instead of a different simulator.
+
+## 0.12.0 (B6) — writing checker, study-design statistics and fixes from held-out trials
 
 - All skills 0.12.0. mri-research-workflow: new `write_check.py` (+ test, standard library): word limits,
   closed citation sets (.bib keys or corpus record IDs; DOIs, URLs and author-year citations fail), verbatim

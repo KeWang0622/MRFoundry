@@ -26,6 +26,8 @@ check FAILs. Run it, fix every FAIL in the files (not in the checker), and run i
                               interpretation field (key with 'interpret' or 'conclusion') must read as no effect;
                               exploratory claims need 'exploratory' or 'post hoc' in that sentence;
                               percentage-point claims (unit pp) must not be written with '%'
+                              with --trace or --ids: each claim's source field (source, source_id, entry, ...)
+                              must be an entry ID of that source data (no invented IDs or paths for non-entries)
   --null-phrases LIST         comma list or @task.json:key (default: a short list of common no-difference
                               phrases; pass the task's list when it gives one)
   --require-in TRIG::WORDS    every sentence of --texts/--loc files containing a trigger contains one of
@@ -494,6 +496,53 @@ def check_claims(claims_path, locs, null_phrases):
         say("PASS", f"claims: {len(claims)} claims consistent with {', '.join(locs)}")
 
 
+SRC_KEY = re.compile(r"^(source|entry|record|result)(_?(id|ids|key|ref))?s?$|^source_", re.I)
+ID_LIKE = re.compile(r"^[A-Za-z]{1,6}[-_]?\d{1,5}[a-z]?$")
+
+
+def _source_refs(paths):
+    """(entry IDs, loaded documents) of the source files: string values and dict keys that look like IDs (E07, Q1)."""
+    ids, docs = set(), []
+    def walk(d):
+        if isinstance(d, dict):
+            for k, v in d.items():
+                if ID_LIKE.match(str(k)): ids.add(str(k))
+                if isinstance(v, str) and ID_LIKE.match(v.strip()): ids.add(v.strip())
+                walk(v)
+        elif isinstance(d, list):
+            for v in d: walk(v)
+    for p in paths:
+        try: doc = json.loads(Path(p).read_text())
+        except (ValueError, OSError): continue
+        docs.append(doc); walk(doc)
+    return ids, docs
+
+
+def check_claim_sources(claims, src_paths):
+    """Each claim's source field (source, source_id, entry, record, ...) must name an entry of the source data. When most
+    claims cite entry IDs, a claim citing anything else (a dotted path, a description, an invented ID) FAILS: the
+    ledger has one record per source entry, and numbers that are not entries need no claim unless the schema asks."""
+    ids, docs = _source_refs(src_paths)
+    refs = []
+    for i, c in enumerate(claims):
+        k = next((k for k in c if SRC_KEY.match(k)), None)
+        if k is None: continue
+        v = c[k]; vals = [v] if isinstance(v, (str, int)) else [x for x in v if isinstance(x, (str, int))] if isinstance(v, list) else []
+        refs.append((claim_label(c, i), k, [str(x) for x in vals]))
+    if not refs or not ids: return
+    by_id = sum(all(x in ids for x in vals) and bool(vals) for _, _, vals in refs) / len(refs)
+    bad = []
+    for cid, k, vals in refs:
+        for x in vals or ['(empty)']:
+            if x in ids: continue
+            path_ok = by_id < 0.5 and any(get_paths(d, x) for d in docs)
+            if not path_ok: bad.append(f"{cid}.{k}={x!r}")
+    say("FAIL" if bad else "PASS", "claim sources: " + (f"not an entry of the source data: {bad[:8]} (one claim per source entry, with its ID "
+        "exactly as in the source; numbers that are not entries, such as enrolment counts, need no claim unless the schema asks)" if bad
+        else f"{len(refs)} claims cite entries of the source data"))
+
+
+
 def pp_lint(files):
     for f in files:
         for s in sentences(Path(f).read_text()):
@@ -754,6 +803,7 @@ def main(argv=None):
         else: check_quotes(a.quotes, a.source, a.min_quote)
     for m in a.mentions: check_mentions(m)
     if a.claims: check_claims(a.claims, locs, load_list(a.null_phrases, NULL_PHRASES))
+    if a.claims and (a.trace or a.ids): check_claim_sources(claim_records(json.loads(Path(a.claims).read_text())), a.trace + ([a.ids] if a.ids else []))
     if a.claims or a.trace: pp_lint(prose)
     for r in a.require_in: check_rule(prose, r, False)
     for r in a.forbid_in: check_rule(prose, r, True)

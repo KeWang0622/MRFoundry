@@ -1,7 +1,7 @@
 # Tools and sequence families
 
-**Summary.** Pulseq/PyPulseq for vendor-neutral prototypes; KomaMRI (komamripy) or MRzeroCore to simulate the
-exported file; SigPy.RF or pulpy for RF pulses; GrOpt or SigPy for time-optimal gradients; vendor SDKs only
+**Summary.** Pulseq/PyPulseq for vendor-neutral prototypes; KomaMRI (komamripy, or Julia set up by
+scripts/setup_koma_julia.sh) to simulate the exported file; SigPy.RF or pulpy for RF pulses; GrOpt or SigPy for time-optimal gradients; vendor SDKs only
 for product integration. Check every family rule on the exported file (SKILL.md table).
 
 ## Pulseq workflow
@@ -10,7 +10,8 @@ for product integration. Check every family rule on the exported file (SKILL.md 
 2. Check hardware limits (gradient amplitude, slew, PNS, duty cycle) and the implied trajectory
    (`calculate_kspace`), then the exported file against every requested parameter.
 3. Simulate the exported file: KomaMRI (https://github.com/JuliaHealth/KomaMRI.jl, Python interface
-   komamripy) or MRzeroCore (https://github.com/MRsources/MRzero-Core).
+   komamripy). MRzeroCore (https://github.com/MRsources/MRzero-Core) uses other signal conventions, so its
+   output does not match a KomaMRI replay of the same file.
 4. Play the file through the vendor's Pulseq interpreter (GE: TOPPE, https://github.com/toppeMRI/toppe).
    Tutorials: MR-Physics-with-Pulseq (https://github.com/pulseq/MR-Physics-with-Pulseq).
 5. Reconstruct (ISMRMRD, then `mri-reconstruction`).

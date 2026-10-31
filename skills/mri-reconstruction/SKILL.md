@@ -10,7 +10,7 @@ description: >-
   check. Trained networks: deep-learning-recon; diffusion: diffusion-mri.
 metadata:
   author: Ke Wang
-  version: "0.12.0"
+  version: "0.13.0"
 ---
 
 # MRFoundry: MRI Reconstruction and Quantitative Maps

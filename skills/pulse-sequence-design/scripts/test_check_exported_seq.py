@@ -149,7 +149,7 @@ def main():
     assert not failed(ch), failed(ch); assert rep['rf_roles']['inversion'] == 32 and rep['rf_roles']['excitation'] == 32, rep['rf_roles']
     print('IR-GRE ok: TI', rep['ti_ms'], 'inversion spoiler cyc/slice', round(rep['post_inversion_z_spoiler_cycles_per_slice_min'], 2))
     rep, ch = measure(ir_gre(P('ir_bad.seq'), ti_from_block_start=True, inversion_spoiler=False), ti=[0.05, 0.4], min_inversion_spoil_cycles=2, slice_thickness=5e-3)
-    assert set(failed(ch)) == {'realized TI (inversion centre -> excitation centre)', 'post-inversion z spoiler (cycles per slice)'}, failed(ch)
+    assert set(failed(ch)) == {'realized TI (inversion centre -> excitation centre) within 1 us', 'post-inversion z spoiler (cycles per slice)'}, failed(ch)
     # fallback role detection without rf.use
     path = ir_gre(P('ir_nouse.seq')); txt = open(path).read().replace(' i\n', ' u\n'); open(path, 'w').write(txt)
     rep, ch = measure(path, ti=[0.05, 0.4]); assert rep['rf_roles']['inversion'] == 32 and not failed(ch), (rep['rf_roles'], failed(ch))
@@ -173,17 +173,25 @@ if __name__ == '__main__':
 
 
 
-# ---- B5: single-shot EPI (add_epi_readout) and the EPI-aware checks ------------------------------------------
-from mrfoundry_seqlib import add_epi_readout
-def epi(path, n=16, fov=0.22, dwell=10e-6, te=0.02, odd_adc_shift=0.0):
+# ---- B5/B7: single-shot EPI (add_epi_readout) and the EPI-aware checks ------------------------------------------
+from mrfoundry_seqlib import add_epi_readout, split_interval, kspace_grid
+def epi(path, n=16, fov=0.22, dwell=10e-6, te=0.02, odd_adc_shift=0.0, oversample=1, extra=0, exact_te=True):
+    """Single-shot gradient-echo EPI. exact_te: split_interval puts the sub-raster remainder of TE into the RF delay;
+    exact_te=False rounds the TE delay to the block raster only (legacy, up to 5 us off)."""
     sysm = make_system(); seq = pp.Sequence(sysm)
     rf, gz, reph = slice_selective_excitation(sysm, 90, 5e-3); gzr = pp.make_trapezoid('z', area=reph, system=sysm)
-    probe = add_epi_readout(pp.Sequence(sysm), sysm, n, n, fov, dwell, extra_blocks=[gzr])
+    probe = add_epi_readout(pp.Sequence(sysm), sysm, n, n, fov, dwell, extra_blocks=[gzr], oversample=oversample, extra=extra)
+    fixed = (pp.calc_duration(rf, gz) - rf_center_time(rf)) + probe['t_k0']
+    if exact_te:
+        d, sh = split_interval(te, fixed, sysm)
+        if sh:
+            rf, gz, reph = slice_selective_excitation(sysm, 90, 5e-3, center_shift=sh); gzr = pp.make_trapezoid('z', area=reph, system=sysm)
+    else:
+        d = fill_delay(te, fixed, what='TE')
     seq.add_block(rf, gz)
-    d = fill_delay(te, (pp.calc_duration(rf, gz) - rf_center_time(rf)) + probe['t_k0'], what='TE')
     if d > 0: seq.add_block(pp.make_delay(d))
     if not odd_adc_shift:
-        info = add_epi_readout(seq, sysm, n, n, fov, dwell, extra_blocks=[gzr])
+        info = add_epi_readout(seq, sysm, n, n, fov, dwell, extra_blocks=[gzr], oversample=oversample, extra=extra)
     else:                                               # broken variant: ADC delayed on reversed lines only
         info = probe; read, adc = probe['read'], probe['adc']
         pre = -(read.area - read.flat_area) / 2 - (n // 2 + 0.5) / fov
@@ -195,20 +203,139 @@ def epi(path, n=16, fov=0.22, dwell=10e-6, te=0.02, odd_adc_shift=0.0):
             seq.add_block(*(ev + ([blip] if j < n - 1 else [])))
     ok, err = seq.check_timing(); assert ok, err[:2]; seq.write(path); return path, info
 
+
+def seq_text_kx(path):
+    """Independent forward calculation from the .seq TEXT (no pypulseq): integrate the exported trapezoids exactly
+    from each RF centre and return kx (cycles/m) at every ADC sample (Pulseq sample time delay + (i + 0.5) dwell).
+    Handles the trapezoid/ADC/RF subset used by the EPI fixtures (RF centre = its delay + half its shape duration)."""
+    sec = None; blocks = []; trap = {}; adc = {}; rf = {}; raster = 1e-5
+    for line in open(path):
+        line = line.split('#')[0].strip()
+        if not line: continue
+        if line.startswith('['): sec = line; continue
+        f = line.split()
+        if sec == '[DEFINITIONS]' and f[0] == 'BlockDurationRaster': raster = float(f[1])
+        elif sec == '[BLOCKS]': blocks.append([int(v) for v in f])
+        elif sec == '[TRAP]': trap[int(f[0])] = [float(v) for v in f[1:6]]          # amp Hz/m, rise, flat, fall, delay (us)
+        elif sec == '[ADC]': adc[int(f[0])] = [float(v) for v in f[1:4]]            # num, dwell (ns), delay (us)
+        elif sec == '[RF]': rf[int(f[0])] = f
+    def area(tr, t):                                       # area of a trapezoid from its block start to time t (s)
+        a, r, fl, fa, de = tr; r, fl, fa, de = r * 1e-6, fl * 1e-6, fa * 1e-6, de * 1e-6; u = t - de
+        if u <= 0: return 0.0
+        if u < r: return a * u * u / (2 * r)
+        if u < r + fl: return a * (r / 2 + u - r)
+        if u < r + fl + fa: v = u - r - fl; return a * (r / 2 + fl + v - v * v / (2 * fa))
+        return a * (r / 2 + fl + fa / 2)
+    k = 0.0; out = []
+    for b in blocks:
+        dur = b[1] * raster; gx = b[3]
+        if b[2]:                                           # an RF pulse (no x gradient in these blocks): kx restarts
+            k = 0.0
+        samples = []
+        if b[6]:
+            num, dw, de = adc[b[6]]; samples = de * 1e-6 + (np.arange(int(num)) + 0.5) * dw * 1e-9
+            out.append(np.array([k + (area(trap[gx], t) if gx else 0.0) for t in samples]))
+        k += area(trap[gx], dur) if gx else 0.0
+    return out
+
+
 with tempfile.TemporaryDirectory() as d:
     p, info = epi(os.path.join(d, 'epi.seq'))
     rep, checks = measure(p, te=0.02, matrix=(16, 16), fov=0.22, epi=True, echo_spacing=info['line_period'] + 1e-9,
                           max_grad=32, max_slew=130, slice_thickness=5e-3)
     assert all(c['pass'] for c in checks), [c for c in checks if not c['pass']]
-    assert len(rep['te_ms']) == 1 and abs(rep['te_ms'][0] - 20.0) < 1e-2, rep['te_ms']
+    assert len(rep['te_ms']) == 1 and abs(rep['te_ms'][0] - 20.0) < 1e-3, rep['te_ms']
     rep2, _ = measure(p, te=0.02, matrix=(16, 16), fov=0.22)
     assert len(rep2['te_ms']) == 16                     # without --epi every line counts as an echo
-    print(f"EPI ok: TE {rep['te_ms']} ms at the kx = ky = 0 sample, echo spacing {rep['echo_spacing_ms']} ms, kx grid exact on both parities")
+    print(f"EPI ok: TE {rep['te_ms']} ms at the kx = ky = 0 sample (split_interval), echo spacing {rep['echo_spacing_ms']} ms, kx grid exact on both parities")
+    p0, _ = epi(os.path.join(d, 'epi_rounded.seq'), exact_te=False)
+    rep0, ch0 = measure(p0, te=0.02, epi=True)
+    assert [c['item'] for c in ch0 if not c['pass']] == ['realized TE (excitation centre -> k=0 sample) within 1 us'], ch0
+    print(f"EPI with the TE delay rounded to the block raster: TE {rep0['te_ms']} ms FAILS the 1 us tolerance")
     p, info = epi(os.path.join(d, 'epi_bad.seq'), odd_adc_shift=10e-6)
     rep, checks = measure(p, te=0.02, matrix=(16, 16), fov=0.22, epi=True)
     kx = [c for c in checks if c['item'].startswith('Cartesian kx')][0]
     par = rep['kx_grid_max_err_by_line_parity']
     assert not kx['pass'] and par['even'] < 0.01 and par['odd'] > 1, par
     print(f"EPI with a mis-timed ADC on reversed lines: kx FAIL, error only on odd lines {par}")
-print("all B5 sequence checks passed")
+    # B7: coverage contracts. Exactly n samples put the end samples on the interval ends (knife edge): FAIL.
+    n, fov = 20, 0.21
+    pe, _ = epi(os.path.join(d, 'epi_exact.seq'), n=n, fov=fov, dwell=5e-6, te=0.03)
+    rep, checks = measure(pe, te=0.03, matrix=(n, n), fov=fov, epi=True, kx_cover=(-n // 2, n - n // 2 - 1))
+    cov = [c for c in checks if c['item'].startswith('readout coverage')][0]
+    assert not cov['pass'], cov
+    print('EPI with exactly n samples per line: coverage FAIL (margins %.2g/%.2g of 1/fov, gap %.6f)' % (
+        rep['kx_coverage_units_of_1_over_fov']['min_margin_below_lo'], rep['kx_coverage_units_of_1_over_fov']['min_margin_above_hi'],
+        rep['kx_coverage_units_of_1_over_fov']['max_gap']))
+    po, info = epi(os.path.join(d, 'epi_os.seq'), n=n, fov=fov, dwell=2.5e-6, te=0.03, oversample=2, extra=1)
+    rep, checks = measure(po, te=0.03, matrix=(n, n), fov=fov, epi=True, kx_cover=(-n // 2, n - n // 2 - 1), line_repeats=1, n_adc=n,
+                          echo_spacing=info['line_period'] + 1e-9, max_grad=32, max_slew=130)
+    assert all(c['pass'] for c in checks), [c for c in checks if not c['pass']]
+    kc = rep['kx_coverage_units_of_1_over_fov']; assert kc['min_margin_below_lo'] > 0.4 and kc['min_margin_above_hi'] > 0.4 and kc['max_gap'] < 0.51, kc
+    # independent forward calculation from the .seq text equals the documented grid on both parities
+    N, c = info['n_samples'], info['k0_index_even']; u = np.arange(N)
+    kx_txt = seq_text_kx(po); assert len(kx_txt) == n
+    for j, kk in enumerate(kx_txt):
+        want = (u - c) / (2 * fov) if j % 2 == 0 else (N - 1 - c - u) / (2 * fov)
+        assert np.max(abs(kk - want)) < 2e-3, (j, np.max(abs(kk - want)))
+    s_ = pp.Sequence(); s_.read(po); kpp = np.asarray(s_.calculate_kspace()[0]).T[:, 0].reshape(n, N)
+    assert np.max(abs(kpp - np.array(kx_txt))) < 2e-3
+    # kspace_grid keeps the samples on the 1/fov grid and drops the half-step and end samples
+    kk3 = np.asarray(s_.calculate_kspace()[0]).T.reshape(n, N, 3); sig = np.exp(-2j * np.pi * (kk3[..., 0] * 0.013 - kk3[..., 1] * 0.021))
+    gr = kspace_grid(sig, kk3, fov, (n, n), drop_off_grid=True)[0]
+    img = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(gr))); iy, ix = np.unravel_index(np.argmax(abs(img)), img.shape)
+    assert abs((ix - n // 2) * fov / n - 0.013) <= fov / n / 2 + 1e-9 and abs((iy - n // 2) * fov / n + 0.021) <= fov / n / 2 + 1e-9, (ix, iy)
+    print(f"EPI oversampled 2x with extra samples beyond each end: coverage PASS (margins {kc['min_margin_below_lo']:.2f}/{kc['min_margin_above_hi']:.2f} of 1/fov, "
+          f"gap {kc['max_gap']:.3f}); .seq-text integration equals the documented grid on both parities; kspace_grid(drop_off_grid=True) places a point source")
+print("all B5/B7 EPI checks passed")
 
+
+# ---- B7: acquired-line bookkeeping and gradient continuity ------------------------------------------------------
+with tempfile.TemporaryDirectory() as d:
+    rep, ch = measure(cartesian_gre(os.path.join(d, 'g.seq'), n=12, dummies=3), matrix=(12, 12), fov=0.2, line_repeats=1, n_adc=12)
+    assert not failed(ch), failed(ch)
+    assert rep['excitations_with_adc'] == 12 and rep['excitations_without_adc'] == 3, rep
+    rep, ch = measure(cartesian_gre(os.path.join(d, 'g_dummy_adc.seq'), n=12, dummies=3, dummy_adc=True), matrix=(12, 12), fov=0.2, line_repeats=1, n_adc=12)
+    assert set(failed(ch)) == {'every line acquired exactly 1 time(s) (dummy repetitions must have no ADC)', 'number of ADC events = 12'}, failed(ch)
+    print('dummy repetitions with an ADC: line-count and ADC-count checks FAIL', rep['line_acquisitions'])
+    sysm = make_system(); T = 0.8e-3; r = sysm.grad_raster_time; t = (np.arange(int(round(T / r))) + 0.5) * r
+    for name, wave, kw, nbad in [('jump', 20e3 * np.cos(np.pi * t / (2 * T)), {}, 1),
+                                 ('smooth', 20e3 * np.sin(np.pi * t / T), dict(first=0.0, last=0.0), 0)]:
+        seq = pp.Sequence(sysm); seq.add_block(pp.make_delay(1e-3))
+        g = pp.make_arbitrary_grad('x', wave, system=sysm, **kw); seq.add_block(g); seq.add_block(pp.make_delay(1e-3))
+        p = os.path.join(d, name + '.seq'); seq.write(p)
+        rep, ch = measure(p, max_slew=130)
+        jumps = rep['gradient_jumps_per_axis'][0]
+        assert (jumps > 0) == (nbad > 0), (name, rep['gradient_jumps_per_axis'], rep['gradient_jump_examples'])
+    print('arbitrary gradient starting at a nonzero value: continuity FAIL; first=0/last=0 with a waveform that starts and ends at 0: PASS')
+print("all B7 sequence checks passed")
+
+
+# ---- B7: centered_readout with adc_shift (sub-raster TE) and an oversampled, extended single-line readout --------
+def gre_line(path, n=14, fov=0.23, dwell=20e-6, te=5.0037e-3, oversample=1, extra=0, shift=True):
+    sysm = make_system(); seq = pp.Sequence(sysm); rf, gz, reph = slice_selective_excitation(sysm, 10, 5e-3)
+    read0, adc0, _ = centered_readout(sysm, n, fov, dwell, oversample=oversample, extra=extra)
+    c = extra + oversample * (n // 2); exc = pp.calc_duration(rf, gz); tpre = 1e-3
+    fixed = (exc - rf_center_time(rf)) + tpre + adc_sample_time(adc0, c)
+    d = fill_delay(te, fixed, what='TE'); sh = round((te - fixed - d) / 1e-6) * 1e-6 if shift else 0.0
+    if sh < 0: d -= 1e-5; sh += 1e-5
+    read, adc, pre = centered_readout(sysm, n, fov, dwell, oversample=oversample, extra=extra, adc_shift=sh)
+    for j in range(n):
+        seq.add_block(rf, gz)
+        seq.add_block(pp.make_trapezoid('x', area=pre, duration=tpre, system=sysm), pp.make_trapezoid('y', area=(j - n // 2) / fov, duration=tpre, system=sysm),
+                      pp.make_trapezoid('z', area=reph, duration=tpre, system=sysm))
+        if d > 0: seq.add_block(pp.make_delay(d))
+        seq.add_block(read, adc); seq.add_block(pp.make_delay(5e-3))
+    ok, err = seq.check_timing(); assert ok, err[:2]; seq.write(path); return path
+
+with tempfile.TemporaryDirectory() as d:
+    rep, ch = measure(gre_line(os.path.join(d, 'a.seq')), te=5.0037e-3, matrix=(14, 14), fov=0.23, line_repeats=1)
+    assert not failed(ch), failed(ch)
+    rep, ch = measure(gre_line(os.path.join(d, 'b.seq'), shift=False), te=5.0037e-3)
+    assert failed(ch) == ['realized TE (excitation centre -> k=0 sample) within 1 us'], failed(ch)
+    rep, ch = measure(gre_line(os.path.join(d, 'c.seq'), dwell=10e-6, oversample=2, extra=1), te=5.0037e-3, matrix=(14, 14), fov=0.23,
+                      kx_cover=(-7, 6), line_repeats=1)
+    assert not failed(ch), failed(ch)
+    print('centered_readout: adc_shift puts the k = 0 sample on a sub-raster TE (grid exact); oversampled extended line covers with margin',
+          rep['kx_coverage_units_of_1_over_fov'])
+print('all B7 readout checks passed')

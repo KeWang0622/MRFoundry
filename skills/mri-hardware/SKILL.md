@@ -10,7 +10,7 @@ description: >-
   clinical advice.
 metadata:
   author: Ke Wang
-  version: "0.12.0"
+  version: "0.13.0"
 ---
 
 # MRFoundry: MRI Hardware and Safety
@@ -52,8 +52,10 @@ Derivations, standard values and references: [computations](references/computati
    rectangular RF train) and check discretization convergence before the real geometry.
 5. **Use established solvers for geometry-dependent physics** (Biot-Savart for coils; full-wave EM with a
    body model for local SAR; published PNS models). Never present a uniform-body estimate as local SAR.
-6. **Design inside limits with a margin** (2-5 %): rounding to rasters and ramp shapes move realized values;
-   recompute every reported safety number from the exported file.
+6. **Design inside limits with a margin** (2-5 %): size flips, pulse durations, echo counts and TR from the limit
+   before building (`b1_rms_of_train`), because rounding to rasters and ramp shapes move realized values; recompute
+   every reported safety number from the exported file. Simulated signals of an exported sequence come from KomaMRI
+   with the replay check of `pulse-sequence-design`.
 7. **Report margins and limits**: standard and edition, mode, averaging window, assumptions and what was not
    modelled. Say when a qualified MR safety expert is required.
 

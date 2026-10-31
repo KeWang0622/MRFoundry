@@ -43,6 +43,13 @@ def test_results_writeup(d):
             "--loc", "body=" + bd, "--trace", src, "--scale", "1000"]
     code, out = run(*base)
     assert code == 0, out
+    assert "3 claims cite entries of the source data" in out, out
+    # a claim for a number that is not a source entry, with an invented source path
+    extra = json.loads(json.dumps(ledger)); extra["items"].append({"id": "L4", "entry": "design.enrolled_total", "value": 88, "where": ["body"]})
+    write(d, "ledger.json", extra)
+    code, out = run(*base)
+    assert code == 1 and "not an entry of the source data" in out and "design.enrolled_total" in out, out
+    write(d, "ledger.json", ledger)
     # a semicolon starts a new clause: the clause with n has no label, and the label sentence is gone
     write(d, "body.md", good.replace("(95% CI -13.1 to -2.7, n = 29)", "(95% CI -13.1 to -2.7; n = 29)")
           .replace("In a post hoc analysis of participants older than 65 years, the", "In participants older than 65 years, the"))

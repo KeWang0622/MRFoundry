@@ -10,7 +10,7 @@ description: >-
   reviewing or writing a manuscript belongs to mri-research-workflow.
 metadata:
   author: Ke Wang
-  version: "0.12.0"
+  version: "0.13.0"
 ---
 
 # MRFoundry: Deep-Learning MRI Reconstruction

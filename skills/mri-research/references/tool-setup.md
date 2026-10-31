@@ -8,7 +8,8 @@
    Record `.venv/bin/python -m pip freeze` and the run command in `environment.txt`.
 2. Use that same interpreter for every run, including the clean-folder rerun of an entrypoint.
 3. Start slow installs (Julia/KomaMRI, BART builds, FSL, containers) in the background while you write code;
-   if a warm-up stalls, switch to the documented alternative (for Pulseq Bloch simulation: MRzeroCore).
+   if a warm-up stalls, switch to the documented alternative (for Pulseq Bloch simulation: the lean KomaMRI
+   install `pulse-sequence-design/scripts/setup_koma_julia.sh`; a different simulator gives a different signal).
 4. Do not replace a missing established solver with a homemade one; if blocked, report the obstacle and the
    alternative. Closed-form and linear fits need only numpy/scipy.
 
@@ -98,8 +99,9 @@ CUDA wheels on an incompatible machine.
   Record phantom, relaxation, off-resonance, discretization and spoiling model.
   The Python interface is evolving: use its installed-version documentation.
 - **MRzero-Core / JEMRIS:** use their official installations and examples if
-  chosen for the task; do not replace them with a new simulator when dependency
-  setup takes longer than expected.
+  chosen for the task. Their signals are not interchangeable with KomaMRI's
+  (scaling, sign and sample-timing conventions differ): when a reference
+  replays the file in KomaMRI, deliver KomaMRI output.
 
 ## Application entry points
 
