@@ -55,6 +55,10 @@ with tempfile.TemporaryDirectory() as d:
             assert "def sampling_pattern" in block and "def grappa_2d" in block and "import numpy as np" in block
             ns = {}; exec(compile(block, "block", "exec"), ns)
             assert callable(ns["grappa_from_mask"])
+            fw = HERE.parent.parent / "mri-reconstruction" / "scripts" / "fatwater_lib.py"
+            b2 = ih.collect(str(fw), ["fit_fat_water", "FAT_AMPLITUDES", "FAT_PPM_REL_WATER"])
+            ns2 = {}; exec(compile(b2, "b2", "exec"), ns2)
+            assert len(ns2["FAT_AMPLITUDES"]) == 6 and callable(ns2["fit_fat_water"]) and "_smooth" in ns2
         except ImportError:
             pass
 print("inline_helpers: transitive helpers and constants copied, clean-folder run ok, block replaced in place")

@@ -4,7 +4,7 @@
 Tasks often require ONE self-contained script. Copy the tested helpers instead of retyping them (retyped copies
 carried silent bugs in evaluation runs: a wrong acceleration factor, a conjugated covariance):
 
-  python inline_helpers.py MODULE.py func1 func2 ... --into my_entrypoint.py
+  python inline_helpers.py MODULE.py func1 func2 [CONSTANT ...] --into my_entrypoint.py
   python inline_helpers.py MODULE.py func1 ... > helpers_block.py      (print instead)
 
 The block contains the module's imports, the module-level constants the functions use and the functions with
@@ -31,11 +31,11 @@ def collect(module_path, names):
             for t in targets:
                 if isinstance(t, ast.Name):
                     consts[t.id] = node
-    missing = [n for n in names if n not in defs]
+    missing = [n for n in names if n not in defs and n not in consts]
     if missing:
         raise SystemExit(f"not defined at top level of {module_path}: {missing} (see --api)")
-    need, todo = [], list(names)
-    used_consts = set()
+    used_consts = {n for n in names if n in consts}
+    need, todo = [], [n for n in names if n in defs]
     while todo:
         n = todo.pop()
         if n in need:

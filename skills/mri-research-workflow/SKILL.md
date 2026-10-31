@@ -2,14 +2,13 @@
 name: mri-research-workflow
 description: >-
   Read before designing, analysing, writing up or reviewing an MRI study:
-  results sections and abstracts with a claim ledger, referee reports on a
-  manuscript, research gaps and proposals from a supplied corpus, sample size
-  and repeatability (wSD, ICC with CI) from pilot data, group comparisons,
-  cutoffs and development/held-out splits. Use it, not the method skills, for
-  manuscripts and proposals. Prevents overclaiming, numbers that do not match
-  the data, non-verbatim quotes, wrong statistical units and over-limit
-  texts. Ships a writing checker, tested study statistics and the finish check
-  every MRFoundry skill runs.
+  results sections with a claim ledger, referee reports, gaps and proposals
+  from a supplied corpus, sample size and repeatability (ICC with CI) from
+  pilot data, group comparisons, cutoffs and held-out splits. Use it, not the
+  method skills, for manuscripts. Prevents overclaiming, numbers that do not
+  match the data, non-verbatim quotes, wrong statistical units and over-limit
+  texts. Ships a writing checker, study statistics and the finish check every
+  MRFoundry skill runs.
 metadata:
   author: Ke Wang
   version: "0.12.0"
@@ -26,6 +25,7 @@ metadata:
 | Research gap and proposal from a supplied corpus | [write-proposal](references/write-proposal.md) | `scripts/write_check.py --ids ... --schema ...` |
 | Repeatability and sample size from pilot data | [plan-sample-size](references/plan-sample-size.md) | `scripts/write_check.py --schema ... --numbers-in ...` |
 | Group statistics, repeatability, cutoffs | `scripts/study_stats.py` (table below) | finish check |
+| Study or method-comparison design: baselines, endpoints, ablations, failure tests | [evaluation guide](../mri-research/references/evaluation-and-attribution.md) | |
 | Paper planning, venues, reviewer responses | [paper-writing guide](references/paper-writing.md) | |
 | Literature summary or related work | [literature access](../mri-research/references/literature-access.md): state topic and date window, verify primary records, merge versions, label abstract-only items, keep reported claims apart from your assessment | |
 | Deliverables with code | | finish check (below) |

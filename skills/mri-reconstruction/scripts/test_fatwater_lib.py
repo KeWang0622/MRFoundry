@@ -53,6 +53,9 @@ for k, (B0, te, flip, tr, t1w, t1f, b1amp, fs, sigma) in enumerate(cases):
     print(f"{B0} T, {len(te)} echoes: max |PDFF error| {max(abs(e) for e in err):.2f} pp, max |R2* error| "
           f"{max(abs(e) for e in rerr):.1f} 1/s (without T1/flip correction {biased:.1f} pp; magnitude discrimination at 0/100 %: {magd:.1f} pp), {time.time() - t0:.1f} s")
     # voxelwise argmin alone swaps some vials (the failure mode the regularized choice prevents)
+    if k == 0:
+        small = fit_fat_water(sig, te, off, FAT_AMPLITUDES, mask=labels > 0, chunk=700)
+        assert np.allclose(small['field_hz'], res['field_hz']) and np.allclose(small['fat_real'], res['fat_real'])
     if k == 3:
         alt = fit_fat_water(sig, te, off, FAT_AMPLITUDES, mask=labels > 0, penalty=0.0)
         swap = max(abs(np.median(fat_fraction(alt['water_real'], alt['fat_real'], flip, tr, t1w, t1f, b1)[labels == i + 1]) - pdff[i]) for i in range(9))
