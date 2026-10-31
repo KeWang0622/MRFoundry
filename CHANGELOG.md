@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased — lean retrieval, finish check and tested helpers (0.11.0, B5)
+## [0.11.0] — 2026-10-31: lean retrieval, finish check and tested helpers
 
 - All skills 0.11.0: SKILL.md files rewritten as short route tables (task -> one helper or reference),
   silent-error checks and a single "before you finish" command; detail moved to on-demand references
@@ -27,9 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kx error by line parity); simulator fallback to MRzeroCore when KomaMRI warm-up stalls.
 - mri-research: `mrs_lib.py` (+ test): spectral registration, linear-combination fit, water referencing.
 
-Motivated by A/B development trials (skill-hurt and both-fail cases); no task instance values.
+Motivated by A/B development trials (skill-hurt and both-fail cases); no task instance values. On six new held-out
+tasks (spectroscopy, ASL, CEST, fat-water, EPI diffusion, fMRI; interim), 0.11.0 completed more paired trials
+than 0.9-0.10 and than the agent without skills.
 
-## Unreleased — detail checks, tested pipelines and study statistics (0.10.0)
+## [0.10.0] — 2026-10-30: detail checks, tested pipelines and study statistics (not released separately)
 
 - pulse-sequence-design 0.10.0: `check_exported_seq.py` classifies excitation/inversion/refocusing pulses and checks
   TE, TR, TI, spin-echo refocusing timing and CPMG phase, quadratic RF spoiling or 0/180 phase cycling with receive
@@ -49,7 +51,7 @@ Motivated by A/B development trials (skill-hurt and both-fail cases); no task in
 Motivated by development failure modes and token sinks (turn count) in A/B evaluations; no held-out task content.
 
 
-## Unreleased — evaluation-driven detail guidance
+## [0.9.0] — 2026-10-29: evaluation-driven detail guidance (not released separately)
 
 - pulse-sequence-design 0.9.0: verify the exported sequence (realized TE/TR, slice-selective
   excitation and width, wrapped quadratic RF spoiling with matching ADC phase, sampling) and

@@ -183,6 +183,15 @@ The hub links to primary papers, courses, datasets and software across MRI. It s
 
 </details>
 
+## Does it help?
+
+MRFoundry is evaluated in preregistered paired trials: the same agent, language model, tools, inputs and time limit, with or without the skills installed, on held-out tasks written without access to the skills and checked by independent graders.
+
+- **Sequence design with Bloch simulation of the exported sequence** (19 language models, three tasks): verified completion rose from 38 of 88 to 71 of 88 paired trials, and no model did worse with the skills.
+- **Across MRI domains** (interim, 31 October 2026; 487 paired trials, 31 tasks): 68% to 76% verified completion, with 73 pairs passing only with MRFoundry and 33 only without it. Gains are largest where MRI-specific details decide correctness (sequence design, spectroscopy, functional MRI, relaxometry); reconstruction, hardware, statistics and writing tasks that strong models already solve show no gain yet and are the focus of the next revision.
+
+Results, tasks, graders and every started trial are reported in the accompanying manuscript.
+
 ## Reliability and scope
 
 - **Established implementations.** Use the scientific tool's official setup and examples; do not replace missing dependencies with an improvised simulator or solver.
