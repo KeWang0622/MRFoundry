@@ -238,8 +238,10 @@ def relative_difference_up_to_phase(a, b):
 def replay_check(seq_file, delivered, x, y, z, rho, T1, T2, T2s=None, B0_Hz=None, tol=0.01, post=None, **kw):
     """Self-check before delivering: re-simulate the exported file with KomaMRI from scratch and compare.
     delivered: the raw signal you deliver (n_adc, n_samples), chronological. post: optional function applied to the
-    fresh samples exactly as your pipeline does after simulation (for example a per-tissue weighting); it must not
-    conjugate, rescale, reorder or demodulate again. Prints and returns the relative difference after one global
+    fresh samples exactly as your pipeline does after simulation (a weighting of the whole object); it must not
+    conjugate, rescale, reorder or demodulate again. A signal combined from several simulations (for example one per
+    tissue, each weighted) is checked the same way: simulate each part with simulate_with_koma from scratch, combine as
+    your pipeline does and compare with relative_difference_up_to_phase. Prints and returns the relative difference after one global
     phase; raises if it exceeds tol. Catches simulating another file, MRzero or homemade output, conjugation,
     Julia column-major reshapes, dropped spins and scale changes."""
     fresh = simulate_with_koma(seq_file, x, y, z, rho, T1, T2, T2s=T2s, B0_Hz=B0_Hz, **kw)['samples']
