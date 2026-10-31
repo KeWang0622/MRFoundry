@@ -10,7 +10,7 @@ description: >-
   check. Trained networks: deep-learning-recon; diffusion: diffusion-mri.
 metadata:
   author: Ke Wang
-  version: "0.13.0"
+  version: "0.14.0"
 ---
 
 # MRFoundry: MRI Reconstruction and Quantitative Maps
@@ -29,7 +29,7 @@ Hand-written versions of these steps failed silently in evaluation runs.
 | T1, T2, T2*, VFA, dictionaries, multi-echo spin echo with B1 (EPG) | `qmri_fit.py` | [quantitative maps](references/quantitative-maps.md) |
 | ASL CBF and arrival time, single or multiple delays | `qmri_fit.py`: `asl_pairs_by_delay`, `slice_delays`, `asl_effective_efficiency` (background suppression), `m0_finite_tr`, `asl_cbf_pcasl`, `fit_asl_multidelay` | [ASL](references/quantitative-maps.md#asl) |
 | DCE: signal to concentration, extended Tofts | `qmri_fit.py`: `spgr_concentration`, `fit_tofts` | [DCE](references/quantitative-maps.md#dce) |
-| QSM: phase to field, background removal, dipole inversion, reference region | `qsm_lib.py`: `run_pipeline` | [QSM](references/quantitative-maps.md#qsm) |
+| QSM: phase to field, background removal, dipole inversion, reference region | `qsm_lib.py`: `run_pipeline` (`phase_misfit_fraction` < 0.01; `--selftest` with your acquisition must PASS) | [QSM](references/quantitative-maps.md#qsm) |
 | Fixed settings of a fitted model (nuisance values, spectra, fractions) | | [model calibration](../mri-research/references/model-calibration.md) |
 | One-file standalone entrypoint | `python .agents/skills/mri-research-workflow/scripts/inline_helpers.py <module.py> <functions> --into <entrypoint.py>` copies the tested helpers | |
 

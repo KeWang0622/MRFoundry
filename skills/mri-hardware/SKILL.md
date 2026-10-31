@@ -10,7 +10,7 @@ description: >-
   clinical advice.
 metadata:
   author: Ke Wang
-  version: "0.13.0"
+  version: "0.14.0"
 ---
 
 # MRFoundry: MRI Hardware and Safety

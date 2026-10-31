@@ -61,12 +61,15 @@ phase (unbiased near 0 % and 100 %, unlike |F| / (|W| + |F|)) and spoiled-GRE T1
 
 ## QSM
 
-`qsm_lib.py` (`python qsm_lib.py --selftest`; tests compare the dipole kernel with the analytic field of a
-magnetized sphere):
+`qsm_lib.py` (tests compare the dipole kernel with the analytic field of a magnetized sphere). First
+`python qsm_lib.py --selftest --shape ... --voxel ... --b0-dir ... --b0 ... --te ...` with the data's own acquisition
+must PASS: the default-geometry self-test hid a field-map failure seen only with other echo spacing and grids.
 
 1. Phase in radians from the stored scaling; apply the stated sign convention.
-2. `multiecho_field_hz`: phase0 removed by division by the first echo; Laplacian unwrapping (default) or
-   temporal unwrapping when |f| < 1/(2 ΔTE_min). Field in Hz.
+2. `multiecho_field_hz`: phase0 removed by division by the first echo; the shortest echo difference is unwrapped
+   inside the mask only (`mask_unwrap`, default), later echoes temporally. Field in Hz;
+   `phase_misfit_fraction` < 0.01. Laplacian unwrapping (the old default) leaks noise and steep fields into the
+   brain; temporal unwrapping aliases when |f| > 1/(2 ΔTE_min).
 3. `pdf_background` (projection onto dipole fields) removes air/sinus fields; `vsharp` is faster and weaker
    with strong external sources. Values are reliable a few mm inside the mask; judge deep regions.
 4. `invert_cg_l2` (data term inside the mask, gradient regularization); `invert_tkd` as a check. B0 direction
