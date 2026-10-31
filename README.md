@@ -11,7 +11,7 @@
 
 **MRI research guidance for your coding agent — from the question to the paper.**
 
-[![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/MRFoundry/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/MRFoundry/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](LICENSE) ![Version](https://img.shields.io/badge/version-0.8.0-1f6feb?style=flat-square&labelColor=000000) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/MRFoundry)
+[![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/MRFoundry/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/MRFoundry/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](LICENSE) ![Version](https://img.shields.io/badge/version-0.11.0-1f6feb?style=flat-square&labelColor=000000) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/MRFoundry)
 
 </div>
 
@@ -200,7 +200,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md) an
 ## Updates
 
 - **On main:** agent-owned application setup and project research memory across all seven skills.
-- **[v0.8.0](CHANGELOG.md):** venue-specific paper writing, evidence-linked project memory, diffusion/sequence guidance and annotated references.
+- **[v0.11.0](CHANGELOG.md):** lean skill files with route tables, a finish check, and tested helpers for QSM, MRS, ASL, DCE, SNR units, shimming and EPI.
+- **v0.8.0:** venue-specific paper writing, evidence-linked project memory, diffusion/sequence guidance and annotated references.
 - **[v0.7.0](https://github.com/KeWang0622/MRFoundry/releases/tag/v0.7.0):** updated BART upstream guidance, reconstruction caveats and upstream monitoring.
 - [Full changelog](CHANGELOG.md) · [Releases](https://github.com/KeWang0622/MRFoundry/releases)
 
@@ -228,7 +229,7 @@ If this helps your research or tooling, please cite it (GitHub's
   author  = {Wang, Ke},
   title   = {MRFoundry: MRI research guidance for coding agents},
   year    = {2026},
-  version = {0.8.0},
+  version = {0.11.0},
   url     = {https://github.com/KeWang0622/MRFoundry}
 }
 ```

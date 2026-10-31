@@ -2,6 +2,9 @@
 
 [MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
+**Summary.** Method selection and citations only; to run a reconstruction use the `mri-reconstruction` skill
+(BART/SigPy and tested numpy helpers).
+
 Use this to (a) pick the right method for a task and (b) hand the user the
 canonical paper. Every citation below was verified; include the DOI/arXiv id
 when you cite so the user can find it behind their own library access. Do not

@@ -109,7 +109,7 @@ def calibrate_basis(dev_curves, bvals, candidates, target_fn, sigma=None, rel_to
     return {'ranked': out, 'best': out[0]['name'], 'identifiability': ident}
 
 
-def stratified_recovery_test(make_truth, fit_fn, bvals, sigma, n=2000, seed=0, n_bins=4):
+def stratified_recovery_test(make_truth, fit_fn, bvals, sigma, n=2000, seed=0, n_bins=4, retest_tol=None):
     """Recovery test that reports bias where it matters, not only pooled.
 
     make_truth(rng, n, bvals) -> (signals, truth) or (signals, truth, group_labels); draw the truth
@@ -119,7 +119,10 @@ def stratified_recovery_test(make_truth, fit_fn, bvals, sigma, n=2000, seed=0, n
     Choose settings by the worst bin/group RMSE, which penalizes both bias and voxelwise spread, and then
     check the worst bias against your tolerance: a pooled bias near zero can hide large bias in one tissue,
     minimizing RMSE over a broad prior favours the prior's centre, and minimizing bias alone favours weak
-    regularization with unstable voxel values."""
+    regularization with unstable voxel values.
+    retest_tol: also fit a second, independent noise realization of the same truth and report
+    'retest_frac_over_tol', the fraction of voxels whose two estimates differ by more than retest_tol (a direct
+    voxelwise test-retest stability check; compare it with the study's stability criterion)."""
     rng = np.random.default_rng(seed)
     b = np.asarray(bvals, float)
     made = make_truth(rng, n, b)
@@ -145,5 +148,10 @@ def stratified_recovery_test(make_truth, fit_fn, bvals, sigma, n=2000, seed=0, n
     worst = max([abs(x['bias']) for x in bins] + [abs(v['bias']) for v in per_group.values()])
     worst_rmse = max([x['rmse'] for x in bins] + [v['rmse'] for v in per_group.values()])
     r = float(np.corrcoef(est, truth)[0, 1]) if est.std() > 0 and truth.std() > 0 else float('nan')
-    return {'bias': float(err.mean()), 'sd': float(err.std()), 'r': r, 'slope': slope, 'bins': bins,
-            'groups': per_group, 'worst_abs_bias': float(worst), 'worst_rmse': float(worst_rmse), 'n': int(n)}
+    out = {'bias': float(err.mean()), 'sd': float(err.std()), 'r': r, 'slope': slope, 'bins': bins,
+           'groups': per_group, 'worst_abs_bias': float(worst), 'worst_rmse': float(worst_rmse), 'n': int(n)}
+    if retest_tol is not None:
+        M2 = np.abs(S + rng.normal(0, sigma, S.shape) + 1j * rng.normal(0, sigma, S.shape))
+        est2 = np.asarray(fit_fn(M2, b), float)
+        out['retest_frac_over_tol'] = float(np.mean(np.abs(est2 - est) > retest_tol))
+    return out

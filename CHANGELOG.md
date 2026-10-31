@@ -5,6 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased — lean retrieval, finish check and tested helpers (0.11.0, B5)
+
+- All skills 0.11.0: SKILL.md files rewritten as short route tables (task -> one helper or reference),
+  silent-error checks and a single "before you finish" command; detail moved to on-demand references
+  (mri-reconstruction `raw-data.md`, `bart-sigpy.md`, `quantitative-maps.md`; pulse-sequence-design
+  `tools-and-families.md`; mri-hardware `landscape.md`; diffusion-mri `preprocessing-and-models.md`). Shared
+  boilerplate removed; tool setup is read only when an install fails. SKILL.md total 101 KB -> 36 KB.
+- mri-research-workflow: `finish_check.py` (+ test): required deliverables in one folder, environment
+  record, clean-folder rerun of the entrypoint, JSON keys, map-median unit ranges.
+- mri-reconstruction: `qmri_fit.py` adds exact piecewise-linear Tofts convolution and grid fit
+  (`conv_exp_pwlinear`, `fit_tofts`), SPGR signal-to-concentration, ASL general kinetic model with explicit
+  time origin and multi-delay fit, M0 finite-TR correction, order-independent ASL pairing, Rician-aware
+  dictionary matching; `mrfoundry_rawrecon.py` adds SNR units, dwell-time noise scaling, coil maps from ACS,
+  reconstruction ranking by simulated error, orientation check; new `qsm_lib.py` (+ test): Laplacian/temporal
+  field estimation, PDF and V-SHARP, CG and TKD dipole inversion, synthetic head, analytic-sphere kernel test.
+- mri-hardware: absolute shim currents with acquisition currents, `bounded_lsq_kkt` optimality check,
+  `voxel_world_coords`, `fieldmap_multiecho`.
+- pulse-sequence-design: `add_epi_readout`; checker `--epi` (TE to the train's k = 0 sample, echo spacing,
+  kx error by line parity); simulator fallback to MRzeroCore when KomaMRI warm-up stalls.
+- mri-research: `mrs_lib.py` (+ test): spectral registration, linear-combination fit, water referencing.
+
+Motivated by A/B development trials (skill-hurt and both-fail cases); no task instance values.
+
 ## Unreleased — detail checks, tested pipelines and study statistics (0.10.0)
 
 - pulse-sequence-design 0.10.0: `check_exported_seq.py` classifies excitation/inversion/refocusing pulses and checks

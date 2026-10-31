@@ -5,7 +5,8 @@ Frames
 - array: components along the image array axes i, j, k (what a voxelwise numpy fit "sees").
 - FSL bvecs: array-axis components, with the x (i) component negated when the determinant of the
   affine's 3x3 part is positive (FSL's radiological voxel convention; documented by FSL and MRtrix3).
-MRtrix3 gradient tables (-grad) are in world coordinates. Check what each tool expects, convert
+MRtrix3 gradient tables (-grad) are in world coordinates. Vendor vector files may use patient LPS components
+(world_from_lps) and encode b in the vector norm (bvals_bvecs_from_vectors). Check what each tool expects, convert
 explicitly, and verify with a forward phantom built from world-frame gradients.
 """
 import numpy as np
@@ -53,6 +54,22 @@ def read_fsl_bvecs(path):
     """Read an FSL .bvec file (3 rows x n or n x 3) as (n, 3)."""
     v = np.loadtxt(path)
     return v.T if v.shape[0] == 3 and v.shape[1] != 3 else v
+
+
+def world_from_lps(v_lps):
+    """Patient/device LPS components (DICOM convention: +x left, +y posterior, +z superior) -> NIfTI world RAS+."""
+    v = np.asarray(v_lps, float).copy(); v[..., :2] *= -1
+    return v
+
+
+def bvals_bvecs_from_vectors(vectors, b_max, zero_tol=1e-6):
+    """Vendor diffusion vector lists whose NORM encodes the b-value (b = b_max * |v|^2, e.g. free-mode vector files
+    with normalisation 'none'): returns (bvals, unit vectors; zero vectors stay zero). Check the scanner's
+    documentation for whether b scales with |v|^2 (gradient amplitude squared) and which frame the vectors use."""
+    v = np.asarray(vectors, float); n = np.linalg.norm(v, axis=-1)
+    b = b_max * n ** 2
+    u = np.where(n[..., None] > zero_tol, v / np.maximum(n[..., None], zero_tol), 0.0)
+    return b, u
 
 
 def simulate_tensor_signal(D_world, g_world, bvals, s0=1.0):

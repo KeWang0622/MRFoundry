@@ -2,6 +2,16 @@
 
 [MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
+**Short version (read further only if this fails).**
+1. Python: use the workspace interpreter (`.venv/bin/python` if it exists, else `python3 -m venv .venv`) and
+   install only missing packages into it (`.venv/bin/python -m pip install numpy scipy nibabel matplotlib`).
+   Record `.venv/bin/python -m pip freeze` and the run command in `environment.txt`.
+2. Use that same interpreter for every run, including the clean-folder rerun of an entrypoint.
+3. Start slow installs (Julia/KomaMRI, BART builds, FSL, containers) in the background while you write code;
+   if a warm-up stalls, switch to the documented alternative (for Pulseq Bloch simulation: MRzeroCore).
+4. Do not replace a missing established solver with a homemade one; if blocked, report the obstacle and the
+   alternative. Closed-form and linear fits need only numpy/scipy.
+
 Use this workflow whenever a task needs an MRI application, library, simulator,
 reconstruction framework, analysis pipeline, or research utility. Install only
 the dependencies needed for the user's task, not this entire catalog.

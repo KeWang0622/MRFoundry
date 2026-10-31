@@ -13,7 +13,7 @@ description: >-
   mri-reconstruction.
 metadata:
   author: Ke Wang
-  version: "0.10.0"
+  version: "0.11.0"
 ---
 
 # MRFoundry: Deep-Learning MRI Reconstruction
@@ -24,59 +24,6 @@ the forward model and data consistency, but do not treat consistency as proof
 of feature fidelity: undersampling leaves information unconstrained, and priors
 can influence that information even when measurement residuals are small.
 
-
-## Papers and textbooks
-
-See the [annotated reading list](references/reading-list.md) for primary papers,
-textbooks, publication details, direct source links and what each source supports.
-Use the [repo-wide reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md) to navigate across skills.
-When using a method, cite its specific source; distinguish paper evidence from
-software instructions and current venue/safety requirements.
-
-
-## Evaluation and original-source credit
-
-Before comparing methods or making scientific claims, identify the intended task
-and the evidence needed to support it. Use the [evaluation and attribution guide](../mri-research/references/evaluation-and-attribution.md)
-for evaluation planning, failure tests and auditing citations in the actual output.
-Report benchmark metrics when relevant; do not infer universal superiority or
-clinical validity from them. Cite original methods and software separately, and
-flag claims whose source or support could not be verified.
-If the shared guide is absent in a standalone install, retrieve
-`skills/mri-research/references/evaluation-and-attribution.md` from the
-[official repository](https://github.com/KeWang0622/MRFoundry).
-
-## Project research memory
-
-For ongoing projects only: use this when `.mrfoundry/INDEX.md` exists or the user
-asks to keep project notes; skip it for one-off tasks.
-If only the legacy `.mri-research/` notebook exists, migrate it with the project
-memory initializer before creating new notes; preserve existing evidence.
-For project experiments, read `.mrfoundry/INDEX.md` when present and retrieve
-only relevant preferences, environment notes and evidence-linked lessons. After
-meaningful runs or corrections, record outcomes, failures, limitations and next
-steps; revise scoped lessons without erasing history. Keep user preferences
-separate from scientific findings. Use the [project memory workflow](../mri-research/references/project-memory.md)
-to initialize the folder or connect project `CLAUDE.md` / `AGENTS.md`. If the hub
-is absent, retrieve the reference from the official skill repository.
-
-## Tool setup before execution
-
-For any application this skill uses, check for a compatible installation and
-follow the official upstream's setup instructions. Within the authorized task,
-install missing dependencies yourself in an isolated environment, run this skill's
-test script or a small upstream example, then execute the user's workflow.
-Start slow installs (for example Julia/KomaMRI) in the background while you write code.
-Work from the installed skill first: its scripts and references cover routine work;
-fetch remote references only when something you need is missing locally.
-Work efficiently: write each stage as one script with built-in checks, run it end to
-end, and fix with targeted edits rather than many exploratory one-off commands. Keep effort proportionate: closed-form or linear fits need only numpy/scipy; install heavy toolboxes only for the steps that need them, and produce every requested deliverable before refining. Before finishing, confirm every requested deliverable exists under its exact name, with code and outputs together in the location the task specifies (the workspace root if none is specified), and rerun each standalone entrypoint from a fresh copy in a temporary directory with the project's interpreter on the provided input; record that command in the environment record. Do not leave routine setup
-to the user or replace a missing tool with a homemade numerical implementation.
-Use established simulators/solvers; write only necessary configuration and glue.
-If blocked, report the actual obstacle and an established alternative.
-Read the [tool setup guide](../mri-research/references/tool-setup.md) when installing,
-repairing, or choosing an execution environment. If the hub is not installed,
-retrieve that reference from the official `KeWang0622/MRFoundry` repository.
 
 ## Method families (with citations)
 
@@ -145,15 +92,19 @@ prototyping: mridata.org.
   comparator; reviewers will ask, so address it in related work even though the
   implementations are proprietary.
 
-## Hand-offs
+## Before you finish
 
-- **Classical / training-free recon** — ESPIRiT, SENSE, GRAPPA, L1-wavelet PICS,
-  NUFFT gridding, or "just get me an image from this k-space": use the
-  `mri-reconstruction` skill, which executes BART/SigPy pipelines. You also want
-  it for the *baseline* your network is compared against.
-- **Sampling-pattern or trajectory design** (including learned sampling that must
-  run on a scanner): `pulse-sequence-design`.
-- **Theory, citations, and the wider landscape:** the `mri-research` hub.
+    python .agents/skills/mri-research-workflow/scripts/finish_check.py --require <every deliverable name> \
+        --rerun "python <entrypoint> <documented arguments with {inputs} and {out}>" --inputs <input folder>
 
-Deeper reference:
-../mri-research/references/recon-methods.md
+## Setup, scope and hand-offs
+
+- Use the workspace interpreter (`.venv/bin/python` if present); on CPU prefer small unrolled models with few
+  cascades. Read the [tool setup guide](../mri-research/references/tool-setup.md) only if an install fails.
+- Citations: [reading list](references/reading-list.md); evidence and claims:
+  [evaluation guide](../mri-research/references/evaluation-and-attribution.md); theory:
+  [recon methods](../mri-research/references/recon-methods.md). Project notes (only with `.mrfoundry/INDEX.md`):
+  [project memory](../mri-research/references/project-memory.md).
+- Classical reconstruction and the classical baseline (ESPIRiT, SENSE, GRAPPA, PICS, NUFFT), including
+  `mri-reconstruction/scripts/mrfoundry_rawrecon.py` (`sense_cg`, `coil_maps_from_acs`, `rank_reconstructions`):
+  `mri-reconstruction`. Sampling or trajectory design: `pulse-sequence-design`.

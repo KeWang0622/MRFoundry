@@ -22,7 +22,7 @@ type: software
 authors:
   - family-names: Wang
     given-names: Ke
-version: 0.8.0
+version: 0.11.0
 date-released: "2026-10-07"
 license: MIT
 repository-code: "https://github.com/KeWang0622/MRFoundry"

@@ -59,3 +59,9 @@ a1 = adc_fit(S, bb, bmax=1000)[0]; a_all = adc_fit(S, bb, bmax=3000)[0]
 assert a_all < a1, (a1, a_all)
 print('adc_fit: ADC(b<=1000) %.2e mm2/s vs all shells %.2e' % (a1, a_all))
 
+
+# B5: voxelwise test-retest stability from two noise realizations
+st_fine = stratified_recovery_test(lambda r, n, b: make(r, n, b)[:2], lambda M, b: fraction_below(fit_weights(M, b, fine), fine, cut), b, 0.02, n=600, retest_tol=0.1)
+st_reg = stratified_recovery_test(lambda r, n, b: make(r, n, b)[:2], lambda M, b: fraction_below(fit_weights(M, b, fine, lam=0.05, smooth=True), fine, cut), b, 0.02, n=600, retest_tol=0.1)
+assert st_reg['retest_frac_over_tol'] < st_fine['retest_frac_over_tol']
+print(f"retest check: unregularized fine grid {st_fine['retest_frac_over_tol']:.2f} vs regularized {st_reg['retest_frac_over_tol']:.2f} of voxels change by > 0.1")

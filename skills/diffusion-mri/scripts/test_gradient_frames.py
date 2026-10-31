@@ -34,3 +34,10 @@ for sign in (+1, -1):
     print('det %+d: FSL round trip ok; eigenvector in world frame matches the phantom; using FSL bvecs as array frame gives |cos| %.3f' % (sign, wrong))
 print('all gradient-frame tests passed')
 
+
+# B5: vendor vectors in LPS with b encoded in the squared norm
+vec = np.array([[0, 0, 0], [0.6, 0, 0.8], [0, -0.5 ** 0.5, 0]])
+b, u = bvals_bvecs_from_vectors(vec, 2000.0)
+assert np.allclose(b, [0, 2000, 1000]) and np.allclose(np.linalg.norm(u[1:], axis=1), 1) and np.allclose(u[0], 0)
+assert np.allclose(world_from_lps([1.0, 2.0, 3.0]), [-1.0, -2.0, 3.0])
+print("vendor vectors: b from the squared norm, LPS -> RAS world")
