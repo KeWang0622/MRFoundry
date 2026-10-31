@@ -1,16 +1,12 @@
 ---
 name: deep-learning-recon
 description: >-
-  Read before training, fine-tuning, applying or evaluating a neural network for
-  MRI reconstruction: unrolled and variational networks (VarNet, MoDL), self-
-  supervised training without fully sampled data (SSDU), diffusion or score-based
-  priors, physics-guided data consistency, fastMRI and mridata datasets, and
-  frameworks such as DIRECT, fastMRI and torchkbnufft. Prevents silent errors from
-  train, validation and test leakage, inconsistent k-space normalization and
-  sampling masks between training and testing, unfair classical baselines, and
-  metrics computed on the wrong region or scale. Classical training-free
-  reconstruction (ESPIRiT, SENSE, GRAPPA, compressed sensing, NUFFT) belongs to
-  mri-reconstruction.
+  Read before training, fine-tuning, applying or evaluating a neural network
+  for MRI reconstruction: unrolled and variational networks, self-supervised
+  training (SSDU), diffusion or score-based priors, fastMRI, DIRECT,
+  torchkbnufft. Prevents silent errors from train/test leakage, inconsistent
+  normalization and masks, unfair classical baselines and metrics on the wrong
+  region or scale. Classical reconstruction belongs to mri-reconstruction.
 metadata:
   author: Ke Wang
   version: "0.11.0"

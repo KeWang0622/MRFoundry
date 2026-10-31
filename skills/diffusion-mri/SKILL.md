@@ -1,16 +1,13 @@
 ---
 name: diffusion-mri
 description: >-
-  Read before fitting, converting or reporting any diffusion-weighted MRI
-  result: ADC, DTI/DKI (FA, MD, kurtosis, eigenvectors), IVIM, NODDI,
-  multi-compartment or spectrum signal fractions, CSD and tractography, and
-  diffusion biomarker or repeatability studies. Prevents silent errors:
-  b-vector frames (FSL, vendor, world) when reporting orientations, b-values
-  from vector norms, the b-range for conventional ADC/DTI, noise-floor bias, units,
-  and biased or unstable fractions from uncalibrated model settings. Ships tested
-  numpy helpers (frame conversion with forward-phantom checks, closed-form tensor
-  fit, noise floor, regularized and fixed-basis fits, calibration, stratified
-  recovery tests). Starts from reconstructed DWI.
+  Read before fitting, converting or reporting diffusion-weighted MRI: ADC,
+  DTI/DKI, IVIM, NODDI, compartment or spectrum fractions, tractography and
+  diffusion biomarker studies. Prevents silent errors in b-vector frames and
+  vendor vector files, the b-range for ADC/DTI, units, noise floor and
+  uncalibrated or unstable fraction models. Ships tested numpy helpers (frame
+  conversion, tensor fit, noise floor, calibration, stratified recovery and
+  retest tests). Starts from reconstructed DWI.
 metadata:
   author: Ke Wang
   version: "0.11.0"

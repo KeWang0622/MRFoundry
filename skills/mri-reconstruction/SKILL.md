@@ -2,13 +2,11 @@
 name: mri-reconstruction
 description: >-
   Read before turning MR data into images or parameter maps: raw k-space
-  (Cartesian, radial, spiral, EPI; twix, ISMRMRD, .cfl, numpy), noise
-  prewhitening, coil combination and SNR units, GRAPPA/SENSE/partial Fourier,
-  BART or SigPy, and quantitative maps (T1, T2 with EPG/B1, T2*, ASL CBF/ATT, DCE
-  Tofts, QSM). Prevents silent errors in encoding sign, orientation, noise
-  covariance and scaling, label timing, convolution and units. Ships tested
-  numpy helpers with self-tests and a finish check. Trained networks belong to
-  deep-learning-recon, diffusion to diffusion-mri, spectroscopy to mri-research.
+  (Cartesian, radial, EPI; twix, ISMRMRD, numpy), coil combination and SNR
+  units, GRAPPA/SENSE, BART or SigPy, and T1, T2/EPG, T2*, ASL, DCE or QSM
+  maps. Prevents silent errors in encoding sign, orientation, noise
+  covariance, timing origin and units. Ships tested numpy helpers and a finish
+  check. Trained networks: deep-learning-recon; diffusion: diffusion-mri.
 metadata:
   author: Ke Wang
   version: "0.11.0"

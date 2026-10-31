@@ -1,15 +1,13 @@
 ---
 name: mri-research
 description: >-
-  Start here when an MRI task does not clearly match a specialist skill, spans
-  several areas, or involves image-level analysis or spectroscopy:
-  DICOM/NIfTI/BIDS conversion and orientation, registration, segmentation,
-  FreeSurfer, fMRI and GLM analysis, MR spectroscopy quantification (tested
-  alignment, linear-combination fit and water referencing), plus papers,
-  datasets and tools. Holds shared references: tool setup, data formats,
-  evaluation and attribution, model calibration, project memory. Routes to the
-  specialists for sequences, reconstruction and quantitative maps (including QSM,
-  ASL, DCE), diffusion, hardware and safety, deep learning and study statistics.
+  Start here when an MRI task matches no specialist skill, spans several
+  areas, or involves image analysis or spectroscopy: DICOM/NIfTI/BIDS and
+  orientation, registration, segmentation, FreeSurfer, fMRI/GLM, MRS
+  quantification (tested alignment, fitting and water referencing), papers,
+  datasets and tools. Holds shared references (tool setup, formats,
+  evaluation, model calibration, project memory) and routes to the specialist
+  skills.
 metadata:
   author: Ke Wang
   version: "0.11.0"

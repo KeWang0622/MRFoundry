@@ -1,15 +1,13 @@
 ---
 name: mri-hardware
 description: >-
-  Read before any calculation, design or advice about MR hardware or safety: B0
-  field maps and shimming (spherical harmonics, current limits, oblique
-  geometry), gradient and RF coils (Biot-Savart, efficiency, linearity, B1), RF
-  exposure (B1+rms, SAR, IEC 60601-2-33 modes), dB/dt and nerve stimulation,
-  receiver noise, coil combination and SNR scaling, low-field and open-source
-  consoles, quench and implants. Prevents silent errors in units, frames, field
-  components, harmonic normalization, bounded optimization and limit definitions.
-  Ships tested SI helpers checked against analytic cases. Not clinical advice;
-  waveform programming belongs to pulse-sequence-design.
+  Read before any MR hardware or safety calculation: B0 field maps and
+  shimming with current limits, gradient and RF coil fields, B1+rms and SAR
+  (IEC 60601-2-33), dB/dt and nerve stimulation, receiver noise and SNR, low-
+  field and open-source consoles. Prevents silent errors in units, frames,
+  field components, harmonic normalization, bounded optimization and limit
+  definitions. Ships tested SI helpers checked against analytic cases. Not
+  clinical advice.
 metadata:
   author: Ke Wang
   version: "0.11.0"

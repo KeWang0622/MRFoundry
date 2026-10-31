@@ -2,13 +2,12 @@
 name: mri-research-workflow
 description: >-
   Read before designing, analysing or reporting an MRI study with subjects,
-  groups or repeated scans: development and held-out splits, biomarker
-  comparisons, repeatability (wCV, ICC), cutoffs and classification, confidence
-  intervals, analysis plans, reports and papers for MRM, JMRI, TMI, MICCAI or
-  CVPR. Prevents test-data leakage, the wrong statistical unit and numbers that do
-  not match saved outputs. Ships tested study statistics and the finish check
-  (missing or split deliverables, entrypoints that fail on a clean rerun) that
-  every MRFoundry skill runs. Measurements belong to the specialist skills.
+  groups or repeated scans: development/held-out splits, biomarker
+  comparisons, repeatability (wCV, ICC), cutoffs, confidence intervals,
+  reports and papers. Prevents test-data leakage, the wrong statistical unit
+  and numbers that do not match saved outputs. Ships tested study statistics
+  and the finish check every MRFoundry skill runs (missing or split
+  deliverables, entrypoints that fail on a clean rerun).
 metadata:
   author: Ke Wang
   version: "0.11.0"
@@ -47,7 +46,9 @@ defaults; recompute every reported number from the saved outputs.
 ## From idea to paper
 
 1. **Frame**: related work ([literature access](../mri-research/references/literature-access.md)), the gap, one
-   claim, the target venue ([publishing](../mri-research/references/publishing.md)).
+   claim, the target venue ([publishing](../mri-research/references/publishing.md)). For a literature summary,
+   state the topic and date window, verify primary records, merge versions, label abstract-only items and
+   separate reported claims from your assessment.
 2. **Design**: datasets and licences, baselines, endpoints, ablations, reference standards, failure tests and
    what would falsify the claim ([evaluation guide](../mri-research/references/evaluation-and-attribution.md));
    keep tuning and test data separate; record seeds, configurations and logs.

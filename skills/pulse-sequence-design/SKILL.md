@@ -1,15 +1,13 @@
 ---
 name: pulse-sequence-design
 description: >-
-  Read before designing, programming, exporting or simulating an MRI acquisition:
-  pulse sequences, RF pulses, gradient waveforms and k-space trajectories
-  (Cartesian, radial, spiral, EPI), Pulseq/PyPulseq .seq files, Bloch simulation
-  of the exported file (KomaMRI, MRzeroCore), SMS and vendor environments.
-  Prevents silent errors in realized timing (TE, TR, TI, echo spacing from RF
-  centres and k = 0 samples), RF spoiling and receive phase, gradient balance,
-  slice selection, steady state and sampling grids. Ships tested builders
-  (spoiled GRE, IR, bSSFP, spin echo, EPI), an exported-sequence checker and an
-  end-to-end example. Reconstruction belongs to mri-reconstruction.
+  Read before designing, exporting or simulating an MRI acquisition: pulse
+  sequences, RF and gradient waveforms, k-space trajectories (Cartesian,
+  radial, spiral, EPI), Pulseq/PyPulseq files and Bloch simulation of the
+  export. Prevents silent errors in realized TE/TR/TI and echo spacing,
+  spoiling and receive phase, gradient balance, slice selection, steady state
+  and sampling grids. Ships tested builders, an exported-sequence checker and
+  an end-to-end example.
 metadata:
   author: Ke Wang
   version: "0.11.0"
