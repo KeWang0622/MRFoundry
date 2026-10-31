@@ -209,7 +209,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md) an
 ## Updates
 
 - **On main:** agent-owned application setup and project research memory across all seven skills.
-- **[v0.14.0](CHANGELOG.md):** coverage-safe EPI and Cartesian readouts, exact sub-raster timing, block-boundary gradient continuity and acquired-line checks for exported sequences; a lean KomaMRI install and a replay check for delivered simulations; claim-ledger source checks.
+- **[v0.14.0](CHANGELOG.md):** deliverables checked where the task expects them, a slice-gradient check at the centre of every selective RF pulse (including UTE half pulses), and in-mask phase unwrapping with a self-check for QSM field maps.
+- **[v0.13.0](CHANGELOG.md):** coverage-safe EPI and Cartesian readouts, exact sub-raster timing, block-boundary gradient continuity and acquired-line checks for exported sequences; a lean KomaMRI install and a replay check for delivered simulations; claim-ledger source checks.
 - **[v0.12.0](CHANGELOG.md):** a writing checker for results sections, reviews, proposals and study plans; ICC confidence intervals and sample-size helpers; GRAPPA from a sampling mask, noise-floor-aware T2 fits, water-fat separation, off-resonance-corrected spiral reconstruction; crusher and safety measurements of exported sequences.
 - **[v0.11.0](CHANGELOG.md):** lean skill files with route tables, a finish check, and tested helpers for QSM, MRS, ASL, DCE, SNR units, shimming and EPI.
 - **v0.8.0:** venue-specific paper writing, evidence-linked project memory, diffusion/sequence guidance and annotated references.
