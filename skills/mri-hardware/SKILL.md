@@ -10,7 +10,7 @@ description: >-
   clinical advice.
 metadata:
   author: Ke Wang
-  version: "0.11.0"
+  version: "0.13.0"
 ---
 
 # MRFoundry: MRI Hardware and Safety
@@ -31,6 +31,8 @@ each helper on an analytic case.
 | Coil fields, gradient efficiency and linearity | `biot_savart`, `circle_path`, `loop_bz_on_axis`, `gradient_metrics` |
 | RF exposure | `rf_energy`, `b1_rms` (window includes dead time), `b1_rms_of_train`, `b1_for_flip`, `sar_scale`, `iec_sar_limits`, `time_averaged_sar` |
 | Gradient safety | `slew_rate`, `dbdt_at_radius`, `effective_stimulus_duration`, `pns_threshold_dbdt`, `iec_dbdt_limit` |
+| Safety numbers of an exported Pulseq file (B1+rms, B1 peak, gradient rms, ramp PNS, crusher moments) | `pulse-sequence-design/scripts/check_exported_seq.py seq --safety --pns-rheobase .. --pns-chronaxie ..` (limits: `--b1rms-max`, `--pns-max`, ...) |
+| Off-resonance correction of a long readout with a field map | `fieldmap_multiecho` here, then `mri-reconstruction` `offres_least_squares` and `smooth_field` |
 | Receiver noise and SNR | `noise_covariance`, `prewhitening_matrix`, `roemer_combine` (SNR units), `rss_combine`, `snr_scale` |
 
 Derivations, standard values and references: [computations](references/computations.md).
@@ -50,7 +52,11 @@ Derivations, standard values and references: [computations](references/computati
    rectangular RF train) and check discretization convergence before the real geometry.
 5. **Use established solvers for geometry-dependent physics** (Biot-Savart for coils; full-wave EM with a
    body model for local SAR; published PNS models). Never present a uniform-body estimate as local SAR.
-6. **Report margins and limits**: standard and edition, mode, averaging window, assumptions and what was not
+6. **Design inside limits with a margin** (2-5 %): size flips, pulse durations, echo counts and TR from the limit
+   before building (`b1_rms_of_train`), because rounding to rasters and ramp shapes move realized values; recompute
+   every reported safety number from the exported file. Simulated signals of an exported sequence come from KomaMRI
+   with the replay check of `pulse-sequence-design`.
+7. **Report margins and limits**: standard and edition, mode, averaging window, assumptions and what was not
    modelled. Say when a qualified MR safety expert is required.
 
 ## Before you finish

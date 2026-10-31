@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Finish check: run this before you report a task as done.
+"""Finish check: run this before you report a task as done. This docstring (--help) is the whole manual.
 
 It catches the packaging failures that most often make correct work unusable:
 missing or misnamed deliverables, an entrypoint stored apart from its outputs, a missing
@@ -69,6 +69,21 @@ def check_location(root, required):
     if ok:
         lines.append(f"PASS all {len(required)} required deliverables in ./{folder if folder not in (None, '.') else ''}")
     return ok, lines, folder
+
+
+CODE_SUFFIXES = ('.py', '.jl', '.R', '.m', '.sh', '.ipynb')
+
+
+def has_code(root, folder):
+    """True if a code file lies in the root or the deliverable folder (depth <= 2, tool folders skipped)."""
+    for base in {Path(root), Path(root) / (folder or '.')}:
+        for dirpath, dirnames, files in os.walk(base):
+            dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS and not d.startswith('.')]
+            if len(Path(dirpath).relative_to(base).parts) >= 2:
+                dirnames[:] = []
+            if any(f.endswith(CODE_SUFFIXES) for f in files):
+                return True
+    return False
 
 
 def check_env_record(root, folder):
@@ -212,7 +227,10 @@ def main(argv=None):
     root = Path(a.root).resolve(); results = []
     ok_loc, lines, folder = check_location(root, a.require) if a.require else (True, [], '.')
     results.append(ok_loc); print("\n".join(lines))
-    ok_env, line = check_env_record(root, folder); results.append(ok_env); print(line)
+    if a.rerun or has_code(root, folder):
+        ok_env, line = check_env_record(root, folder); results.append(ok_env); print(line)
+    else:
+        print("NOTE no code delivered: environment record not required")
     if a.json:
         ok, lines = check_json(root, folder, a.json); results.append(ok); print("\n".join(lines))
     if a.ranges:

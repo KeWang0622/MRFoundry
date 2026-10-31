@@ -1,19 +1,65 @@
 ---
 name: mri-research-workflow
 description: >-
-  Read before designing, analysing or reporting an MRI study with subjects,
-  groups or repeated scans: development/held-out splits, biomarker
-  comparisons, repeatability (wCV, ICC), cutoffs, confidence intervals,
-  reports and papers. Prevents test-data leakage, the wrong statistical unit
-  and numbers that do not match saved outputs. Ships tested study statistics
-  and the finish check every MRFoundry skill runs (missing or split
-  deliverables, entrypoints that fail on a clean rerun).
+  Read before designing, analysing, writing up or reviewing an MRI study:
+  results sections with a claim ledger, referee reports, gaps and proposals
+  from a supplied corpus, sample size and repeatability (ICC with CI) from
+  pilot data, group comparisons, cutoffs and held-out splits. Use it, not the
+  method skills, for manuscripts. Prevents overclaiming, numbers that do not
+  match the data, non-verbatim quotes, wrong statistical units and over-limit
+  texts. Ships a writing checker, study statistics and the finish check every
+  MRFoundry skill runs.
 metadata:
   author: Ke Wang
-  version: "0.11.0"
+  version: "0.13.0"
 ---
 
-# MRFoundry: MRI Research Workflow (study design, statistics, deliverables, papers)
+# MRFoundry: MRI Research Workflow (studies, statistics, write-ups, reviews, deliverables)
+
+## Route
+
+| Task | Read | Check before finishing |
+|---|---|---|
+| Results section, abstract, claim ledger | [write-results](references/write-results.md) | `scripts/write_check.py --claims ...` |
+| Methods/statistics review of a manuscript | [write-review](references/write-review.md) | `scripts/write_check.py --quotes ...` |
+| Research gap and proposal from a supplied corpus | [write-proposal](references/write-proposal.md) | `scripts/write_check.py --ids ... --schema ...` |
+| Repeatability and sample size from pilot data | [plan-sample-size](references/plan-sample-size.md) | `scripts/write_check.py --schema ... --numbers-in ...` |
+| Group statistics, repeatability, cutoffs | `scripts/study_stats.py` (table below) | finish check |
+| Study or method-comparison design: baselines, endpoints, ablations, failure tests | [evaluation guide](../mri-research/references/evaluation-and-attribution.md) | |
+| Paper planning, venues, reviewer responses | [paper-writing guide](references/paper-writing.md) | |
+| Literature summary or related work | [literature access](../mri-research/references/literature-access.md): state topic and date window, verify primary records, merge versions, label abstract-only items, keep reported claims apart from your assessment | |
+| Deliverables with code | | finish check (below) |
+
+`python .agents/skills/mri-research-workflow/scripts/write_check.py --help` lists every flag; each FAIL line
+says what to fix. Fix the files, never the checker, and run it again.
+
+## Rules for every write-up, review and plan
+
+1. **Definitions are literal.** Apply each definition the task gives to every record or entry IN CODE (one row
+   per record with the fields the definition uses and the decision). Add no criteria and drop none.
+2. **Schemas are exact**: key names, vocabulary spellings, one value versus a list, integers. An endpoint
+   `unit` is the measurement unit (ms, 1/s, mm²/s, %), never the unit of analysis.
+3. **Numbers come from files**: compute in code, keep one ledger, write prose from it with the same rounding;
+   no new statistics unless asked. Units and precision as the task states.
+4. **Claims match the evidence**: a CI including 0 is reported as no difference detected; exploratory results
+   are labelled as such in every clause; no causal or clinical claim beyond the design.
+5. **Citations are closed**: only supplied keys or record IDs; a record supports a statement only if it states
+   that fact itself.
+6. **Limits**: word limits count every token; stay below 90 %. Quotes are one contiguous verbatim passage.
+
+## Study statistics (`scripts/study_stats.py`, tested; `--api` lists signatures)
+
+| Need | Function |
+|---|---|
+| Two groups | `two_sample_t` (pooled or Welch t, CI, p, pooled SD, Hedges g), `auc`, `subject_bootstrap` |
+| Paired | `paired_difference` (t CI, Cohen's dz), `bland_altman` |
+| Repeatability | `repeatability` (wSD with chi-square CI, wCV, RC), `icc`, `icc_ci` (F-based CI, all six forms) |
+| Sample size | `n_per_group`, `n_paired` (normal or exact t), `sd_of_differences`, `inflate_for_loss`, `combined_fraction`, `n_total_unbalanced` |
+| Cutoffs | `threshold_on_dev`, `balanced_accuracy` |
+
+The statistical unit is the subject (or the unit the plan names), never the voxel; fix every setting, threshold
+and cutoff on development subjects and apply it unchanged to held-out subjects; the study's analysis plan
+overrides these defaults.
 
 ## Finish check (every task with files to deliver)
 
@@ -22,43 +68,12 @@ metadata:
         --rerun "python <entrypoint> <documented arguments with {inputs} and {out}>" --inputs <input folder> \
         [--expect <files the entrypoint must write>] [--json report.json:key1,key2/sub] [--range FILE:LOW:HIGH]
 
-It fails when a deliverable is missing or misnamed, when the entrypoint sits in one folder and its outputs in
-another (put all of them in the folder the task names, else the workspace root), when no environment record
-exists, when the entrypoint fails in a fresh folder holding only the script and the inputs, and when a map
-median falls outside the expected range for its units. Fix each FAIL and run it again. Produce every
-deliverable first, then refine. `scripts/check_deliverables.py spec.json` checks nested JSON keys and array
-shapes against a spec.
+It fails on missing or misnamed deliverables, an entrypoint stored apart from its outputs, no environment
+record when code is delivered, an entrypoint that fails in a fresh folder, and map medians outside the
+expected range. Without code, use `--require` only. `--help` lists the flags of either checker: run them, do not
+read their sources. A standalone single-file entrypoint takes tested helpers with
+`python .agents/skills/mri-research-workflow/scripts/inline_helpers.py <module.py> <functions> --into <entrypoint.py>`.
 
-## Study statistics (`scripts/study_stats.py`, tested)
+Citations: [reading list](references/reading-list.md).
+Project notes (only with `.mrfoundry/INDEX.md`): [project memory](../mri-research/references/project-memory.md).
 
-| Need | Function |
-|---|---|
-| Group separation | `auc` (Mann-Whitney), `paired_difference` (t-based CI, Cohen's dz), `subject_bootstrap` |
-| Repeatability | `repeatability` (within-subject SD with chi-square CI, wCV, repeatability coefficient), `within_subject_cv` |
-| Agreement | `icc` (one-way, two-way random and mixed; single and average measures; k sessions), `icc_3_1`, `bland_altman` |
-| Cutoffs and classification | `threshold_on_dev`, `balanced_accuracy` |
-
-Rules: the statistical unit is the subject (or lesion, or ROI-session if the plan says so), never the voxel;
-declare the unit and ICC form for every endpoint; fix every model setting, threshold and cutoff on
-development subjects and apply it unchanged to held-out subjects; the study's analysis plan overrides these
-defaults; recompute every reported number from the saved outputs.
-
-## From idea to paper
-
-1. **Frame**: related work ([literature access](../mri-research/references/literature-access.md)), the gap, one
-   claim, the target venue ([publishing](../mri-research/references/publishing.md)). For a literature summary,
-   state the topic and date window, verify primary records, merge versions, label abstract-only items and
-   separate reported claims from your assessment.
-2. **Design**: datasets and licences, baselines, endpoints, ablations, reference standards, failure tests and
-   what would falsify the claim ([evaluation guide](../mri-research/references/evaluation-and-attribution.md));
-   keep tuning and test data separate; record seeds, configurations and logs.
-3. **Run** with the specialist skills (reconstruction, deep learning, diffusion, sequences, hardware).
-4. **Analyze** the planned endpoints with uncertainty, subgroups and failure cases; limit conclusions to the
-   evidence collected.
-5. **Write** from verified evidence ([paper-writing guide](references/paper-writing.md),
-   [paper plan](assets/paper-plan.md), [reviewer response](assets/reviewer-response.md)); keep planned and actual
-   results distinct; submission requires user authorization.
-
-Citations: [reading list](references/reading-list.md). Project notes (only with `.mrfoundry/INDEX.md`):
-[project memory](../mri-research/references/project-memory.md). Setup problems:
-[tool setup guide](../mri-research/references/tool-setup.md).

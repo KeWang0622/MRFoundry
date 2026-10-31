@@ -8,6 +8,16 @@ Rules these helpers enforce or make easy:
 - Uncertainty by resampling subjects (cluster bootstrap): paired comparisons resample the same subjects for both
   biomarkers.
 """
+if __name__ == '__main__' and '--api' in __import__('sys').argv:  # signatures only; works without numpy
+    import ast as _ast, sys as _sys
+    for _n in _ast.parse(open(__file__).read()).body:
+        if isinstance(_n, (_ast.FunctionDef, _ast.ClassDef)) and not _n.name.startswith('_'):
+            _f = _n if isinstance(_n, _ast.FunctionDef) else next((m for m in _n.body if isinstance(m, _ast.FunctionDef) and m.name == '__init__'), None)
+            _a = _ast.unparse(_f.args).replace('self, ', '').replace('self', '') if _f else ''
+            _d = (_ast.get_docstring(_n) or '').strip().splitlines()
+            print(f"{_n.name}({_a})" + chr(10) + f"    {_d[0] if _d else ''}")
+    _sys.exit(0)
+
 import numpy as np
 
 def auc(pos, neg):
@@ -102,3 +112,129 @@ def balanced_accuracy(y_true, y_pred):
     """Mean of sensitivity and specificity for binary labels (compute at the declared unit, e.g. one value per subject)."""
     t = np.asarray(y_true, bool); p = np.asarray(y_pred, bool)
     return float((np.mean(p[t]) + np.mean(~p[~t])) / 2)
+
+
+
+# ---- sample size, two-group tests and ICC confidence intervals (standard formulas) --------------------------
+def _z(p):
+    from statistics import NormalDist
+    return NormalDist().inv_cdf(p)
+
+
+def _ceil(x):
+    import math
+    return int(math.ceil(x - 1e-9))
+
+
+def n_per_group(delta, sd, alpha=0.05, power=0.8, sided=2, exact=False):
+    """Evaluable participants PER GROUP for two independent groups of equal size:
+    n = ceil(2 ((z_{1-alpha/sided} + z_{1-beta}) sd / delta)^2), beta = 1 - power (normal approximation). sd: within-group
+    (between-participant) SD of ONE measurement per participant. exact=True: smallest n whose noncentral-t power
+    (df = 2n - 2) reaches 'power' (needs scipy). Rounds up only once, at the end."""
+    za, zb = _z(1 - alpha / sided), _z(power)
+    n = _ceil(2 * ((za + zb) * sd / delta) ** 2)
+    if not exact:
+        return n
+    from scipy.stats import nct, t as tdist
+    m = max(2, n - 3)
+    while True:
+        df = 2 * m - 2; nc = abs(delta) / (sd * np.sqrt(2.0 / m)); tc = tdist.ppf(1 - alpha / sided, df)
+        pw = 1 - nct.cdf(tc, df, nc) + (nct.cdf(-tc, df, nc) if sided == 2 else 0)
+        if pw >= power:
+            return int(m)
+        m += 1
+
+
+def n_paired(delta, sd_diff, alpha=0.05, power=0.8, sided=2, exact=False):
+    """Evaluable participants for a paired / crossover comparison: n = ceil(((z_{1-alpha/sided} + z_{1-beta}) sd_diff / delta)^2).
+    sd_diff: SD of each participant's difference between the two conditions (sqrt(2) times the within-subject SD
+    when both conditions carry the test-retest variability; see sd_of_differences). exact=True: noncentral t, df = n - 1."""
+    za, zb = _z(1 - alpha / sided), _z(power)
+    n = _ceil(((za + zb) * sd_diff / delta) ** 2)
+    if not exact:
+        return n
+    from scipy.stats import nct, t as tdist
+    m = max(2, n - 3)
+    while True:
+        df = m - 1; nc = abs(delta) / (sd_diff / np.sqrt(m)); tc = tdist.ppf(1 - alpha / sided, df)
+        pw = 1 - nct.cdf(tc, df, nc) + (nct.cdf(-tc, df, nc) if sided == 2 else 0)
+        if pw >= power:
+            return int(m)
+        m += 1
+
+
+def sd_of_differences(within_subject_sd):
+    """SD of a within-participant difference of two measurements that each carry the within-subject SD: sqrt(2) wSD."""
+    return float(np.sqrt(2.0) * within_subject_sd)
+
+
+def combined_fraction(fractions):
+    """Probability that a participant is lost to at least one of several independent causes: 1 - (1 - f1)(1 - f2)..."""
+    return float(1 - np.prod([1 - float(p) for p in fractions]))
+
+
+def inflate_for_loss(n_needed, loss_fraction):
+    """Participants to recruit so that n_needed remain after a fraction loss_fraction is lost: ceil(n / (1 - loss))."""
+    return _ceil(n_needed / (1 - float(loss_fraction)))
+
+
+def n_total_unbalanced(n_needed_per_group, minority_share, loss_fraction=0.0):
+    """Recruitment when group membership is only known after enrolment (a test result splits participants):
+    ceil(n / (minority_share x (1 - loss_fraction))) participants so that the SMALLER group reaches n."""
+    return _ceil(n_needed_per_group / (float(minority_share) * (1 - float(loss_fraction))))
+
+
+def pooled_sd(a, b):
+    """Pooled within-group SD sqrt(((n1-1) s1^2 + (n2-1) s2^2) / (n1 + n2 - 2)) with sample variances (ddof 1)."""
+    a = np.asarray(a, float); b = np.asarray(b, float)
+    return float(np.sqrt(((len(a) - 1) * a.var(ddof=1) + (len(b) - 1) * b.var(ddof=1)) / (len(a) + len(b) - 2)))
+
+
+def two_sample_t(a, b, ci=0.95, welch=False):
+    """Difference mean(a) - mean(b) with a pooled-variance (welch=False) or Welch (welch=True) t interval, t, df,
+    two-sided p, pooled SD and Hedges g (J = 1 - 3/(4 (n1 + n2) - 9)). One value per participant in each group."""
+    from scipy.stats import t as tdist
+    a = np.asarray(a, float); b = np.asarray(b, float); n1, n2 = len(a), len(b); d = a.mean() - b.mean()
+    v1, v2 = a.var(ddof=1), b.var(ddof=1); sp = pooled_sd(a, b)
+    if welch:
+        se = np.sqrt(v1 / n1 + v2 / n2); df = (v1 / n1 + v2 / n2) ** 2 / ((v1 / n1) ** 2 / (n1 - 1) + (v2 / n2) ** 2 / (n2 - 1))
+    else:
+        se = sp * np.sqrt(1 / n1 + 1 / n2); df = n1 + n2 - 2
+    q = tdist.ppf(1 - (1 - ci) / 2, df); t = d / se
+    g = d / sp * (1 - 3 / (4 * (n1 + n2) - 9))
+    return {'difference': float(d), 'ci': [float(d - q * se), float(d + q * se)], 't': float(t), 'df': float(df),
+            'p': float(2 * tdist.sf(abs(t), df)), 'pooled_sd': sp, 'hedges_g': float(g), 'n': [n1, n2]}
+
+
+def icc_ci(data, form='2,1', ci=0.95):
+    """ICC with its F-based confidence interval for an (n subjects x k sessions/raters) array, complete data.
+    Forms as in icc(): '1,1' one-way; '2,1' two-way random, absolute agreement (Shrout & Fleiss 1979; McGraw & Wong
+    1996 ICC(A,1)); '3,1' two-way mixed, consistency; '1,k', '2,k', '3,k' for the mean of k measurements ('2,k'
+    bounds by Spearman-Brown of the '2,1' bounds). Returns (icc, (lo, hi)). Average regions or repeats per
+    session first if the endpoint is their mean."""
+    from scipy.stats import f as fdist
+    Y = np.asarray(data, float); n, k = Y.shape; a = (1 - ci) / 2
+    gm = Y.mean(); rm = Y.mean(1); cm = Y.mean(0)
+    msr = k * np.sum((rm - gm) ** 2) / (n - 1); msc = n * np.sum((cm - gm) ** 2) / (k - 1)
+    mse = np.sum((Y - rm[:, None] - cm[None, :] + gm) ** 2) / ((n - 1) * (k - 1)); msw = np.sum((Y - rm[:, None]) ** 2) / (n * (k - 1))
+    f = form.replace(' ', ''); est = float(icc(Y, f))
+    if f in ('1,1', '1,k'):
+        F = msr / msw; df1, df2 = n - 1, n * (k - 1)
+    elif f in ('3,1', '3,k'):
+        F = msr / mse; df1, df2 = n - 1, (n - 1) * (k - 1)
+    if f in ('1,1', '3,1', '1,k', '3,k'):
+        FL = F / fdist.ppf(1 - a, df1, df2); FU = F * fdist.ppf(1 - a, df2, df1)
+        if f.endswith(',1'):
+            return est, (float((FL - 1) / (FL + k - 1)), float((FU - 1) / (FU + k - 1)))
+        return est, (float(1 - 1 / FL), float(1 - 1 / FU))
+    if f in ('2,1', '2,k'):
+        r = icc(Y, '2,1'); aa = k * r / (n * (1 - r)); bb = 1 + k * r * (n - 1) / (n * (1 - r))
+        v = (aa * msc + bb * mse) ** 2 / ((aa * msc) ** 2 / (k - 1) + (bb * mse) ** 2 / ((n - 1) * (k - 1)))
+        Fs = fdist.ppf(1 - a, n - 1, v); Fss = fdist.ppf(1 - a, v, n - 1)
+        lo = n * (msr - Fs * mse) / (Fs * (k * msc + (k * n - k - n) * mse) + n * msr)
+        hi = n * (Fss * msr - mse) / (k * msc + (k * n - k - n) * mse + n * Fss * msr)
+        if f == '2,k':
+            lo, hi = k * lo / (1 + (k - 1) * lo), k * hi / (1 + (k - 1) * hi)
+        return est, (float(lo), float(hi))
+    raise ValueError(form)
+

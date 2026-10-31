@@ -6,6 +6,16 @@ test_hwlib.py; run that test after installing numpy and scipy. These helpers sup
 research calculations; they do not replace vendor safety supervision, validated EM
 simulation or a site MR safety programme.
 """
+if __name__ == '__main__' and '--api' in __import__('sys').argv:  # signatures only; works without numpy
+    import ast as _ast, sys as _sys
+    for _n in _ast.parse(open(__file__).read()).body:
+        if isinstance(_n, (_ast.FunctionDef, _ast.ClassDef)) and not _n.name.startswith('_'):
+            _f = _n if isinstance(_n, _ast.FunctionDef) else next((m for m in _n.body if isinstance(m, _ast.FunctionDef) and m.name == '__init__'), None)
+            _a = _ast.unparse(_f.args).replace('self, ', '').replace('self', '') if _f else ''
+            _d = (_ast.get_docstring(_n) or '').strip().splitlines()
+            print(f"{_n.name}({_a})" + chr(10) + f"    {_d[0] if _d else ''}")
+    _sys.exit(0)
+
 import numpy as np
 
 MU0 = 1.25663706212e-6  # vacuum permeability, T*m/A (CODATA 2018)
@@ -442,14 +452,3 @@ def snr_scale(snr_ref, b0_ratio=1.0, voxel_volume_ratio=1.0, time_ratio=1.0, ban
     return snr_ref * b0_ratio ** b0_exponent * voxel_volume_ratio * np.sqrt(time_ratio / bandwidth_ratio)
 
 
-def _print_api(namespace):
-    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
-    import inspect
-    for name, f in sorted(namespace.items()):
-        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
-            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
-            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
-
-
-if __name__ == '__main__' and '--api' in __import__('sys').argv:
-    _print_api(dict(globals()))

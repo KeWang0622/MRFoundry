@@ -3,6 +3,16 @@
 Fits of exp(-b D) mixtures are ill-conditioned. Calibrate fixed settings on development data
 (calibrate_basis), check identifiability, and use stratified recovery tests before trusting fractions.
 """
+if __name__ == '__main__' and '--api' in __import__('sys').argv:  # signatures only; works without numpy
+    import ast as _ast, sys as _sys
+    for _n in _ast.parse(open(__file__).read()).body:
+        if isinstance(_n, (_ast.FunctionDef, _ast.ClassDef)) and not _n.name.startswith('_'):
+            _f = _n if isinstance(_n, _ast.FunctionDef) else next((m for m in _n.body if isinstance(m, _ast.FunctionDef) and m.name == '__init__'), None)
+            _a = _ast.unparse(_f.args).replace('self, ', '').replace('self', '') if _f else ''
+            _d = (_ast.get_docstring(_n) or '').strip().splitlines()
+            print(f"{_n.name}({_a})" + chr(10) + f"    {_d[0] if _d else ''}")
+    _sys.exit(0)
+
 import numpy as np
 from scipy.optimize import nnls
 
@@ -47,12 +57,13 @@ def recovery_test(make_truth, fit_fn, bvals, sigma, n=2000, seed=0):
     return {'bias': float(err.mean()), 'sd': float(err.std()), 'r': r, 'median_abs_error': float(np.median(np.abs(err))), 'n': int(n)}
 
 
-def adc_fit(signals, bvals, bmax=1000.0, bmin=0.0):
-    """Conventional mono-exponential ADC from b in [bmin, bmax] only (clinical convention b <= 1000 s/mm^2;
-    higher b values bend the curve through kurtosis/restriction and lower the ADC). Log-linear least squares per
-    voxel over all directions/repeats of the selected shells. signals (n_vox, n_b) magnitude; returns ADC in the
+def adc_fit(signals, bvals, bmax=None, bmin=0.0):
+    """Mono-exponential ADC by log-linear least squares per voxel over all directions/repeats of the b-values in
+    [bmin, bmax] (bmax=None: every b-value). Choose the range from the study, task or signal model: a stated
+    Gaussian model uses every shell; in vivo shells above about 1500 s/mm^2 bend the curve (kurtosis, restriction)
+    and the clinical ADC convention then keeps b <= 1000 s/mm^2. signals (n_vox, n_b) magnitude; returns ADC in the
     inverse units of bvals (s/mm^2 -> mm^2/s; multiply by 1e3 for um^2/ms)."""
-    b = np.asarray(bvals, float); keep = (b >= bmin - 1e-6) & (b <= bmax + 1e-6)
+    b = np.asarray(bvals, float); keep = (b >= bmin - 1e-6) & (b <= (np.inf if bmax is None else bmax) + 1e-6)
     if len(np.unique(np.round(b[keep]))) < 2: raise ValueError('need at least two distinct b-values within the ADC range')
     Y = np.log(np.clip(np.atleast_2d(np.asarray(signals, float))[:, keep], 1e-12, None)); A = np.stack([np.ones(keep.sum()), -b[keep]], 1)
     coef, *_ = np.linalg.lstsq(A, Y.T, rcond=None)
@@ -157,14 +168,3 @@ def stratified_recovery_test(make_truth, fit_fn, bvals, sigma, n=2000, seed=0, n
     return out
 
 
-def _print_api(namespace):
-    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
-    import inspect
-    for name, f in sorted(namespace.items()):
-        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
-            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
-            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
-
-
-if __name__ == '__main__' and '--api' in __import__('sys').argv:
-    _print_api(dict(globals()))

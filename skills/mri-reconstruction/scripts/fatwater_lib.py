@@ -1,0 +1,194 @@
+"""MRFoundry water-fat separation with a multi-peak fat model, common R2* and a regularized field map
+(numpy only; tested in test_fatwater_lib.py: python test_fatwater_lib.py).
+
+Signal model per voxel (complex echoes after a phase-preserving coil combination, the SAME coil weights for every
+echo): y(TE) = (W + F sum_p a_p exp(i s 2 pi f_p TE)) exp(-R2* TE) exp(i s 2 pi psi TE), f_p = (ppm_p - ppm_water)
+1e-6 gamma B0 in Hz, psi the field map in Hz, s = +1 when the phase of a component at offset f grows as +2 pi f TE
+(sign=-1 for the opposite convention; check it on the data). Pure fat at field psi resembles pure water at psi + f_main (the
+water-fat swap): the voxelwise best fit is ambiguous, so fit_fat_water picks, per voxel, among the local minima of
+the residual over the field the one that agrees with a smooth field estimated from confident voxels. It needs
+no initial guess and works for isolated vials as long as the field is spatially smooth.
+PDFF: fat_fraction(...) with optional T1/flip-angle (spoiled GRE) correction to proton density.
+"""
+if __name__ == '__main__' and '--api' in __import__('sys').argv:  # signatures only; works without numpy
+    import ast as _ast, sys as _sys
+    for _n in _ast.parse(open(__file__).read()).body:
+        if isinstance(_n, (_ast.FunctionDef, _ast.ClassDef)) and not _n.name.startswith('_'):
+            _f = _n if isinstance(_n, _ast.FunctionDef) else next((m for m in _n.body if isinstance(m, _ast.FunctionDef) and m.name == '__init__'), None)
+            _a = _ast.unparse(_f.args).replace('self, ', '').replace('self', '') if _f else ''
+            _d = (_ast.get_docstring(_n) or '').strip().splitlines()
+            print(f"{_n.name}({_a})" + chr(10) + f"    {_d[0] if _d else ''}")
+    _sys.exit(0)
+
+import numpy as np
+
+# Six-peak fat spectrum relative to water (ppm) and relative amplitudes (Hamilton et al. 2011; ISMRM fat-water
+# toolbox). Use the spectrum supplied with the data when there is one.
+FAT_PPM_REL_WATER = (-3.80, -3.40, -2.60, -1.94, -0.39, 0.60)
+FAT_AMPLITUDES = (0.087, 0.693, 0.128, 0.004, 0.039, 0.048)
+GAMMA_BAR_MHZ = 42.577478518     # proton gyromagnetic ratio / 2 pi, MHz/T (CODATA 2018)
+
+
+def fat_offsets_hz(b0_t, peaks_ppm, reference_ppm=None, gamma_bar_mhz=GAMMA_BAR_MHZ):
+    """Frequency offsets of the fat peaks relative to water in Hz. peaks_ppm are absolute chemical shifts (then give
+    the water shift as reference_ppm, about 4.7) or shifts already relative to water (reference_ppm=None)."""
+    ppm = np.asarray(peaks_ppm, float) - (0.0 if reference_ppm is None else float(reference_ppm))
+    return ppm * 1e-6 * gamma_bar_mhz * 1e6 * b0_t
+
+
+def fat_basis(te_s, offsets_hz, amplitudes, sign=1):
+    """Complex fat signal at each echo time: sum_p a_p exp(i sign 2 pi f_p TE), amplitudes normalized to sum 1."""
+    a = np.asarray(amplitudes, float); a = a / a.sum(); te = np.asarray(te_s, float)
+    return np.sum(a[:, None] * np.exp(1j * sign * 2 * np.pi * np.asarray(offsets_hz, float)[:, None] * te[None, :]), 0)
+
+
+def _smooth(values, weights, mask, sigma_vox):
+    """Normalized Gaussian smoothing inside the mask (FFT, zero padded); returns the smooth map everywhere."""
+    sh = values.shape; pad = [int(3 * sigma_vox) + 1] * len(sh)
+    shp = tuple(s + 2 * p for s, p in zip(sh, pad))
+    k = np.ones(shp)
+    for ax, n in enumerate(shp):
+        g = np.exp(-0.5 * (np.fft.fftfreq(n) * n / sigma_vox) ** 2)
+        k = k * g.reshape([-1 if a == ax else 1 for a in range(len(shp))])
+        # separable Gaussian built in the spatial domain, transformed below
+    K = np.fft.fftn(k)
+    def conv(x):
+        xp = np.zeros(shp); xp[tuple(slice(p, p + s) for p, s in zip(pad, sh))] = x
+        return np.real(np.fft.ifftn(np.fft.fftn(xp) * K))[tuple(slice(p, p + s) for p, s in zip(pad, sh))]
+    w = weights * mask
+    return conv(w * values) / np.maximum(conv(w), 1e-12 * w.max() + 1e-30)
+
+
+def _cost_over_fields(Yc, te, fb, fields, r2s, sign):
+    """VARPRO residual ||y||^2 - z^H G^-1 z minimized over the R2* grid, for every field: [n_field, n_vox]."""
+    e2 = np.sum(np.abs(Yc) ** 2, 0)
+    E = np.exp(-1j * sign * 2 * np.pi * np.outer(fields, te))                      # [n_field, n_echo]
+    out = np.full((len(fields), Yc.shape[1]), np.inf)
+    for r in r2s:
+        d = np.exp(-r * te); B = np.stack([d, d * fb], 1); Gi = np.linalg.inv(B.conj().T @ B)
+        z0 = (np.conj(B[:, 0])[None] * E) @ Yc; z1 = (np.conj(B[:, 1])[None] * E) @ Yc
+        q = Gi[0, 0].real * np.abs(z0) ** 2 + Gi[1, 1].real * np.abs(z1) ** 2 + 2 * np.real(Gi[0, 1] * np.conj(z0) * z1)
+        np.minimum(out, e2 - q, out=out)
+    return out
+
+
+def _amplitudes(Y, te, fb, field, r2, sign):
+    """Complex water and fat amplitudes and residual at given per-voxel field and R2* ([n_echo, n_vox] data)."""
+    Yd = Y * np.exp(-1j * sign * 2 * np.pi * np.outer(te, field)); dd = np.exp(-np.outer(te, r2))
+    B0 = dd; B1 = dd * fb[:, None]
+    g00 = np.sum(np.abs(B0) ** 2, 0); g11 = np.sum(np.abs(B1) ** 2, 0); g01 = np.sum(B0.conj() * B1, 0)
+    z0 = np.sum(B0.conj() * Yd, 0); z1 = np.sum(B1.conj() * Yd, 0); det = g00 * g11 - np.abs(g01) ** 2
+    w = (g11 * z0 - g01 * z1) / det; f = (g00 * z1 - np.conj(g01) * z0) / det
+    return w, f, np.sum(np.abs(Yd - B0 * w - B1 * f) ** 2, 0), (Yd, B0, B1, g00, g11, g01)
+
+
+def fit_fat_water(signal, te_s, offsets_hz, amplitudes, mask=None, sign=1, field_range_hz=None, field_step_hz=None,
+                  r2s_grid=None, smooth_sigma_vox=None, n_iter=4, penalty=2.0, chunk=20000):
+    """Water-fat separation of complex multi-echo images signal [n_echo, ...] (one phase-preserving combination).
+    Returns dict(water_real, fat_real (signed real amplitudes after removing the common phase phase0: use these
+    for PDFF), water, fat (unconstrained complex), r2s (1/s), field_hz, phase0, pdff_uncorrected (%)).
+    Field grid: one alias period 1/min(dTE) unless field_range_hz=(lo, hi) is given; R2* grid 0..400 1/s by default.
+    Each voxel chooses among the local minima of its residual over the field the one minimizing
+    log(cost / min cost) + penalty ((psi - smooth field) / |main fat offset|)^2, with the smooth field re-estimated
+    n_iter times by magnitude- and confidence-weighted smoothing (sigma default: 1/8 of the largest dimension).
+    Needs at least 4 echoes with R2* free; with 3 echoes pass a single fixed value in r2s_grid. Works in voxel
+    chunks (memory ~ n_field x chunk)."""
+    Y = np.asarray(signal, complex); te = np.asarray(te_s, float); sh = Y.shape[1:]
+    if len(te) < 4 and (r2s_grid is None or np.size(r2s_grid) > 1):
+        raise ValueError('fewer than 4 echoes cannot separate water, fat, field and R2*: fix R2* (r2s_grid=[value])')
+    msk = np.ones(sh, bool) if mask is None else np.asarray(mask, bool)
+    Yv = Y.reshape(len(te), -1)[:, msk.ravel()]; nv = Yv.shape[1]
+    fb = fat_basis(te, offsets_hz, amplitudes, sign)
+    a = np.asarray(amplitudes, float); fmain = abs(np.asarray(offsets_hz, float)[np.argmax(a)])
+    dte = np.min(np.diff(np.sort(te)))
+    if field_range_hz is None:
+        field_range_hz = (-0.5 / dte, 0.5 / dte)
+    step = field_step_hz or max(0.5, (field_range_hz[1] - field_range_hz[0]) / 400)
+    fields = np.arange(field_range_hz[0], field_range_hz[1] + 1e-9, step)
+    r2_coarse = np.asarray(r2s_grid if r2s_grid is not None else np.linspace(0, 400, 21), float).ravel()
+    periodic = abs((field_range_hz[1] - field_range_hz[0]) - 1.0 / dte) < 2 * step
+    K = 4
+    cand_f = np.full((K, nv), np.nan); cand_c = np.full((K, nv), np.inf); cmin = np.zeros(nv); conf = np.zeros(nv)
+    for s0 in range(0, nv, chunk):
+        sl = slice(s0, min(nv, s0 + chunk))
+        cost = _cost_over_fields(Yv[:, sl], te, fb, fields, r2_coarse, sign)
+        is_min = (cost <= np.roll(cost, 1, 0)) & (cost <= np.roll(cost, -1, 0))
+        if not periodic:
+            is_min[0] = cost[0] <= cost[1]; is_min[-1] = cost[-1] <= cost[-2]
+        cm = cost.min(0) + 1e-30; best = fields[np.argmin(cost, 0)]
+        dist = (np.abs(((fields[:, None] - best[None, :]) + 0.5 / dte) % (1.0 / dte) - 0.5 / dte) if periodic
+                else np.abs(fields[:, None] - best[None, :]))
+        c2 = np.where(dist > 0.5 * fmain, cost, np.inf).min(0)                       # best fit at least fmain/2 away
+        conf[sl] = np.clip(np.log(c2 / cm), 0, 5); cmin[sl] = cm
+        mc = np.where(is_min, cost, np.inf); idx = np.argsort(mc, 0)[:K]
+        cand_f[:, sl] = fields[idx]; cand_c[:, sl] = np.take_along_axis(mc, idx, 0)
+    amp = np.sqrt(np.sum(np.abs(Yv) ** 2, 0))
+    sigma = smooth_sigma_vox or max(sh) / 8.0
+    psi = cand_f[0].copy(); full = np.zeros(sh)
+    for _ in range(n_iter):
+        full[:] = 0; full[msk] = psi
+        wmap = np.zeros(sh); wmap[msk] = amp ** 2 * conf
+        fsm = _smooth(full, wmap, msk.astype(float), sigma)[msk]
+        with np.errstate(divide='ignore', invalid='ignore'):
+            J = np.where(np.isfinite(cand_c), np.log(cand_c / cmin[None]) + penalty * ((cand_f - fsm[None]) / fmain) ** 2, np.inf)
+        psi = np.take_along_axis(cand_f, np.argmin(J, 0)[None], 0)[0]
+        conf = np.ones_like(conf)
+    # refinement: field on a fine grid around the chosen candidate (R2* on the coarse grid), then R2* at 0.5 1/s
+    bf = psi.copy(); rr = np.zeros(nv)
+    for s0 in range(0, nv, chunk):
+        sl = slice(s0, min(nv, s0 + chunk)); Yc = Yv[:, sl]; e2 = np.sum(np.abs(Yc) ** 2, 0)
+        bestc = np.full(Yc.shape[1], np.inf); f0 = psi[sl]; fbest = f0.copy(); rbest = np.zeros(Yc.shape[1])
+        for df in np.arange(-2 * step, 2 * step + 1e-9, step / 4):
+            Yd = Yc * np.exp(-1j * sign * 2 * np.pi * np.outer(te, f0 + df))
+            for r in r2_coarse:
+                d = np.exp(-r * te); B = np.stack([d, d * fb], 1); Gi = np.linalg.inv(B.conj().T @ B); z = B.conj().T @ Yd
+                c = e2 - np.real(np.sum(z.conj() * (Gi @ z), 0))
+                t = c < bestc; bestc[t] = c[t]; fbest[t] = f0[t] + df; rbest[t] = r
+        rstep = (r2_coarse[1] - r2_coarse[0]) if len(r2_coarse) > 1 else 0.0
+        bestc[:] = np.inf; rfine = rbest.copy()
+        for dr in np.arange(-rstep, rstep + 1e-9, 0.5) if rstep else [0.0]:
+            rv = np.clip(rbest + dr, 0, None)
+            _, _, c, _ = _amplitudes(Yc, te, fb, fbest, rv, sign)
+            t = c < bestc; bestc[t] = c[t]; rfine[t] = rv[t]
+        bf[sl] = fbest; rr[sl] = rfine
+    wv, fv, _, (Yd, B0, B1, g00, g11, g01) = _amplitudes(Yv, te, fb, bf, rr, sign)
+    # common phase: water and fat share the phase at TE = 0, so fit REAL amplitudes after removing it. Unlike
+    # |F| / (|W| + |F|), this keeps PDFF unbiased near 0 % and 100 % fat at moderate SNR.
+    phi = np.angle(wv + fv)
+    h00 = g00.real; h11 = g11.real; h01 = np.real(g01)
+    for _ in range(3):
+        ye = Yd * np.exp(-1j * phi)[None]
+        r0 = np.real(np.sum(B0.conj() * ye, 0)); r1 = np.real(np.sum(B1.conj() * ye, 0)); dr_ = h00 * h11 - h01 ** 2
+        wr = (h11 * r0 - h01 * r1) / dr_; fr = (h00 * r1 - h01 * r0) / dr_
+        phi = np.angle(np.sum(np.conj(B0 * wr + B1 * fr) * Yd, 0))
+    out = {k: np.zeros(sh, complex if k in ('water', 'fat') else float)
+           for k in ('water', 'fat', 'water_real', 'fat_real', 'phase0', 'r2s', 'field_hz')}
+    out['water'][msk] = wv; out['fat'][msk] = fv; out['r2s'][msk] = rr; out['field_hz'][msk] = bf
+    out['water_real'][msk] = wr; out['fat_real'][msk] = fr; out['phase0'][msk] = phi
+    out['pdff_uncorrected'] = fat_fraction(out['water_real'], out['fat_real'])
+    return out
+
+
+
+def spgr_weight(flip_deg, tr_s, t1_s, b1=1.0):
+    """Steady-state spoiled-GRE signal per unit proton density: sin(a) (1 - E1) / (1 - cos(a) E1), a = flip x b1."""
+    a = np.deg2rad(flip_deg) * np.asarray(b1, float); e1 = np.exp(-tr_s / t1_s)
+    return np.sin(a) * (1 - e1) / (1 - np.cos(a) * e1)
+
+
+def fat_fraction(water, fat, flip_deg=None, tr_s=None, t1_water_s=None, t1_fat_s=None, b1=1.0, clip=True):
+    """PDFF in percent: F / (W + F). Real inputs (water_real, fat_real from fit_fat_water: common phase removed)
+    are used with their signs, which keeps the estimate unbiased near 0 % and 100 %; complex inputs use magnitudes
+    (|F| / (|W| + |F|), biased upward near 0 % and downward near 100 % at low SNR). With flip_deg, tr_s and both
+    T1 values the spoiled-GRE T1/flip weighting is removed (b1 = actual/nominal flip map); without them the result
+    is a signal fat fraction. clip limits the result to [0, 100]."""
+    if np.iscomplexobj(water) or np.iscomplexobj(fat):
+        W = np.abs(water).astype(float); F = np.abs(fat).astype(float)
+    else:
+        W = np.asarray(water, float); F = np.asarray(fat, float)
+    if flip_deg is not None:
+        W = W / np.maximum(spgr_weight(flip_deg, tr_s, t1_water_s, b1), 1e-12)
+        F = F / np.maximum(spgr_weight(flip_deg, tr_s, t1_fat_s, b1), 1e-12)
+    tot = W + F
+    ff = 100.0 * F / np.where(np.abs(tot) > 1e-30, tot, 1e-30)
+    return np.clip(ff, 0, 100) if clip else ff
