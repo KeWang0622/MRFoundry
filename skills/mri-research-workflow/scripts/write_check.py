@@ -501,7 +501,7 @@ ID_LIKE = re.compile(r"^[A-Za-z]{1,6}[-_]?\d{1,5}[a-z]?$")
 
 
 def _source_refs(paths):
-    """(entry IDs, loaded documents) of the source files: string values and dict keys that look like IDs (E07, Q1)."""
+    """(entry IDs, loaded documents) of the source files: string values and dict keys that look like IDs (R12, Q1)."""
     ids, docs = set(), []
     def walk(d):
         if isinstance(d, dict):

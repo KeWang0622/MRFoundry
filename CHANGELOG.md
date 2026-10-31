@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `kspace_grid(drop_off_grid=True)` for oversampled lines; `simulate_with_koma(backend='julia')` with
   `koma_sim.jl` and `setup_koma_julia.sh` (lean Julia 1.10 + KomaMRICore install inside the workspace when the
   komamripy install stalls; same signal as komamripy in the test); `replay_check` and
-  `relative_difference_after_global_phase` re-simulate the delivered file and compare; documented and tested
+  `relative_difference_up_to_phase` re-simulate the delivered file and compare; documented and tested
   KomaMRI sign convention (never conjugate). The MRzero fallback is removed from the guidance. Checker: TE/TR/TI
   tolerance 1 us by default (`--time-tol`, several `--tr` intervals), `--kx-cover`/`--max-gap` coverage contracts
   with a margin, oversampled readouts accepted by the grid check, 3D `--matrix NX NY NZ`, `--line-repeats` and

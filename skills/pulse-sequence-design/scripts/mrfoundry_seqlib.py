@@ -226,7 +226,7 @@ def _koma_julia(seq_file, arrays, rf_step_s, dt_s, gmax, smax, julia=None, proje
             raise RuntimeError('koma_sim.jl failed: ' + (r.stderr or r.stdout)[-2000:])
         return np.fromfile(fout, np.complex128)
 
-def relative_difference_after_global_phase(a, b):
+def relative_difference_up_to_phase(a, b):
     """||a e^{i phi} - b|| / ||b|| with the best single phase phi: the usual measure for comparing a delivered
     simulated signal (a) with an independent replay of the same exported file (b). Shapes must match."""
     a = np.asarray(a, complex).ravel(); b = np.asarray(b, complex).ravel()
@@ -245,7 +245,7 @@ def replay_check(seq_file, delivered, x, y, z, rho, T1, T2, T2s=None, B0_Hz=None
     fresh = simulate_with_koma(seq_file, x, y, z, rho, T1, T2, T2s=T2s, B0_Hz=B0_Hz, **kw)['samples']
     if post is not None:
         fresh = post(fresh)
-    d = relative_difference_after_global_phase(delivered, fresh)
+    d = relative_difference_up_to_phase(delivered, fresh)
     print(f"replay check: relative difference after global phase {d:.2e} ({'PASS' if d <= tol else 'FAIL'}, tol {tol:g})")
     if d > tol:
         raise AssertionError(f'delivered signal differs from a KomaMRI replay of {seq_file} by {d:.3g}')

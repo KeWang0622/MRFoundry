@@ -66,10 +66,10 @@ def main():
     x0,y0=0.035,-0.02
     one=simulate_with_koma(c,[x0],[y0],[0.0],[1.0],[1.0],[0.005]);kk=one['k']  # T2 << TR: no echoes from earlier TRs
     pred=np.exp(-2j*np.pi*(kk[...,0]*x0+kk[...,1]*y0));ph=one['samples']/abs(one['samples'])
-    d_ok=relative_difference_after_global_phase(ph,pred);d_conj=relative_difference_after_global_phase(np.conj(ph),pred)
+    d_ok=relative_difference_up_to_phase(ph,pred);d_conj=relative_difference_up_to_phase(np.conj(ph),pred)
     print('one off-centre spin: samples follow exp(-2 pi i k.r) (difference %.1e); conjugated %.2f'%(d_ok,d_conj))
     assert d_ok<0.05 and d_conj>0.5
-    s0=out['samples'];assert relative_difference_after_global_phase(s0*np.exp(0.7j),s0)<1e-12
+    s0=out['samples'];assert relative_difference_up_to_phase(s0*np.exp(0.7j),s0)<1e-12
     args=(x,y,np.zeros_like(x),rho,np.full(rho.shape,0.3),np.full(rho.shape,0.005))
     replay_check(c,s0*np.exp(-1.1j),*args)
     for bad,name in [(np.conj(s0),'conjugated'),(2*s0,'rescaled'),(s0[::-1],'reversed ADC order')]:
@@ -78,7 +78,7 @@ def main():
     J,P=os.environ.get('MRFOUNDRY_JULIA'),os.environ.get('MRFOUNDRY_KOMA_PROJECT')
     if J and P:
         oj=simulate_with_koma(c,*args,backend='julia',julia=J,julia_project=P)
-        dj=relative_difference_after_global_phase(oj['samples'],s0);print('Julia backend (koma_sim.jl) vs komamripy: %.1e'%dj);assert dj<1e-9
+        dj=relative_difference_up_to_phase(oj['samples'],s0);print('Julia backend (koma_sim.jl) vs komamripy: %.1e'%dj);assert dj<1e-9
     else:print('MRFOUNDRY_JULIA/MRFOUNDRY_KOMA_PROJECT not set: Julia backend test skipped')
 if __name__=='__main__':main()
 
