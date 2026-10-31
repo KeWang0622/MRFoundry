@@ -23,7 +23,7 @@ Cover the full B1 range expected (low B1 needs a grid reaching well below 0.5).
 `fatwater_lib.py` (test: `python scripts/test_fatwater_lib.py`). Form complex echo images first: undo any readout
 reversal of bipolar echoes in k-space, prewhiten, combine coils with ONE set of phase-preserving weights for all
 echoes (`sense_combine` with maps from the first echo or the ACS), crop readout oversampling. Then
-`fit_fat_water(echoes, te, fat_offsets_hz(B0, ppm, water_ppm), amplitudes, mask)`: multi-peak fat (the supplied
+`fit_fat_water(echoes, te, fat_offsets_hz(b0_t, peaks_ppm, reference_ppm), amplitudes, mask)`: multi-peak fat (the supplied
 spectrum, else the six-peak default), common R2* and field, field-map choice regularized by a smooth field (pure
 fat at field f fits almost as well as pure water at f plus the main fat offset; voxelwise minima swap isolated
 high-fat regions, most often at 1.5 T or with few echoes). Needs at least 4 echoes with R2* free.
@@ -36,9 +36,9 @@ phase (unbiased near 0 % and 100 %, unlike |F| / (|W| + |F|)) and spoiled-GRE T1
 
 - Group control and label volumes by their own delay (BIDS aslcontext, per-volume PLD) with
   `asl_pairs_by_delay`; volume order and pairing vary between datasets.
-- 2-D multi-slice: the effective delay of slice z is PLD + SliceTiming[z] (`slice_delays(pld, slice_order,
-  interval)` for an acquisition order); pass per-voxel delays.
-- Background suppression: `asl_effective_efficiency(alpha, n_bs_pulses, eta_per_pulse)` (alpha x eta^n, consensus
+- 2-D multi-slice: the effective delay of slice z is PLD + SliceTiming[z] (`slice_delays(pld, acquisition_order,
+  spacing)` for an acquisition order); pass per-voxel delays.
+- Background suppression: `asl_effective_efficiency(alpha, n_pulses, eta_pulse)` (alpha x eta^n, consensus
   convention); M0 has no background suppression.
 - M0 acquired with a finite TR: `m0_finite_tr(m0, tr, t1_tissue)`; blood M0 = M0 / λ inside the model.
 - Single delay: `asl_cbf_pcasl` / `asl_cbf_pasl` (consensus formula, Alsop et al. 2015).

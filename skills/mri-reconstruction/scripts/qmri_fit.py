@@ -219,23 +219,23 @@ def asl_cbf_pcasl(delta_m, m0, pld, label_duration, t1_blood=1.65, efficiency=0.
         2 * efficiency * t1_blood * np.asarray(m0) * (1 - np.exp(-label_duration / t1_blood)))
 
 
-def asl_effective_efficiency(labeling_efficiency, n_bs_pulses=0, bs_efficiency_per_pulse=1.0):
-    """Labelling efficiency seen at readout with background suppression: alpha x eta_BS^n (consensus convention,
-    Alsop et al. 2015: each BS inversion pulse multiplies the label by its efficiency, typically about 0.95).
-    Omitting it underestimates CBF by the factor eta^n. Use the protocol's own definition of the per-pulse efficiency."""
-    return float(labeling_efficiency) * float(bs_efficiency_per_pulse) ** int(n_bs_pulses)
+def asl_effective_efficiency(alpha, n_pulses=0, eta_pulse=1.0):
+    """Labelling efficiency seen at readout with background suppression: alpha x eta^n (consensus convention,
+    Alsop et al. 2015: each background-suppression inversion multiplies the label by its inversion efficiency eta,
+    slightly below 1). Omitting it underestimates CBF by the factor eta^n. Use the protocol's own definition of eta."""
+    return float(alpha) * float(eta_pulse) ** int(n_pulses)
 
 
-def slice_delays(pld_first_s, slice_order, slice_interval_s, n_slices=None):
+def slice_delays(pld_first_s, acquisition_order, spacing_s, n_slices=None):
     """Post-labelling delay of every slice INDEX for 2D multislice readouts: the slice acquired r-th (position r in
-    slice_order, 0-based) has PLD + r x slice_interval. slice_order lists slice indices in acquisition order
-    (interleaved orders included). Returns an array indexed by slice index."""
-    order = [int(i) for i in slice_order]; n = int(n_slices or (max(order) + 1))
+    acquisition_order, 0-based) has PLD + r x spacing. acquisition_order lists slice indices in the order they were
+    excited (interleaved orders included). Returns an array indexed by slice index."""
+    order = [int(i) for i in acquisition_order]; n = int(n_slices or (max(order) + 1))
     out = np.full(n, np.nan)
     for r, z in enumerate(order):
-        out[z] = float(pld_first_s) + r * float(slice_interval_s)
+        out[z] = float(pld_first_s) + r * float(spacing_s)
     if np.isnan(out).any():
-        raise ValueError('slice_order does not cover every slice index')
+        raise ValueError('acquisition_order does not cover every slice index')
     return out
 
 

@@ -113,21 +113,21 @@ def cpmg(path, n_echo=8, esp=12e-3, crusher_area=1000.0, rf_dur=0.5e-3, crusher_
 def test_crushers_and_safety(P):
     g = 42.576e6
     rep, ch = measure(cpmg(P('cpmg.seq')), cpmg=True, crusher_range=(600, 1500), safety=True, pns_rheobase=60, pns_chronaxie=0.4e-3,
-                      b1rms_max=5.0, grms_max=40, pns_max=0.9)
+                      b1rms_max=5.0, grms_max=35, pns_max=0.9)
     assert not failed(ch), failed(ch)
     cm = rep['crusher_moment_cycles_m']
-    assert all(abs(v - 1000) < 1 for v in cm['pre_min_max'] + cm['post_min_max']) and cm['max_rel_pre_post_mismatch'] < 1e-3, cm
+    assert all(abs(v - 1000) < 1 for v in cm['before_refocusing'] + cm['after_refocusing']) and cm['max_relative_mismatch'] < 1e-3, cm
     # analytic B1 rms: block pulses of amplitude flip/(2 pi gamma d)
     tot = rep['duration_s']; b90 = 0.25 / 0.5e-3 / g; b180 = 0.5 / 0.5e-3 / g
     b1rms = np.sqrt((b90 ** 2 + 8 * b180 ** 2) * 0.5e-3 / tot) * 1e6
-    assert abs(rep['b1_rms_uT'] - b1rms) < 1e-3 * b1rms and abs(rep['b1_peak_uT'] - b180 * 1e6) < 1e-6, (rep['b1_rms_uT'], b1rms)
-    # analytic ramp PNS fraction of the crusher trapezoid: P = G / (S_r (tau + c))
+    assert abs(rep['b1_rms_whole_file_uT'] - b1rms) < 1e-3 * b1rms and abs(rep['b1_peak_whole_file_uT'] - b180 * 1e6) < 1e-6, (rep['b1_rms_whole_file_uT'], b1rms)
+    # analytic ramp PNS fraction of the crusher trapezoid: P = dG / (rheobase (rise time + chronaxie))
     import pypulseq as pp_
     cr = pp_.make_trapezoid("z", area=1000.0, duration=1.6e-3, system=make_system())
     p_exp = cr.amplitude / g / (60 * (cr.rise_time + 0.4e-3))
     assert abs(max(rep['pns_max_fraction_per_axis']) - p_exp) < 1e-4, (rep['pns_max_fraction_per_axis'], p_exp)
     print('CPMG crushers %.1f cycles/m both sides; B1rms %.3f uT (analytic %.3f), peak %.2f uT; ramp PNS %.4f (analytic %.4f)'
-          % (cm['pre_min_max'][0], rep['b1_rms_uT'], b1rms, rep['b1_peak_uT'], max(rep['pns_max_fraction_per_axis']), p_exp))
+          % (cm['before_refocusing'][0], rep['b1_rms_whole_file_uT'], b1rms, rep['b1_peak_whole_file_uT'], max(rep['pns_max_fraction_per_axis']), p_exp))
     # gradient passed in T/m where Pulseq expects Hz/m: moments near 1e-5 cycles/m
     rep, ch = measure(cpmg(P('cpmg_units.seq'), crusher_area=1000.0 / g), cpmg=True, crusher_range=(600, 1500))
     assert failed(ch) == [c['item'] for c in ch if c['item'].startswith('spin-echo crusher')], failed(ch)

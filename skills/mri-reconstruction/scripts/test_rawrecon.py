@@ -149,7 +149,7 @@ print("all B5 reconstruction-selection tests passed")
 
 
 # ---- B6: sampling pattern read from the mask, GRAPPA from the mask, phase-preserving combination ----
-for Rf, off, half in ((3, 2, 10), (2, 1, 8), (4, 2, 11), (3, 0, 12)):
+for Rf, off, half in ((3, 1, 6), (2, 1, 8), (4, 2, 11), (3, 0, 12)):
     mask = np.zeros(ny, bool); mask[off::Rf] = True; mask[ny // 2 - half:ny // 2 + half + 1] = True
     pat = sampling_pattern(mask)
     lo, hi = pat['acs']  # the contiguous run may include lattice lines adjacent to the calibration block
@@ -159,11 +159,11 @@ for Rf, off, half in ((3, 2, 10), (2, 1, 8), (4, 2, 11), (3, 0, 12)):
     e, _ = nrmse(rss(ifft2c(ksp)), rss(ifft2c(kg)), obj > 0)
     assert e < 0.06, (Rf, off, e)
     print("sampling_pattern R=%d offset=%d ACS %s; grappa_from_mask NRMSE %.4f" % (Rf, off, pat['acs'], e))
-# the hand-derived estimate seen in an evaluation run (1/spacing of the first acquired lines) gives R=2 for R=3 data
-mask = np.zeros(ny, bool); mask[2::3] = True; mask[ny // 2 - 10:ny // 2 + 11] = True
+# a hand-derived estimate of the kind seen in an evaluation run (1/spacing of the first acquired lines) returns 2 for any R >= 3
+mask = np.zeros(ny, bool); mask[1::4] = True; mask[ny // 2 - 11:ny // 2 + 12] = True
 bad_R = max(2, int(round(1.0 / np.median(np.diff(np.flatnonzero(mask)[:8])))))
-assert bad_R == 2 and sampling_pattern(mask)['R'] == 3
-kb = grappa_2d(ksp * mask[None, :, None], bad_R, ksp[:, ny // 2 - 10:ny // 2 + 11, :])
+assert bad_R == 2 and sampling_pattern(mask)['R'] == 4
+kb = grappa_2d(ksp * mask[None, :, None], bad_R, ksp[:, ny // 2 - 11:ny // 2 + 12, :])
 eb, _ = nrmse(rss(ifft2c(ksp)), rss(ifft2c(kb)), obj > 0)
 eg, _ = nrmse(rss(ifft2c(ksp)), rss(ifft2c(grappa_from_mask(ksp * mask[None, :, None], mask)[0])), obj > 0)
 assert eg < 0.03 and eb > 2 * eg, (eg, eb)

@@ -54,7 +54,7 @@ says what to fix. Fix the files, never the checker, and run it again.
 | Two groups | `two_sample_t` (pooled or Welch t, CI, p, pooled SD, Hedges g), `auc`, `subject_bootstrap` |
 | Paired | `paired_difference` (t CI, Cohen's dz), `bland_altman` |
 | Repeatability | `repeatability` (wSD with chi-square CI, wCV, RC), `icc`, `icc_ci` (F-based CI, all six forms) |
-| Sample size | `n_per_group`, `n_paired` (normal or exact t), `sd_of_differences`, `n_enrol`, `combined_fraction`, `n_total_unbalanced` |
+| Sample size | `n_per_group`, `n_paired` (normal or exact t), `sd_of_differences`, `inflate_for_loss`, `combined_fraction`, `n_total_unbalanced` |
 | Cutoffs | `threshold_on_dev`, `balanced_accuracy` |
 
 The statistical unit is the subject (or the unit the plan names), never the voxel; fix every setting, threshold

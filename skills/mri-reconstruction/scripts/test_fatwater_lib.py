@@ -7,8 +7,8 @@ from fatwater_lib import *
 
 def phantom(n=64, seed=0):
     yy, xx = np.mgrid[0:n, 0:n] / n - 0.5
-    labels = np.zeros((n, n), int); pdff = np.array([0, 5, 15, 30, 50, 70, 85, 100], float)
-    r2s = np.array([25, 60, 35, 120, 45, 80, 150, 50], float)
+    labels = np.zeros((n, n), int); pdff = np.array([0, 4, 17, 33, 48, 66, 87, 100], float)
+    r2s = np.array([22, 58, 37, 115, 47, 83, 145, 52], float)
     spots = [(i // 3 - 1, i % 3 - 1) for i in range(9) if i != 4]
     for i, (a, b) in enumerate(spots):
         cy, cx = a * 0.3, b * 0.3
@@ -34,10 +34,10 @@ def simulate(field_T, te, flip, tr, t1w, t1f, b1amp, field_scale, sigma, seed):
 
 
 cases = [  # field, echo times, flip, TR, T1 water, T1 fat, B1 spread, field scale (Hz), noise
-    (3.0, 1.2e-3 + 1.0e-3 * np.arange(6), 5.0, 9e-3, 1.0, 0.35, 0.15, 150.0, 0.004),
-    (1.5, 1.4e-3 + 2.0e-3 * np.arange(6), 15.0, 14e-3, 0.8, 0.3, 0.10, 90.0, 0.004),
-    (3.0, 1.0e-3 + 1.3e-3 * np.arange(5), 3.0, 7e-3, 1.2, 0.4, 0.20, -120.0, 0.0015),
-    (1.5, 1.2e-3 + 2.3e-3 * np.arange(4), 10.0, 10e-3, 1.0, 0.3, 0.10, 100.0, 0.004),   # swap-prone: 4 echoes
+    (3.0, 1.05e-3 + 0.9e-3 * np.arange(6), 5.0, 7.5e-3, 1.0, 0.35, 0.14, 150.0, 0.004),
+    (1.5, 1.3e-3 + 2.2e-3 * np.arange(6), 15.0, 14e-3, 0.8, 0.3, 0.11, 80.0, 0.004),
+    (3.0, 1.0e-3 + 1.3e-3 * np.arange(5), 3.0, 7e-3, 1.2, 0.4, 0.18, -120.0, 0.0015),
+    (1.5, 1.2e-3 + 2.3e-3 * np.arange(4), 10.0, 10e-3, 1.0, 0.3, 0.09, 115.0, 0.004),   # swap-prone: 4 echoes
 ]
 for k, (B0, te, flip, tr, t1w, t1f, b1amp, fs, sigma) in enumerate(cases):
     sig, labels, pdff, r2s, b1, off = simulate(B0, te, flip, tr, t1w, t1f, b1amp, fs, sigma, k)

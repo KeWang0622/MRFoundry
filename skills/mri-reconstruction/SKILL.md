@@ -35,8 +35,8 @@ Hand-written versions of these steps failed silently in evaluation runs.
 
 Import with `sys.path.insert(0, '.agents/skills/mri-reconstruction/scripts')`. `python <module>.py --api` prints the
 signatures (do not read the sources); `scripts/test_<module>.py` has worked examples. Never retype a helper into a
-standalone entrypoint: copy it with `inline_helpers.py` (a retyped GRAPPA used R = 2 for R = 3 data and still gave
-plausible maps).
+standalone entrypoint: copy it with `inline_helpers.py` (a retyped GRAPPA took the wrong acceleration factor from
+the mask and still gave plausible maps).
 
 ## Checks that prevent silent errors
 

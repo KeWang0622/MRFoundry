@@ -18,12 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   replace the long route to the paper-writing guide for these tasks; SKILL.md lists six rules for every
   write-up. `study_stats.py` adds `icc_ci` (F-based CIs for all six ICC forms, checked against psych::ICC),
   `two_sample_t` (pooled or Welch, Hedges g), `n_per_group`, `n_paired` (normal or exact t),
-  `sd_of_differences`, `n_enrol`, `combined_fraction`, `n_total_unbalanced`. `inline_helpers.py` (+ test) copies
+  `sd_of_differences`, `inflate_for_loss`, `combined_fraction`, `n_total_unbalanced`. `inline_helpers.py` (+ test) copies
   tested helpers with their dependencies into a one-file entrypoint. `finish_check.py` asks for an environment
   record only when code is delivered. Description covers write-ups, reviews and proposals.
 - mri-reconstruction: `sampling_pattern` and `grappa_from_mask` (R, offset and ACS read from the mask; a
   hand-derived R was wrong in a held-out run), `sense_combine`, `rank_reconstructions(metric=)` for endpoint-based
-  selection, noise-floor model in `fit_monoexp(noise_sigma=, n_channels=)` (RSS T2 bias +16 % -> -1 % in the
+  selection, noise-floor model in `fit_monoexp(noise_sigma=, n_channels=)` (RSS T2 bias +16 % -> -0.5 % in the
   test), EPG dictionary built with the sample's T1, `asl_effective_efficiency` (background suppression) and
   `slice_delays`; new `fatwater_lib.py` (+ test): multi-peak water-fat separation with common R2*, field-map choice
   regularized by a smooth field (prevents swaps in isolated high-fat regions), common-phase real amplitudes and

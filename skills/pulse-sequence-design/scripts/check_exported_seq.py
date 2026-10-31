@@ -29,9 +29,9 @@ What is measured from the read-back file (fresh pp.Sequence().read):
   * --epi: TE per EXCITATION = its centre -> the sample closest to kx = ky = 0 over the whole echo train (without
     --epi every ADC line counts as its own echo); echo spacing = start-to-start time of consecutive lines.
   * Peak gradient/slew per axis and Pulseq timing errors. Number of excitations before the first ADC.
-  * Spin-echo trains: crusher moment (cycles/m) from each echo (the excitation for the first) to the next refocusing
-    centre and from it to the next echo (echo = 2 x refocusing centre - previous echo). Pulseq gradients are in
-    Hz/m and areas in 1/m: a value near 1e-5 means T/m was passed where Hz/m was expected.
+  * Spin-echo trains: gradient moment (cycles/m) on each side of every refocusing pulse, between its centre and the
+    spin-echo times around it (the excitation centre before the first pulse; echo = 2 x refocusing centre - previous
+    echo). Pulseq gradients are in Hz/m and areas in 1/m: a value near 1e-5 means T/m was passed where Hz/m was expected.
   * --safety: B1+rms over the whole file, B1 peak, gradient rms per axis and the ramp PNS fraction; a WARN line marks
     any value within 2 % of its limit (raster rounding can cross it: design with a margin).
 Prints a compact summary and one PASS/FAIL line per expectation (add --json for every measurement);
@@ -65,9 +65,9 @@ def _sq_integral(w, t0=None, t1=None):
     return float(np.sum(dt * (g0 * g0 + g0 * g1 + g1 * g1) / 3.0))
 
 def pns_ramps(w, rheobase, chronaxie, gamma):
-    """Ramp PNS model on a piecewise-linear waveform (t s, g Hz/m): a ramp is a maximal interval over which the
-    waveform changes monotonically with non-zero slope (consecutive segments of the same slope sign join; a flat
-    segment ends it). P = |dG| / (rheobase (tau + chronaxie)), dG in T/m, tau in s. Returns (max P, worst ramp)."""
+    """PNS fraction of a piecewise-linear gradient waveform (t s, g Hz/m) under the hyperbolic strength-duration model:
+    the waveform is cut into runs of one slope sign (zero-slope samples separate runs), and a run whose gradient moves
+    by dG (T/m) within tau (s) gives P = |dG| / (rheobase (tau + chronaxie)). Returns (max P, worst run)."""
     t, g = w
     if len(t) < 2:
         return 0.0, None
@@ -84,7 +84,7 @@ def pns_ramps(w, rheobase, chronaxie, gamma):
             tau += dt[j]; dG += dg[j]; j += 1
         P = abs(dG) / (rheobase * (tau + chronaxie))
         if P > best:
-            best, worst = P, {'start_s': float(t0[i]), 'duration_s': float(tau), 'dG_mT_m': float(dG * 1e3)}
+            best, worst = P, {'t_begin_s': float(t0[i]), 'run_s': float(tau), 'dG_mT_m': float(dG * 1e3)}
         i = j
     return float(best), worst
 
@@ -236,9 +236,9 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
                 pre.append(_area(waves[ax], echo, r['center'])); post.append(_area(waves[ax], r['center'], e_n)); echo = e_n
         if pre:
             pre, post = np.abs(pre), np.abs(post)
-            rep['crusher_moment_cycles_m'] = {'axis': crusher_axis, 'pre_min_max': [float(pre.min()), float(pre.max())],
-                                              'post_min_max': [float(post.min()), float(post.max())],
-                                              'max_rel_pre_post_mismatch': float(np.max(np.abs(pre - post) / np.maximum(np.maximum(pre, post), 1e-12)))}
+            rep['crusher_moment_cycles_m'] = {'axis': crusher_axis, 'before_refocusing': [float(pre.min()), float(pre.max())],
+                                              'after_refocusing': [float(post.min()), float(post.max())],
+                                              'max_relative_mismatch': float(np.max(np.abs(pre - post) / np.maximum(np.maximum(pre, post), 1e-12)))}
     # --- Cartesian sampling
     if matrix is not None and fov is not None and adcs:
         nx, ny = int(matrix[0]), int(matrix[-1]); fx, fy = (fov, fov) if np.isscalar(fov) else (fov[0], fov[-1])
@@ -260,12 +260,12 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
         for r in rfs:
             rf = r['rf']; rt = np.asarray(rf.t); sig = np.abs(np.asarray(rf.signal)) / gamma
             w = np.diff(np.r_[0., (rt[:-1] + rt[1:]) / 2, float(rf.shape_dur)]); e_rf += float(np.sum(sig ** 2 * w)); peak = max(peak, float(sig.max()))
-        rep['b1_rms_uT'] = float(np.sqrt(e_rf / total) * 1e6); rep['b1_peak_uT'] = peak * 1e6
+        rep['b1_rms_whole_file_uT'] = float(np.sqrt(e_rf / total) * 1e6); rep['b1_peak_whole_file_uT'] = peak * 1e6
         rep['grad_rms_mT_m'] = [float(np.sqrt(_sq_integral(w) / total) / gamma * 1e3) for w in waves]
         if pns_rheobase and pns_chronaxie:
             pn = [pns_ramps(w, pns_rheobase, pns_chronaxie, gamma) for w in waves]
             rep['pns_max_fraction_per_axis'] = [round(v[0], 5) for v in pn]
-            rep['pns_worst_ramp'] = pn[int(np.argmax([v[0] for v in pn]))][1]
+            rep['pns_worst_run'] = pn[int(np.argmax([v[0] for v in pn]))][1]
     # --- checks
     def chk(name, cond, detail): checks.append({'item': name, 'pass': bool(cond), 'detail': detail})
     def near(value, limit, upper=True):
@@ -308,14 +308,14 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
         if monopolar: chk('monopolar readout', rep['readout_polarities'] == [1.0], rep['readout_polarities'])
     if crusher_range is not None:
         cm = rep.get('crusher_moment_cycles_m'); lo, hi = crusher_range
-        okc = cm is not None and lo <= min(cm['pre_min_max'][0], cm['post_min_max'][0]) and max(cm['pre_min_max'][1], cm['post_min_max'][1]) <= hi
+        okc = cm is not None and lo <= min(cm['before_refocusing'][0], cm['after_refocusing'][0]) and max(cm['before_refocusing'][1], cm['after_refocusing'][1]) <= hi
         chk(f'spin-echo crusher moments on {crusher_axis} within [{lo:g}, {hi:g}] cycles/m (Pulseq areas: Hz/m * s = 1/m)', okc,
             cm if cm else 'no refocusing pulses found')
         if cm:
-            for v in cm['pre_min_max'] + cm['post_min_max']:
+            for v in cm['before_refocusing'] + cm['after_refocusing']:
                 near(v, lo); near(v, hi)
-    if b1rms_max: chk('B1+rms over the whole file (uT)', rep['b1_rms_uT'] <= b1rms_max, rep['b1_rms_uT']); near(rep['b1_rms_uT'], b1rms_max)
-    if b1peak_max: chk('B1 peak (uT)', rep['b1_peak_uT'] <= b1peak_max, rep['b1_peak_uT']); near(rep['b1_peak_uT'], b1peak_max)
+    if b1rms_max: chk('B1+rms over the whole file (uT)', rep['b1_rms_whole_file_uT'] <= b1rms_max, rep['b1_rms_whole_file_uT']); near(rep['b1_rms_whole_file_uT'], b1rms_max)
+    if b1peak_max: chk('B1 peak (uT)', rep['b1_peak_whole_file_uT'] <= b1peak_max, rep['b1_peak_whole_file_uT']); near(rep['b1_peak_whole_file_uT'], b1peak_max)
     if grms_max: chk('gradient rms per axis (mT/m)', max(rep['grad_rms_mT_m']) <= grms_max, rep['grad_rms_mT_m']); near(max(rep['grad_rms_mT_m']), grms_max)
     if pns_max and 'pns_max_fraction_per_axis' in rep:
         chk('ramp PNS fraction', max(rep['pns_max_fraction_per_axis']) <= pns_max, rep['pns_max_fraction_per_axis']); near(max(rep['pns_max_fraction_per_axis']), pns_max)
@@ -364,7 +364,7 @@ def main():
                           b1rms_max=a.b1rms_max, b1peak_max=a.b1peak_max, grms_max=a.grms_max, pns_max=a.pns_max)
     keys = ['rf_roles', 'excitation_flip_deg', 'te_ms', 'echo_spacing_ms', 'tr_ms', 'ti_ms', 'refocusing_after_excitation_ms', 'excitations_before_first_adc',
             'adc_samples', 'excitation_slice_fwhm_mm', 'peak_grad_mT_m', 'peak_slew_T_m_s', 'crusher_moment_cycles_m',
-            'b1_rms_uT', 'b1_peak_uT', 'grad_rms_mT_m', 'pns_max_fraction_per_axis']
+            'b1_rms_whole_file_uT', 'b1_peak_whole_file_uT', 'grad_rms_mT_m', 'pns_max_fraction_per_axis']
     out = rep if a.json else {k: rep[k] for k in keys if k in rep}
     print(json.dumps({k: v for k, v in out.items() if k != 'checks'}, default=float))
     for c in checks: print(('PASS ' if c['pass'] else 'FAIL ') + c['item'] + ': ' + json.dumps(c['detail'], default=float))

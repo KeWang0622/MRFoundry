@@ -2,9 +2,9 @@
 (numpy only; tested in test_fatwater_lib.py: python test_fatwater_lib.py).
 
 Signal model per voxel (complex echoes after a phase-preserving coil combination, the SAME coil weights for every
-echo): y(TE) = (W + F sum_p a_p exp(i s 2 pi f_p TE)) exp(-R2* TE) exp(i s 2 pi psi TE), f_p = (ppm_p - water_ppm)
-1e-6 gamma B0 in Hz, psi the field map in Hz, s = +1 if a component at offset f contributes exp(+i 2 pi f TE)
-(pass sign=-1 for the opposite convention). Pure fat at field psi resembles pure water at psi + f_main (the
+echo): y(TE) = (W + F sum_p a_p exp(i s 2 pi f_p TE)) exp(-R2* TE) exp(i s 2 pi psi TE), f_p = (ppm_p - ppm_water)
+1e-6 gamma B0 in Hz, psi the field map in Hz, s = +1 when the phase of a component at offset f grows as +2 pi f TE
+(sign=-1 for the opposite convention; check it on the data). Pure fat at field psi resembles pure water at psi + f_main (the
 water-fat swap): the voxelwise best fit is ambiguous, so fit_fat_water picks, per voxel, among the local minima of
 the residual over the field the one that agrees with a smooth field estimated from confident voxels. It needs
 no initial guess and works for isolated vials as long as the field is spatially smooth.
@@ -26,14 +26,14 @@ import numpy as np
 # toolbox). Use the spectrum supplied with the data when there is one.
 FAT_PPM_REL_WATER = (-3.80, -3.40, -2.60, -1.94, -0.39, 0.60)
 FAT_AMPLITUDES = (0.087, 0.693, 0.128, 0.004, 0.039, 0.048)
-GAMMA_MHZ_PER_T = 42.577478518
+GAMMA_BAR_MHZ = 42.577478518     # proton gyromagnetic ratio / 2 pi, MHz/T (CODATA 2018)
 
 
-def fat_offsets_hz(field_strength_T, fat_ppm, water_ppm=None, gamma_mhz_per_t=GAMMA_MHZ_PER_T):
-    """Frequency offsets of the fat peaks relative to water in Hz. fat_ppm are absolute positions (then give
-    water_ppm, e.g. 4.7) or offsets relative to water (water_ppm=None)."""
-    ppm = np.asarray(fat_ppm, float) - (0.0 if water_ppm is None else float(water_ppm))
-    return ppm * 1e-6 * gamma_mhz_per_t * 1e6 * field_strength_T
+def fat_offsets_hz(b0_t, peaks_ppm, reference_ppm=None, gamma_bar_mhz=GAMMA_BAR_MHZ):
+    """Frequency offsets of the fat peaks relative to water in Hz. peaks_ppm are absolute chemical shifts (then give
+    the water shift as reference_ppm, about 4.7) or shifts already relative to water (reference_ppm=None)."""
+    ppm = np.asarray(peaks_ppm, float) - (0.0 if reference_ppm is None else float(reference_ppm))
+    return ppm * 1e-6 * gamma_bar_mhz * 1e6 * b0_t
 
 
 def fat_basis(te_s, offsets_hz, amplitudes, sign=1):

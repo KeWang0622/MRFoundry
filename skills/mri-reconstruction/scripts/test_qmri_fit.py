@@ -128,9 +128,9 @@ print("all B5 quantitative model tests passed")
 
 
 # B6: root-sum-of-squares magnitude at low SNR biases mono-exponential T2 upward; the noise-floor model removes it
-rng7 = np.random.default_rng(7); te6 = np.arange(1, 9) * 10.0; t2v = 80.0; nv = 4000; Cc = 8
+rng7 = np.random.default_rng(7); te6 = np.arange(1, 9) * 10.0; t2v = 70.0; nv = 4000; Cc = 12
 wc = rng7.uniform(0.2, 1.0, (Cc, 1)); wc /= np.sqrt((wc ** 2).sum())
-sig = 0.06; sclean = np.exp(-te6 / t2v)[None, :] * np.ones((nv, 1))
+sig = 0.045; sclean = np.exp(-te6 / t2v)[None, :] * np.ones((nv, 1))
 coils = wc[None] * sclean[:, None, :] + sig * (rng7.normal(size=(nv, Cc, 8)) + 1j * rng7.normal(size=(nv, Cc, 8)))
 magn = np.sqrt((np.abs(coils) ** 2).sum(1))
 _, t2_plain = fit_monoexp(te6, magn); _, t2_aware = fit_monoexp(te6, magn, noise_sigma=sig, n_channels=Cc)
@@ -143,21 +143,21 @@ print(f"fit_monoexp(noise_sigma=, n_channels=): RSS of {Cc} channels at last-ech
 
 
 # B6: with refocusing below 180 deg, stimulated echoes carry T1: build the EPG dictionary with the sample's own T1
-sig_t1 = epg_cpmg(32, 0.008, 0.15, t1=0.4, refocus_deg=110 * 0.9, excite_deg=90 * 0.9)
-Dw, Pw = epg_t2_dictionary(32, 0.008, np.geomspace(0.05, 0.4, 90), np.linspace(0.75, 1.05, 31), t1=1.0, refocus_deg=110)
-Dr, Pr = epg_t2_dictionary(32, 0.008, np.geomspace(0.05, 0.4, 90), np.linspace(0.75, 1.05, 31), t1=0.4, refocus_deg=110)
-ew = fit_dictionary(np.abs(sig_t1)[None], Dw, Pw)[0][0, 0] / 0.15 - 1; er = fit_dictionary(np.abs(sig_t1)[None], Dr, Pr)[0][0, 0] / 0.15 - 1
+sig_t1 = epg_cpmg(28, 0.007, 0.14, t1=0.5, refocus_deg=115 * 0.88, excite_deg=90 * 0.88)
+Dw, Pw = epg_t2_dictionary(28, 0.007, np.geomspace(0.05, 0.4, 90), np.linspace(0.75, 1.05, 31), t1=1.0, refocus_deg=115)
+Dr, Pr = epg_t2_dictionary(28, 0.007, np.geomspace(0.05, 0.4, 90), np.linspace(0.75, 1.05, 31), t1=0.5, refocus_deg=115)
+ew = fit_dictionary(np.abs(sig_t1)[None], Dw, Pw)[0][0, 0] / 0.14 - 1; er = fit_dictionary(np.abs(sig_t1)[None], Dr, Pr)[0][0, 0] / 0.14 - 1
 assert abs(ew) > 0.03 and abs(er) < 0.015, (ew, er)
-print(f"EPG dictionary T1: default T1 gives a T2 error of {ew:+.1%} at 110 deg refocusing; the sample's T1 gives {er:+.1%}")
+print(f"EPG dictionary T1: default T1 gives a T2 error of {ew:+.1%} at 115 deg refocusing; the sample's T1 gives {er:+.1%}")
 
 
 # B6: background-suppression efficiency and per-slice delays for 2D multislice pCASL
-assert abs(asl_effective_efficiency(0.85, 2, 0.95) - 0.85 * 0.95 ** 2) < 1e-12 and asl_effective_efficiency(0.85) == 0.85
-d = slice_delays(2.0, [0, 2, 4, 1, 3, 5], 0.04)
-assert np.allclose(d, [2.0, 2.12, 2.04, 2.16, 2.08, 2.2]), d
-cbf_true = 60.0; m0v = 1000.0; t1b = 1.65; tau = 1.5; aeff = asl_effective_efficiency(0.85, 4, 0.95)
+assert abs(asl_effective_efficiency(0.83, 2, 0.94) - 0.83 * 0.94 ** 2) < 1e-12 and asl_effective_efficiency(0.83) == 0.83
+d = slice_delays(1.7, [1, 3, 5, 0, 2, 4], 0.035)
+assert np.allclose(d, [1.805, 1.7, 1.84, 1.735, 1.875, 1.77]), d
+cbf_true = 55.0; m0v = 1200.0; t1b = 1.65; tau = 1.6; aeff = asl_effective_efficiency(0.83, 3, 0.94)
 dm = cbf_true * 2 * aeff * t1b * m0v * (1 - np.exp(-tau / t1b)) * np.exp(-d / t1b) / (6000 * 0.9)
 cbf = asl_cbf_pcasl(dm, m0v, d, tau, efficiency=aeff)
-naive = asl_cbf_pcasl(dm, m0v, 2.0, tau, efficiency=0.85)
+naive = asl_cbf_pcasl(dm, m0v, 1.7, tau, efficiency=0.83)
 assert np.allclose(cbf, cbf_true) and naive.max() / cbf_true - 1 < -0.05 and naive.min() / cbf_true - 1 < -0.15
 print("asl_effective_efficiency and slice_delays: exact CBF; without them the error is %.0f%% to %.0f%%" % (100 * (naive.max() / cbf_true - 1), 100 * (naive.min() / cbf_true - 1)))

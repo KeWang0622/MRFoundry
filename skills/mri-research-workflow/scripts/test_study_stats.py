@@ -45,8 +45,8 @@ def test_design():
     # sample sizes: textbook values (two groups, d = 0.5, alpha 0.05, power 0.8 -> 63 normal / 64 exact per group)
     assert n_per_group(0.5, 1.0, power=0.8) == 63 and n_per_group(0.5, 1.0, power=0.8, exact=True) == 64
     assert n_paired(1.0, 2.0, power=0.9) == 43 and n_paired(1.0, 2.0, power=0.9, exact=True) in (44, 45)
-    assert n_enrol(40, 0.15) == 48 and n_enrol(34, 0.15) == 40 and abs(combined_fraction([0.1, 0.05]) - 0.145) < 1e-12
-    assert n_total_unbalanced(30, 0.4, 0.1) == 84 and abs(sd_of_differences(2.0) - 2.828427) < 1e-6
+    assert inflate_for_loss(40, 0.15) == 48 and inflate_for_loss(34, 0.15) == 40 and abs(combined_fraction([0.2, 0.25]) - 0.4) < 1e-12
+    assert n_total_unbalanced(30, 0.4, 0.2) == 94 and abs(sd_of_differences(2.0) - 2.828427) < 1e-6
     a = np.array([10.1, 11.4, 9.8, 12.0, 10.9]); b = np.array([8.2, 9.1, 9.9, 8.7]); r = two_sample_t(a, b, welch=True)
     from scipy.stats import ttest_ind
     tt = ttest_ind(a, b, equal_var=False); assert abs(r['t'] - tt.statistic) < 1e-9 and abs(r['p'] - tt.pvalue) < 1e-9

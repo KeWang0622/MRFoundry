@@ -7,21 +7,27 @@ check FAILs. Run it, fix every FAIL in the files (not in the checker), and run i
 
   --words FILE:MAX[:nohead]   word limit: every whitespace token counts (add :nohead to skip '#' lines)
   --texts FILE ...            prose files (.md/.txt) and JSON outputs checked by --bib, --ids and the rules
-  --bib refs.bib              every citation key in --texts ([@key], @key, \cite{key}) must be in the .bib;
-                              DOIs, URLs, PMIDs, arXiv IDs, 'et al.' and author-year citations FAIL
+  --bib FILE.bib              every citation key in --texts ([@key], @key, \cite{key}) must be in the .bib;
+                              references from outside the set FAIL (DOI strings, web links, PubMed or arXiv
+                              identifiers, author-year or 'et al.' citations)
   --ids SOURCE.json           every record ID cited in --texts ([A07], "A07" in JSON) must exist in SOURCE
-  --quotes REVIEW.json --source PARAGRAPHS.json|.md
+  --quotes REVIEW.json --source PARAGRAPHS.json|.md [--min-quote N]
                               each issue's quote must be ONE contiguous verbatim passage of the paragraph or
-                              table it is filed under (case and whitespace are ignored; no ellipsis)
+                              table it is filed under (case and whitespace are ignored; no ellipsis); N is
+                              the minimum quote length the task sets (default 1)
   --mentions REVIEW.json=REVIEW.md
                               every paragraph/table ID used in REVIEW.json is mentioned in REVIEW.md
-  --claims CLAIMS.json --loc NAME=FILE ...
-                              claim ledger against the texts: every number of a claim appears in each text
-                              its 'locations' list names; a 95% CI that includes 0 needs a no-difference
-                              phrase in the sentence with the estimate and interpretation no_effect_detected;
-                              exploratory claims need 'exploratory' or 'post hoc' in the same sentence;
-                              percentage-point claims must not be written with '%'
-  --null-phrases LIST         comma list or @task.json:key (default: common no-difference phrases)
+  --claims LEDGER.json --loc NAME=FILE ...
+                              claim ledger against the texts, with the ledger's own key names: every top-level
+                              number of a claim (and each number of a short list such as a CI) appears in each
+                              text its location list (key locations/where/sections) names, at the ledger's
+                              precision; a CI (a ci/conf list, or ci/conf keys with low and up/high) that
+                              includes 0 needs a no-difference phrase in the same sentence as its estimate, and an
+                              interpretation field (key with 'interpret' or 'conclusion') must read as no effect;
+                              exploratory claims need 'exploratory' or 'post hoc' in that sentence;
+                              percentage-point claims (unit pp) must not be written with '%'
+  --null-phrases LIST         comma list or @task.json:key (default: a short list of common no-difference
+                              phrases; pass the task's list when it gives one)
   --require-in TRIG::WORDS    every sentence of --texts/--loc files containing a trigger contains one of
                               WORDS (comma lists, or @task.json:key). TRIG '*' = every sentence
   --forbid-in TRIG::WORDS     no sentence containing a trigger contains any of WORDS
@@ -37,16 +43,15 @@ check FAILs. Run it, fix every FAIL in the files (not in the checker), and run i
 Sentences are split at . ! ? ; and line breaks, and every table row is its own sentence: a label such as
 'exploratory' must be repeated in every clause that reports a labelled estimate.
 Example (results write-up):
-  python write_check.py --words abstract.md:250 --texts abstract.md results.md --bib refs.bib \
-      --claims claims.json --loc abstract=abstract.md --loc results=results.md --trace inputs/results.json
+  python write_check.py --words <summary>:<limit> --texts <summary> <body> --bib <bib> --claims <ledger> \
+      --loc <name>=<summary> --loc <name>=<body> --trace <source json>
 """
 import argparse, json, re, sys
 from pathlib import Path
 
-NULL_PHRASES = ["no significant", "not significant", "not statistically significant", "did not differ",
-                "no evidence", "no detectable", "not detected", "no difference", "inconclusive",
-                "did not reach statistical significance", "not different", "no statistically significant",
-                "no clear difference", "was not detected"]
+NULL_PHRASES = ["no difference", "did not differ", "no significant", "not significant", "no statistically significant",
+                "not statistically significant", "was not detected", "were not detected", "no detectable",
+                "no evidence of"]
 EXPLORATORY = ["exploratory", "post hoc", "post-hoc"]
 EXTERNAL = [(r"\bdoi\s*:|doi\.org|\b10\.\d{4,9}/\S+", "DOI"), (r"https?://|www\.", "URL"), (r"\bPMID\b", "PMID"),
             (r"arXiv\s*:?\s*\d", "arXiv ID"), (r"\bet al\b", "'et al.'"),
@@ -54,13 +59,19 @@ EXTERNAL = [(r"\bdoi\s*:|doi\.org|\b10\.\d{4,9}/\S+", "DOI"), (r"https?://|www\.
              r"([A-Z][A-Za-z'\-]+(\s+(and|&)\s+[A-Z][A-Za-z'\-]+)?),?\s+(19|20)\d\d[a-z]?\)", "author-year citation")]
 NUM_RE = re.compile(r"(?<![\w.])-?(?:\d{1,3}(?:,\d{3})+|\d+)?(?:\.\d+)?(?:[eE][-+]?\d+)?")
 OUT = []
+LOC_ITEM_KEY = re.compile(r"paragraph|location|table|section|where", re.I)
+
+
+def _is_id_key(k):
+    k = str(k).lower()
+    return k == "id" or k.endswith("_id")
 
 
 def say(level, msg):
     OUT.append((level, msg)); print(f"{level} {msg}")
 
 
-def norm_text(s):
+def normalize_chars(s):
     return (s.replace("\u2212", "-").replace("\u2013", "-").replace("\u2014", " - ").replace("\u00a0", " ")
              .replace("\u2009", " ").replace("\u202f", " "))
 
@@ -68,7 +79,7 @@ def norm_text(s):
 def numbers(text):
     """(value, decimals, raw) for every number in text; thousands separators and unicode minus handled."""
     out = []
-    for m in NUM_RE.finditer(norm_text(text)):
+    for m in NUM_RE.finditer(normalize_chars(text)):
         raw = m.group(0)
         if not raw or raw in ("-", ".", "-.") or not re.search(r"\d", raw):
             continue
@@ -86,7 +97,7 @@ def sentences(text):
     """Split prose into sentences/clauses: at . ! ? followed by space, at every ';', at line breaks;
     table rows are single sentences."""
     res = []
-    for line in norm_text(text).splitlines():
+    for line in normalize_chars(text).splitlines():
         s = line.strip()
         if not s or set(s) <= set("|-: "):
             continue
@@ -198,7 +209,7 @@ def source_ids(path):
     def walk(d):
         if isinstance(d, dict):
             for k, v in d.items():
-                if k in ("id", "record_id", "entry_id", "ID") and isinstance(v, str):
+                if _is_id_key(k) and isinstance(v, str):
                     ids.add(v)
                 walk(v)
         elif isinstance(d, list):
@@ -231,7 +242,7 @@ def paragraphs(src):
     if p.suffix == ".json":
         def walk(d):
             if isinstance(d, dict):
-                i = d.get("id") or d.get("paragraph_id") or d.get("table_id")
+                i = next((v for k, v in d.items() if _is_id_key(k) and isinstance(v, str)), None)
                 if isinstance(i, str):
                     parts = []
                     def strings(x):
@@ -258,7 +269,7 @@ def squash(s):
 
 
 def fold(s):
-    return squash(norm_text(s).replace("\u2018", "'").replace("\u2019", "'").replace("\u201c", '"').replace("\u201d", '"')
+    return squash(normalize_chars(s).replace("\u2018", "'").replace("\u2019", "'").replace("\u201c", '"').replace("\u201d", '"')
                   .replace("|", " ").replace("*", "").replace("\u00b2", "2").replace("\u00b3", "3"))
 
 
@@ -271,16 +282,25 @@ def find_issues(review):
 
 
 def loc_of(item):
-    for k in ("paragraph_id", "location", "table_id", "paragraph", "location_id", "section_id"):
-        if isinstance(item.get(k), str):
-            return item[k]
+    """The paragraph/table ID an issue is filed under: the first string field whose key names a paragraph, table,
+    section or location, preferring values shaped like an ID (S3, AB12)."""
+    cands = [v for k, v in item.items() if isinstance(v, str) and LOC_ITEM_KEY.search(k)]
+    for v in cands:
+        if re.fullmatch(r"[A-Za-z]{1,3}\d{1,4}", v.strip()):
+            return v.strip()
+    for v in cands:
+        return v
     return None
 
 
-def check_quotes(review, src, min_len=10):
+def issue_label(item, n):
+    return next((str(v) for k, v in item.items() if _is_id_key(k) and not LOC_ITEM_KEY.search(k) and isinstance(v, (str, int))), str(n))
+
+
+def check_quotes(review, src, min_len=1):
     paras = paragraphs(src); bad = 0; items = find_issues(review)
     for n, it in enumerate(items):
-        q = str(it.get("quote", "")); loc = loc_of(it); tag = f"{it.get('issue_id', n)}@{loc}"
+        q = str(it.get("quote", "")); loc = loc_of(it); tag = f"{issue_label(it, n)}@{loc}"
         if loc not in paras:
             say("FAIL", f"quote {tag}: location {loc!r} is not a paragraph/table ID of {src}"); bad += 1; continue
         if "..." in q or "\u2026" in q or "[...]" in q:
@@ -308,71 +328,168 @@ def check_mentions(spec):
 
 
 # ---------------------------------------------------------------- claim ledger against texts
-FIELDS = ["estimate", "ci_lower", "ci_upper", "sd", "iqr_lower", "iqr_upper", "n", "p_value"]
+# The ledger keeps its own key names (the task's schema); these patterns find the fields that the checks need.
+SKIP_KEY = re.compile(r"(^|_)(id|ids|index|decimals?|precision|level|alpha|page)($|_)", re.I)
+LOC_KEY = re.compile(r"^(locations?|where|sections?|texts?|appears_in)$", re.I)
+INTERP_KEY = re.compile(r"interpret|conclusion|inference|verdict", re.I)
+PVAL_STR = re.compile(r"^\s*([<>≤≥]=?)\s*(\d*\.?\d+)\s*$")
+
+
+def _isnum(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def claim_records(d):
+    """The list of claim records: d['claims'], else the first list of objects in d, else d itself."""
+    if isinstance(d, list):
+        return [c for c in d if isinstance(c, dict)]
+    if isinstance(d, dict):
+        if isinstance(d.get("claims"), list):
+            return [c for c in d["claims"] if isinstance(c, dict)]
+        for v in d.values():
+            if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
+                return v
+    return []
+
+
+def claim_label(c, i):
+    for k, v in c.items():
+        if (k.lower() == "id" or k.lower().endswith("_id")) and isinstance(v, (str, int)) and not isinstance(v, bool):
+            return str(v)
+    return str(i + 1)
+
+
+def claim_ci(c):
+    """(lower, upper): a two-number list under a key naming ci/conf/interval, or separate ci/conf keys with
+    low/lower and up/upper/high in their names."""
+    for k, v in c.items():
+        if isinstance(v, list) and len(v) == 2 and all(_isnum(x) for x in v) and re.search(r"(^|_)(ci|conf)|interval", k.lower()):
+            return float(v[0]), float(v[1])
+    lo = hi = None
+    for k, v in c.items():
+        kl = k.lower()
+        if _isnum(v) and re.search(r"(^|_)(ci|conf)", kl):
+            if re.search(r"low|lcl", kl):
+                lo = float(v)
+            elif re.search(r"up|high|ucl", kl):
+                hi = float(v)
+    return (lo, hi) if lo is not None and hi is not None else None
+
+
+def claim_estimate(c):
+    for k, v in c.items():
+        if _isnum(v) and re.fullmatch(r"estimate|value|effect|difference|mean_difference|point_estimate|est", k.lower()):
+            return float(v)
+    for k, v in c.items():
+        if _isnum(v) and "estimate" in k.lower():
+            return float(v)
+    return None
+
+
+def interp_class(c):
+    """'exploratory', 'null' or 'effect' from the words of the interpretation field; None if absent or other."""
+    k = next((k for k in c if INTERP_KEY.search(k)), None)
+    if k is None or not isinstance(c[k], str):
+        return None
+    s = re.sub(r"[\s\-]+", "_", c[k].lower())
+    if re.search(r"explor|post_?hoc", s):
+        return "exploratory"
+    if re.search(r"(^|_)(no|not|non|null|none|absent)(_|$)", s):
+        return "null"
+    if re.search(r"effect|differ|detect|signif|positive|present", s):
+        return "effect"
+    return None
+
+
+def is_exploratory(c):
+    if interp_class(c) == "exploratory":
+        return True
+    for k, v in c.items():
+        if re.search(r"explor|post_?hoc", k.lower()) and v is True:
+            return True
+        if isinstance(v, str) and len(v) <= 60 and re.search(r"\bexploratory\b|\bpost[\s_-]?hoc\b", v, re.I):
+            return True
+    return False
+
+
+def is_pp(c):
+    for k, v in c.items():
+        if "unit" in k.lower() and isinstance(v, str):
+            u = re.sub(r"[\s\-]+", "_", v.lower())
+            if "percentage_point" in u or u == "pp":
+                return True
+    return False
+
+
+def claim_numbers(c):
+    """(field, value) for every top-level number and every number of a short top-level list (CI, IQR)."""
+    out = []
+    for k, v in c.items():
+        if SKIP_KEY.search(k) or LOC_KEY.match(k):
+            continue
+        if _isnum(v):
+            out.append((k, float(v)))
+        elif isinstance(v, list) and 0 < len(v) <= 4 and all(_isnum(x) for x in v):
+            out += [(f"{k}[{j}]", float(x)) for j, x in enumerate(v)]
+    return out
 
 
 def check_claims(claims_path, locs, null_phrases):
-    d = json.loads(Path(claims_path).read_text())
-    claims = d.get("claims", d) if isinstance(d, dict) else d
+    claims = claim_records(json.loads(Path(claims_path).read_text()))
     texts = {k: Path(v).read_text() for k, v in locs.items()}
     sents = {k: sentences(v) for k, v in texts.items()}
+    if not claims:
+        say("FAIL", f"claims: no list of claim records found in {claims_path}"); return
     nfail = 0
-    for c in claims:
-        cid = c.get("claim_id") or c.get("id") or c.get("source_id")
-        where = c.get("locations") or list(texts)
-        where = [where] if isinstance(where, str) else where
-        lo, hi = c.get("ci_lower"), c.get("ci_upper")
-        spans0 = isinstance(lo, (int, float)) and isinstance(hi, (int, float)) and lo <= 0 <= hi
-        interp = c.get("interpretation")
-        if interp in ("effect_detected", "no_effect_detected") and isinstance(lo, (int, float)) and isinstance(hi, (int, float)):
-            want = "no_effect_detected" if spans0 else "effect_detected"
-            if interp != want:
-                say("FAIL", f"claim {cid}: interpretation {interp} but the 95% CI [{lo}, {hi}] {'includes' if spans0 else 'excludes'} 0"); nfail += 1
+    for i, c in enumerate(claims):
+        cid = claim_label(c, i)
+        lk = next((k for k in c if LOC_KEY.match(k)), None)
+        where = list(texts) if lk is None else ([c[lk]] if isinstance(c[lk], str) else list(c[lk]))
+        ci = claim_ci(c); spans0 = ci is not None and ci[0] <= 0 <= ci[1]
+        cls = interp_class(c)
+        if cls in ("effect", "null") and ci is not None:
+            want = "null" if spans0 else "effect"
+            if cls != want:
+                say("FAIL", f"claim {cid}: interpretation reads as {'no effect' if cls == 'null' else 'an effect'} but the 95% CI "
+                            f"[{ci[0]}, {ci[1]}] {'includes' if spans0 else 'excludes'} 0"); nfail += 1
         for loc in where:
             if loc not in texts:
                 say("FAIL", f"claim {cid}: location {loc!r} has no --loc {loc}=FILE"); nfail += 1; continue
-            nums = numbers(texts[loc])
-            for fld in FIELDS:
-                v = c.get(fld)
-                if v is None:
+            plain = normalize_chars(texts[loc]); nums = numbers(texts[loc])
+            for k, v in c.items():
+                m = PVAL_STR.match(v) if isinstance(v, str) else None
+                if m:
+                    num = m.group(2); cmp_ = "[<≤]" if m.group(1)[0] in "<≤" else "[>≥]"
+                    pat = cmp_ + r"\s*" + ("0?" + re.escape(num[1:]) if num.startswith("0.") else re.escape(num))
+                    if not re.search(pat, plain):
+                        say("FAIL", f"claim {cid}.{k} '{v}' not written in {loc}"); nfail += 1
+            for fld, v in claim_numbers(c):
+                if num_matches(v, nums):
                     continue
-                if fld == "p_value" and isinstance(v, str):
-                    m = re.match(r"\s*([<>≤≥]=?)\s*(\d*\.?\d+)", v)
-                    if m:
-                        num = m.group(2)
-                        pat = r"[<≤]\s*" + ("0?" + re.escape(num[1:]) if num.startswith("0.") else re.escape(num))
-                        if not re.search(pat, norm_text(texts[loc])):
-                            say("FAIL", f"claim {cid}.p_value '{v}' not written in {loc}"); nfail += 1
-                    continue
-                if not isinstance(v, (int, float)):
-                    continue
-                if not num_matches(float(v), nums):
-                    if num_matches(float(v), nums, signed=False):
-                        say("WARN", f"claim {cid}.{fld}={v} appears in {loc} only without its sign")
-                    elif rounded_only(float(v), nums):
-                        say("FAIL", f"claim {cid}.{fld}={v} is printed with fewer decimals in {loc}: use the same rounding in the ledger and the text"); nfail += 1
-                    else:
-                        say("FAIL", f"claim {cid}.{fld}={v} not in {loc} (write it there at the ledger's precision, or drop {loc} from locations)"); nfail += 1
-            est = c.get("estimate")
-            if isinstance(est, (int, float)):
-                with_est = [s for s in sents[loc] if num_matches(float(est), numbers(s)) or num_matches(float(est), numbers(s), signed=False)]
+                if num_matches(v, nums, signed=False):
+                    say("WARN", f"claim {cid}.{fld}={v:g} appears in {loc} only without its sign")
+                elif rounded_only(v, nums):
+                    say("FAIL", f"claim {cid}.{fld}={v:g} is printed with fewer decimals in {loc}: use the same rounding in the ledger and the text"); nfail += 1
+                else:
+                    say("FAIL", f"claim {cid}.{fld}={v:g} not in {loc} (write it there at the ledger's precision, or drop {loc} from its locations)"); nfail += 1
+            est = claim_estimate(c)
+            if est is not None:
+                with_est = [s for s in sents[loc] if num_matches(est, numbers(s)) or num_matches(est, numbers(s), signed=False)]
                 if spans0 and with_est and not any(contains_any(s, null_phrases) for s in with_est):
-                    say("FAIL", f"claim {cid}: CI includes 0 but no sentence in {loc} that reports {est} says so ({', '.join(null_phrases[:4])}, ...)"); nfail += 1
-                if (interp == "exploratory" or c.get("exploratory") is True) and with_est:
+                    say("FAIL", f"claim {cid}: CI includes 0 but no sentence in {loc} that reports {est:g} says so ({', '.join(null_phrases[:4])}, ...)"); nfail += 1
+                if is_exploratory(c) and with_est:
                     unl = [s for s in with_est if not contains_any(s, EXPLORATORY)]
                     if unl:
                         say("FAIL", f"claim {cid}: exploratory estimate without 'exploratory'/'post hoc' in the same clause in {loc}: '{unl[0][:90]}'"); nfail += 1
-            if str(c.get("unit", "")).lower().replace(" ", "_") in ("percentage_points", "pp"):
-                for fld in ("estimate", "ci_lower", "ci_upper"):
-                    v = c.get(fld)
-                    if isinstance(v, (int, float)):
-                        for m in NUM_RE.finditer(norm_text(texts[loc])):
-                            raw = m.group(0)
-                            try:
-                                if raw and round(float(raw.replace(",", "")), 6) == round(float(v), 6) and norm_text(texts[loc])[m.end():m.end() + 2].strip().startswith("%"):
-                                    say("FAIL", f"claim {cid}.{fld}={v} in {loc} is a difference of percentages: write 'percentage points' (pp), not '%'"); nfail += 1; break
-                            except ValueError:
-                                pass
+            if is_pp(c):
+                for v in [x for x in [est] + list(ci or []) if x is not None]:
+                    for m in NUM_RE.finditer(plain):
+                        raw = m.group(0)
+                        try:
+                            if raw and round(float(raw.replace(",", "")), 6) == round(v, 6) and plain[m.end():m.end() + 2].strip().startswith("%"):
+                                say("FAIL", f"claim {cid}: {v:g} in {loc} is a difference of percentages: write 'percentage points' (pp), not '%'"); nfail += 1; break
+                        except ValueError:
+                            pass
     if not nfail:
         say("PASS", f"claims: {len(claims)} claims consistent with {', '.join(locs)}")
 
@@ -499,16 +616,32 @@ def brace_body(desc):
     return desc[i + 1:]
 
 
+def _allowed_values(voc, field):
+    """Values allowed by one top-level entry of the task file: a list of strings, the list stored under this
+    field in a dict of lists, or the keys of a dict of descriptions (codes)."""
+    if isinstance(voc, list) and voc and all(isinstance(x, str) for x in voc):
+        return voc
+    if isinstance(voc, dict):
+        sub = voc.get(field)
+        if isinstance(sub, list) and all(isinstance(x, str) for x in sub):
+            return sub
+        if isinstance(sub, dict) and sub and all(isinstance(x, str) for x in sub.values()):
+            return list(sub.keys())
+        if voc and all(isinstance(x, str) for x in voc.values()):
+            return list(voc.keys())
+    return None
+
+
 def vocab_for(seg, task, field):
+    """Allowed values for a field: the top-level task entry that the field's schema text names, else a top-level
+    dict that holds a list of values under the field's name."""
     for name, voc in task.items():
-        if not name.endswith("vocabulary"):
-            continue
-        if name in seg:
-            if isinstance(voc, dict) and field in voc and isinstance(voc[field], list):
-                return voc[field]
-            return list(voc.keys()) if isinstance(voc, dict) and not all(isinstance(v, list) for v in voc.values()) else (voc if isinstance(voc, list) else None)
+        if len(name) >= 4 and re.search(r"(?<![\w])" + re.escape(name) + r"(?![\w])", seg):
+            vals = _allowed_values(voc, field)
+            if vals is not None:
+                return vals
     for name, voc in task.items():
-        if name.endswith("vocabulary") and isinstance(voc, dict) and isinstance(voc.get(field), list):
+        if isinstance(voc, dict) and isinstance(voc.get(field), list) and all(isinstance(x, str) for x in voc[field]):
             return voc[field]
     return None
 
@@ -600,7 +733,7 @@ def main(argv=None):
     ap.add_argument("--words", action="append", default=[])
     ap.add_argument("--texts", nargs="+", default=[])
     ap.add_argument("--bib"); ap.add_argument("--ids")
-    ap.add_argument("--quotes"); ap.add_argument("--source"); ap.add_argument("--min-quote", type=int, default=10)
+    ap.add_argument("--quotes"); ap.add_argument("--source"); ap.add_argument("--min-quote", type=int, default=1)
     ap.add_argument("--mentions", action="append", default=[])
     ap.add_argument("--claims"); ap.add_argument("--loc", action="append", default=[])
     ap.add_argument("--null-phrases")

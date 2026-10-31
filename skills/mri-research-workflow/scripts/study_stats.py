@@ -126,9 +126,9 @@ def _ceil(x):
     return int(math.ceil(x - 1e-9))
 
 
-def n_per_group(delta, sd, alpha=0.05, power=0.9, sided=2, exact=False):
+def n_per_group(delta, sd, alpha=0.05, power=0.8, sided=2, exact=False):
     """Evaluable participants PER GROUP for two independent groups of equal size:
-    n = ceil(2 ((z_{1-alpha/sided} + z_{power}) sd / delta)^2) (normal approximation). sd: within-group
+    n = ceil(2 ((z_{1-alpha/sided} + z_{1-beta}) sd / delta)^2), beta = 1 - power (normal approximation). sd: within-group
     (between-participant) SD of ONE measurement per participant. exact=True: smallest n whose noncentral-t power
     (df = 2n - 2) reaches 'power' (needs scipy). Rounds up only once, at the end."""
     za, zb = _z(1 - alpha / sided), _z(power)
@@ -145,10 +145,10 @@ def n_per_group(delta, sd, alpha=0.05, power=0.9, sided=2, exact=False):
         m += 1
 
 
-def n_paired(delta, sd_diff, alpha=0.05, power=0.9, sided=2, exact=False):
-    """Evaluable participants for a paired / crossover comparison: n = ceil(((z_{1-alpha/sided} + z_{power}) sd_diff / delta)^2).
-    sd_diff is the SD of the within-participant DIFFERENCES (= sqrt(2) x within-subject SD when the two conditions
-    have the test-retest variability; see sd_of_differences). exact=True uses the noncentral t with df = n - 1."""
+def n_paired(delta, sd_diff, alpha=0.05, power=0.8, sided=2, exact=False):
+    """Evaluable participants for a paired / crossover comparison: n = ceil(((z_{1-alpha/sided} + z_{1-beta}) sd_diff / delta)^2).
+    sd_diff: SD of each participant's difference between the two conditions (sqrt(2) times the within-subject SD
+    when both conditions carry the test-retest variability; see sd_of_differences). exact=True: noncentral t, df = n - 1."""
     za, zb = _z(1 - alpha / sided), _z(power)
     n = _ceil(((za + zb) * sd_diff / delta) ** 2)
     if not exact:
@@ -169,19 +169,19 @@ def sd_of_differences(within_subject_sd):
 
 
 def combined_fraction(fractions):
-    """Combine independent loss fractions (non-evaluable MRI, failed reference, dropout): 1 - prod(1 - p_i)."""
+    """Probability that a participant is lost to at least one of several independent causes: 1 - (1 - f1)(1 - f2)..."""
     return float(1 - np.prod([1 - float(p) for p in fractions]))
 
 
-def n_enrol(n_evaluable, nonevaluable_fraction):
-    """Participants to enrol so that n_evaluable remain: ceil(n_evaluable / (1 - nonevaluable_fraction))."""
-    return _ceil(n_evaluable / (1 - float(nonevaluable_fraction)))
+def inflate_for_loss(n_needed, loss_fraction):
+    """Participants to recruit so that n_needed remain after a fraction loss_fraction is lost: ceil(n / (1 - loss))."""
+    return _ceil(n_needed / (1 - float(loss_fraction)))
 
 
-def n_total_unbalanced(n_per_group_needed, smaller_group_fraction, nonevaluable_fraction=0.0):
-    """Consecutive recruitment where the groups form naturally (e.g. reference-positive vs negative):
-    enrol ceil(n_per_group / (smaller_group_fraction x (1 - nonevaluable_fraction))) so the SMALLER group reaches n."""
-    return _ceil(n_per_group_needed / (float(smaller_group_fraction) * (1 - float(nonevaluable_fraction))))
+def n_total_unbalanced(n_needed_per_group, minority_share, loss_fraction=0.0):
+    """Recruitment when group membership is only known after enrolment (a test result splits participants):
+    ceil(n / (minority_share x (1 - loss_fraction))) participants so that the SMALLER group reaches n."""
+    return _ceil(n_needed_per_group / (float(minority_share) * (1 - float(loss_fraction))))
 
 
 def pooled_sd(a, b):

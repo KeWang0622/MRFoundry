@@ -73,7 +73,7 @@ from the data convention and confirm it on a simulated point), in double precisi
 field from multi-echo phase (`mri-hardware` `fieldmap_multiecho`); a two-echo map is noisy, and its noise goes
 straight into the image: smooth it with `smooth_field` (local-plane normalized convolution with magnitude^2
 weights, exact for linear fields at object edges). Choose sigma and lambda by simulated error against the
-exact reconstruction with the true field, on an object and field unlike the public one.
+exact reconstruction that uses the known simulated field, on an object and field unlike the public one.
 
 ## Standalone entrypoints
 
