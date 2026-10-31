@@ -2,14 +2,16 @@
 name: mri-reconstruction
 description: >-
   Read before turning MR data into images or parameter maps: raw k-space
-  (Cartesian, radial, EPI; twix, ISMRMRD, numpy), coil combination and SNR
-  units, GRAPPA/SENSE, BART or SigPy, and T1, T2/EPG, T2*, ASL, DCE or QSM
-  maps. Prevents silent errors in encoding sign, orientation, noise
-  covariance, timing origin and units. Ships tested numpy helpers and a finish
-  check. Trained networks: deep-learning-recon; diffusion: diffusion-mri.
+  (Cartesian, radial, spiral, EPI; twix, ISMRMRD, numpy), GRAPPA/SENSE from a
+  sampling mask, coil combination and SNR units, off-resonance correction,
+  BART or SigPy, and T1, T2/EPG, T2*, water-fat (PDFF), ASL, DCE or QSM maps.
+  Prevents silent errors in encoding sign, acceleration pattern, orientation,
+  noise covariance and noise floor, water-fat swaps, timing origin and units.
+  Ships tested numpy helpers and a finish check. Trained networks:
+  deep-learning-recon; diffusion: diffusion-mri.
 metadata:
   author: Ke Wang
-  version: "0.11.0"
+  version: "0.12.0"
 ---
 
 # MRFoundry: MRI Reconstruction and Quantitative Maps
@@ -23,19 +25,21 @@ solve left in scaled units).
 
 | Task | Use (`scripts/`) | Read only if needed |
 |---|---|---|
-| Raw multi-coil k-space to image: prewhitening, readout oversampling, GRAPPA, CG-SENSE, partial Fourier, SNR units | `mrfoundry_rawrecon.py` | [raw-data checklist](references/raw-data.md) |
-| Non-Cartesian (radial, spiral): exact forward model, NUFFT least squares | `mrfoundry_reconlib.py` | [raw-data checklist](references/raw-data.md#non-cartesian) |
+| Undersampled multi-coil Cartesian: R, offset and ACS from the mask, GRAPPA, CG-SENSE, prewhitening, coil combination, SNR units | `mrfoundry_rawrecon.py`: `sampling_pattern`, `grappa_from_mask`, `sense_combine`, `prewhiten` | [raw-data checklist](references/raw-data.md) |
+| Non-Cartesian (radial, spiral): exact forward model, NUFFT least squares; off-resonance with a field map | `mrfoundry_reconlib.py`: `offres_least_squares`, `smooth_field` | [raw-data checklist](references/raw-data.md#non-cartesian) |
+| Water-fat separation, PDFF, R2* (multi-echo GRE, multi-peak fat) | `fatwater_lib.py`: `fat_offsets_hz`, `fit_fat_water`, `fat_fraction` | [quantitative maps](references/quantitative-maps.md#water-fat) |
 | BART or SigPy pipelines; twix, ISMRMRD, `.cfl` files | `bart_recon.sh` | [BART and SigPy](references/bart-sigpy.md) |
 | T1, T2, T2*, VFA, dictionaries, multi-echo spin echo with B1 (EPG) | `qmri_fit.py` | [quantitative maps](references/quantitative-maps.md) |
 | ASL CBF and arrival time, single or multiple delays | `qmri_fit.py`: `asl_pairs_by_delay`, `m0_finite_tr`, `fit_asl_multidelay` | [ASL](references/quantitative-maps.md#asl) |
 | DCE: signal to concentration, extended Tofts | `qmri_fit.py`: `spgr_concentration`, `fit_tofts` | [DCE](references/quantitative-maps.md#dce) |
 | QSM: phase to field, background removal, dipole inversion, reference region | `qsm_lib.py`: `run_pipeline` | [QSM](references/quantitative-maps.md#qsm) |
 | Fixed settings of a fitted model (nuisance values, spectra, fractions) | | [model calibration](../mri-research/references/model-calibration.md) |
+| One-file standalone entrypoint | `python .agents/skills/mri-research-workflow/scripts/inline_helpers.py <module.py> <functions> --into <entrypoint.py>` copies the tested helpers | |
 
 Import with `sys.path.insert(0, '.agents/skills/mri-reconstruction/scripts')` (adjust if installed elsewhere).
 `python .agents/skills/mri-reconstruction/scripts/qmri_fit.py --api` (or any module) prints every signature with a one-line summary (2-4 KB; reading the source costs
-5-10 times more); `scripts/test_<module>.py` shows worked examples. Copy a helper into a standalone entrypoint
-when the task requires one file.
+5-10 times more); `scripts/test_<module>.py` shows worked examples. Never retype a helper into a standalone entrypoint: copy it
+with `inline_helpers.py` (a retyped GRAPPA derived R = 2 for R = 3 data and still gave plausible maps).
 
 ## Checks that prevent silent errors
 
@@ -52,10 +56,15 @@ when the task requires one file.
    low-magnitude pixels of the image.
 4. **Choose the reconstruction by simulated error** (`rank_reconstructions` with your sampling and measured
    noise): exact data consistency is not image quality; at R >= 3 it keeps or amplifies noise.
-5. **Fits**: use the stated model and time origin; for low-SNR magnitude data pass `noise_sigma` to
-   `fit_dictionary`; check map units against expected ranges (`finish_check.py --range`).
-6. **Standalone entrypoints** read every protocol value (matrix, coils, delays, echo times, slice timing,
-   frame times, scale factors) from the inputs; run them once on a second simulated input with other values.
+5. **Fits**: use the stated model and time origin. Multi-echo magnitude at low SNR: combine coils with the SAME
+   phase-preserving weights for every echo (`sense_combine`), then pass `noise_sigma` (and `n_channels` for RSS)
+   to `fit_monoexp` or `fit_dictionary`; an RSS log-linear fit overestimates T2 by several percent. Water-fat:
+   `fit_fat_water` chooses among field-map candidates with a smooth field (voxelwise minima swap water and fat
+   in isolated high-fat regions), then `fat_fraction(water_real, fat_real, flip, TR, T1w, T1f, b1)`. Check map
+   units against expected ranges (`finish_check.py --range`).
+6. **Standalone entrypoints** read every protocol value (matrix, coils, acceleration, delays, echo times,
+   field strength, slice timing, frame times, scale factors) from the inputs; run them on a second simulated
+   input with OTHER values (another acceleration, field strength or echo train) before finishing.
 
 ## Before you finish
 

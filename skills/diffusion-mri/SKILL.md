@@ -10,7 +10,7 @@ description: >-
   retest tests). Starts from reconstructed DWI.
 metadata:
   author: Ke Wang
-  version: "0.11.0"
+  version: "0.12.0"
 ---
 
 # MRFoundry: Diffusion MRI
@@ -35,8 +35,11 @@ row you need; `python .agents/skills/diffusion-mri/scripts/spectrum_fit.py --api
    declared frame and report orientations in world coordinates. Verify with `simulate_tensor_signal`: build
    signals from a known world fibre direction, pass them through YOUR conversion and fit, and confirm the
    reported direction. A check that reuses your conversion in both directions cannot detect a frame error.
-2. **Conventional ADC/DTI use b <= 1000 s/mm²** (`adc_fit(signals, bvals, bmax=1000)`) unless the study says
-   otherwise; DKI fits all shells including the higher ones.
+2. **Shells for ADC/DTI come from the study or task, not from a habit.** If the task states a single-tensor
+   (Gaussian) signal model, fit every diffusion-weighted volume. For in vivo data with shells above about
+   1500 s/mm², a conventional ADC/DTI may keep the lower shells (`adc_fit(..., bmax=1000)`); DKI fits all
+   shells. Never hard-code a b cutoff in an entrypoint that is rerun on other schemes: it can leave fewer than
+   six directions or no volumes at all.
 3. **Units**: MD and ADC in mm²/s (brain tissue about 0.6e-3 to 1.0e-3, free water about 3e-3 at body
    temperature) or µm²/ms (x1000); b in s/mm². Check map medians with `finish_check.py --range` in the units
    the task asks for.

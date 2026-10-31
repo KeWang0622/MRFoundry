@@ -83,6 +83,60 @@ def spin_echo(path, n=16, fov=0.2, te=30e-3, tr=0.3, sl=5e-3, dwell=40e-6, cpmg=
 
 def failed(checks): return [c['item'] for c in checks if not c['pass']]
 
+
+def cpmg(path, n_echo=8, esp=10e-3, crusher_area=1200.0, rf_dur=0.5e-3, crusher_dur=1.6e-3, ramp=None, n_samples=16, dwell=20e-6):
+    """Non-selective CPMG: hard 90 (phase 0), n_echo hard 180s (phase 90) at ESP/2 + (n-1) ESP, one ADC centred on
+    each echo, equal z crushers (area in cycles/m) on both sides of every refocusing pulse."""
+    sysm = make_system(); seq = pp.Sequence(sysm)
+    ex = pp.make_block_pulse(np.pi / 2, duration=rf_dur, delay=sysm.rf_dead_time, system=sysm, use='excitation')
+    rf = pp.make_block_pulse(np.pi, duration=rf_dur, delay=sysm.rf_dead_time, phase_offset=np.pi / 2, system=sysm, use='refocusing')
+    kw = dict(rise_time=ramp, fall_time=ramp) if ramp else {}
+    cr = pp.make_trapezoid('z', area=crusher_area, duration=crusher_dur, system=sysm, **kw)
+    adc = pp.make_adc(n_samples, dwell=dwell, delay=sysm.adc_dead_time, system=sysm)
+    seq.add_block(ex)
+    t_exc_c = rf_center_time(ex); dex = pp.calc_duration(ex); drf = pp.calc_duration(rf); c_rf = rf_center_time(rf)
+    d1 = fill_delay(esp / 2, (dex - t_exc_c) + pp.calc_duration(cr) + c_rf, what='ESP/2')
+    seq.add_block(pp.make_delay(d1))
+    for k in range(n_echo):
+        seq.add_block(cr); seq.add_block(rf); seq.add_block(cr)
+        half = adc_sample_time(adc, n_samples // 2)
+        d2 = fill_delay(esp / 2, (drf - c_rf) + pp.calc_duration(cr) + half, what='to echo')
+        if d2 > 0: seq.add_block(pp.make_delay(d2))
+        seq.add_block(adc)
+        if k < n_echo - 1:
+            d3 = fill_delay(esp / 2, (pp.calc_duration(adc) - half) + pp.calc_duration(cr) + c_rf, what='echo to next refocusing')
+            if d3 > 0: seq.add_block(pp.make_delay(d3))
+    seq.add_block(pp.make_delay(0.1))
+    ok, err = seq.check_timing(); assert ok, err[:2]; seq.write(path); return path
+
+
+def test_crushers_and_safety(P):
+    g = 42.576e6
+    rep, ch = measure(cpmg(P('cpmg.seq')), cpmg=True, crusher_range=(800, 2000), safety=True, pns_rheobase=50, pns_chronaxie=0.36e-3,
+                      b1rms_max=5.0, grms_max=40, pns_max=0.8)
+    assert not failed(ch), failed(ch)
+    cm = rep['crusher_moment_cycles_m']
+    assert all(abs(v - 1200) < 1 for v in cm['pre_min_max'] + cm['post_min_max']) and cm['max_rel_pre_post_mismatch'] < 1e-3, cm
+    # analytic B1 rms: block pulses of amplitude flip/(2 pi gamma d)
+    tot = rep['duration_s']; b90 = 0.25 / 0.5e-3 / g; b180 = 0.5 / 0.5e-3 / g
+    b1rms = np.sqrt((b90 ** 2 + 8 * b180 ** 2) * 0.5e-3 / tot) * 1e6
+    assert abs(rep['b1_rms_uT'] - b1rms) < 1e-3 * b1rms and abs(rep['b1_peak_uT'] - b180 * 1e6) < 1e-6, (rep['b1_rms_uT'], b1rms)
+    # analytic ramp PNS fraction of the crusher trapezoid: P = G / (S_r (tau + c))
+    import pypulseq as pp_
+    cr = pp_.make_trapezoid("z", area=1200.0, duration=1.6e-3, system=make_system())
+    p_exp = cr.amplitude / g / (50 * (cr.rise_time + 0.36e-3))
+    assert abs(max(rep['pns_max_fraction_per_axis']) - p_exp) < 1e-4, (rep['pns_max_fraction_per_axis'], p_exp)
+    print('CPMG crushers %.1f cycles/m both sides; B1rms %.3f uT (analytic %.3f), peak %.2f uT; ramp PNS %.4f (analytic %.4f)'
+          % (cm['pre_min_max'][0], rep['b1_rms_uT'], b1rms, rep['b1_peak_uT'], max(rep['pns_max_fraction_per_axis']), p_exp))
+    # gradient passed in T/m where Pulseq expects Hz/m: moments near 1e-5 cycles/m
+    rep, ch = measure(cpmg(P('cpmg_units.seq'), crusher_area=1200.0 / g), cpmg=True, crusher_range=(800, 2000))
+    assert failed(ch) == [c['item'] for c in ch if c['item'].startswith('spin-echo crusher')], failed(ch)
+    # designed exactly at the lower limit: flagged as a margin warning
+    rep, ch = measure(cpmg(P('cpmg_edge.seq'), crusher_area=800.0), cpmg=True, crusher_range=(800, 2000))
+    assert rep.get('margin_warnings'), rep.get('crusher_moment_cycles_m')
+    print('crusher unit error (T/m given as Hz/m) FAILS; a design at the range edge gets a margin WARN')
+
+
 def main():
     tmp = tempfile.mkdtemp(); P = lambda f: os.path.join(tmp, f)
     # spoiled GRE
@@ -105,6 +159,8 @@ def main():
     rep, ch = measure(bssfp(P('ssfp_unbal.seq'), balanced=False), balanced=True); assert failed(ch) == ['balanced: zero net gradient area per TR on every axis'], failed(ch)
     rep, ch = measure(bssfp(P('ssfp_adc.seq'), adc_follows_rf=False), rf_phase_cycle=180); assert failed(ch) == ['ADC phase equals the phase of its own excitation'], failed(ch)
     rep, ch = measure(bssfp(P('ssfp_nocyc.seq'), alternate=False), rf_phase_cycle=180); assert 'RF phase cycling increment' in failed(ch), failed(ch)
+    # CPMG crushers and safety quantities measured from the export
+    test_crushers_and_safety(P)
     # spin echo
     rep, ch = measure(spin_echo(P('se.seq')), te=30e-3, tr=0.3, cpmg=True, slice_thickness=5e-3, matrix=(16, 16), fov=0.2)
     assert not failed(ch), failed(ch); assert rep['rf_roles']['refocusing'] == 16 and abs(rep['refocusing_after_excitation_ms'][0] - 15) < 1e-3, rep

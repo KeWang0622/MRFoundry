@@ -7,6 +7,16 @@ squares are preserved and white k-space noise stays white with the same variance
 image. numpy's default unnormalized ifft2 (as in cartesian_image) differs by a constant
 factor: say which scaling you report.
 """
+if __name__ == '__main__' and '--api' in __import__('sys').argv:  # signatures only; works without numpy
+    import ast as _ast, sys as _sys
+    for _n in _ast.parse(open(__file__).read()).body:
+        if isinstance(_n, (_ast.FunctionDef, _ast.ClassDef)) and not _n.name.startswith('_'):
+            _f = _n if isinstance(_n, _ast.FunctionDef) else next((m for m in _n.body if isinstance(m, _ast.FunctionDef) and m.name == '__init__'), None)
+            _a = _ast.unparse(_f.args).replace('self, ', '').replace('self', '') if _f else ''
+            _d = (_ast.get_docstring(_n) or '').strip().splitlines()
+            print(f"{_n.name}({_a})" + chr(10) + f"    {_d[0] if _d else ''}")
+    _sys.exit(0)
+
 import numpy as np
 
 
@@ -136,7 +146,7 @@ def remove_readout_oversampling(ksp, factor=2, axis=-1):
 
 
 # ------------------------------------------------------------------ GRAPPA
-def grappa_2d(ksp, R, acs, kernel_kx=5, lamda=1e-3):
+def grappa_2d(ksp, R, acs, kernel_kx=5, lamda=1e-3, offset=None):
     """GRAPPA for 2D Cartesian data undersampled by R along ky.
 
     ksp: [coil, ky, kx] with zeros at missing lines (acquired lines every R along ky,
@@ -144,7 +154,8 @@ def grappa_2d(ksp, R, acs, kernel_kx=5, lamda=1e-3):
     block (contiguous lines; may be taken from ksp). Kernel: the two nearest acquired
     lines (y0, y0 + R) x kernel_kx readout neighbours from all coils, one weight set per
     missing offset 1..R-1, Tikhonov-regularized (lamda relative to the source energy).
-    Acquired samples are kept unchanged (including ACS lines present in ksp).
+    Acquired samples are kept unchanged (including ACS lines present in ksp). offset: residue of the regular
+    lines modulo R (default: most common residue); grappa_from_mask derives R, offset and the ACS for you.
     """
     ksp = np.asarray(ksp, complex)
     C, ny, nx = ksp.shape
@@ -153,7 +164,7 @@ def grappa_2d(ksp, R, acs, kernel_kx=5, lamda=1e-3):
     acquired = np.any(np.abs(ksp) > 0, axis=(0, 2))
     # regular sampling offset: the most common residue of acquired line indices modulo R
     idx = np.nonzero(acquired)[0]
-    off = np.bincount(idx % R, minlength=R).argmax()
+    off = np.bincount(idx % R, minlength=R).argmax() if offset is None else int(offset) % R
     weights = {}
     na = acs.shape[1]
     for d in range(1, R):
@@ -185,6 +196,64 @@ def grappa_2d(ksp, R, acs, kernel_kx=5, lamda=1e-3):
 
 
 # ------------------------------------------------------------------ partial Fourier
+def sampling_pattern(mask):
+    """Read an undersampling pattern from a sampling mask [ky] (or [ky, kx]: any sample on the line counts).
+    Returns dict(R, offset, acs=(first, last) contiguous calibration lines around the centre, n_acs, regular,
+    n_lines). R is the spacing of the acquired lines OUTSIDE the calibration block (never 1/spacing, never
+    estimated from lines that include the block); regular is True when every outer line lies on
+    offset + j R. Use it instead of re-deriving R by hand."""
+    m = np.asarray(mask, bool)
+    if m.ndim == 2:
+        m = m.any(axis=1)
+    ny = len(m); idx = np.flatnonzero(m)
+    if idx.size == 0:
+        raise ValueError('empty sampling mask')
+    runs = np.split(idx, np.flatnonzero(np.diff(idx) > 1) + 1)
+    c = ny // 2
+    acs = max(runs, key=lambda r: (len(r), -min(abs(r[0] - c), abs(r[-1] - c))))
+    lo, hi = int(acs[0]), int(acs[-1])
+    outer = idx[(idx < lo) | (idx > hi)]
+    if outer.size >= 2:
+        d = np.diff(outer); d = d[d > 0]
+        R = int(np.bincount(d).argmax()) if d.size else 1
+        # gaps that jump over the calibration block are multiples of R; the most common gap is R itself
+    else:
+        R = 1
+    offset = int(np.bincount(outer % max(R, 1), minlength=max(R, 1)).argmax()) if outer.size else 0
+    regular = bool(outer.size == 0 or np.all((outer - offset) % max(R, 1) == 0))
+    return {'R': R, 'offset': offset, 'acs': (lo, hi), 'n_acs': int(hi - lo + 1), 'regular': regular, 'n_lines': int(idx.size)}
+
+
+def grappa_from_mask(ksp, mask, kernel_kx=5, lamda=1e-3):
+    """GRAPPA for [coil, ky, kx] data with missing lines, using the pattern read by sampling_pattern(mask):
+    R and the line offset from the lines outside the calibration block, calibration from the contiguous centre
+    block. Non-acquired lines are zeroed first. Prewhiten the data (prewhiten) before calling it. Returns
+    (filled k-space, pattern dict)."""
+    pat = sampling_pattern(mask)
+    if not pat['regular']:
+        raise ValueError(f'irregular outer sampling {pat}: use sense_cg with coil_maps_from_acs instead')
+    m = np.asarray(mask, bool)
+    m = m.any(axis=1) if m.ndim == 2 else m
+    k = np.asarray(ksp, complex) * m[None, :, None]
+    if pat['R'] <= 1:
+        return k, pat
+    lo, hi = pat['acs']
+    if pat['n_acs'] < pat['R'] + 2:
+        raise ValueError(f"calibration block of {pat['n_acs']} lines is too small for R = {pat['R']}")
+    return grappa_2d(k, pat['R'], k[:, lo:hi + 1, :], kernel_kx=kernel_kx, lamda=lamda, offset=pat['offset']), pat
+
+
+def sense_combine(coil_images, sens, psi=None):
+    """Phase-preserving coil combination sum_c conj(s_c) x_c / sum_c |s_c|^2 (with psi: s^H Psi^-1 x / s^H Psi^-1 s).
+    Unlike RSS, the result is linear in the data: noise stays complex Gaussian (no magnitude noise floor added by
+    the combination), which matters for multi-echo fits at low SNR. sens from coil_maps_from_acs or ESPIRiT."""
+    x = np.asarray(coil_images, complex); s = np.asarray(sens, complex)
+    if psi is not None:
+        P = np.linalg.inv(np.asarray(psi, complex)); s2 = np.tensordot(P, s, axes=(1, 0))
+        return np.sum(np.conj(s2) * x, 0) / np.maximum(np.real(np.sum(np.conj(s2) * s, 0)), 1e-12)
+    return np.sum(np.conj(s) * x, 0) / np.maximum(np.sum(np.abs(s) ** 2, 0), 1e-12)
+
+
 def pocs_partial_fourier(ksp, sampled, n_iter=30, center_lines=None, axis=-2):
     """POCS partial-Fourier reconstruction for asymmetric sampling along one axis.
 
@@ -332,14 +401,3 @@ def nrmse(ref, img, mask=None, fit_scale=True):
     return float(np.linalg.norm(a * x - r) / np.linalg.norm(r)), a
 
 
-def _print_api(namespace):
-    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
-    import inspect
-    for name, f in sorted(namespace.items()):
-        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
-            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
-            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
-
-
-if __name__ == '__main__' and '--api' in __import__('sys').argv:
-    _print_api(dict(globals()))

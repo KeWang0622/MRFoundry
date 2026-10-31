@@ -4,6 +4,16 @@ Tested with pypulseq 1.5.0.post1, komamripy 0.0.11 (KomaMRI 0.13-0.14), numpy 2.
 Copy the functions you need into your own script, or import this file. Each helper
 encodes a convention that is easy to get wrong; read its docstring.
 """
+if __name__ == '__main__' and '--api' in __import__('sys').argv:  # signatures only; works without numpy
+    import ast as _ast, sys as _sys
+    for _n in _ast.parse(open(__file__).read()).body:
+        if isinstance(_n, (_ast.FunctionDef, _ast.ClassDef)) and not _n.name.startswith('_'):
+            _f = _n if isinstance(_n, _ast.FunctionDef) else next((m for m in _n.body if isinstance(m, _ast.FunctionDef) and m.name == '__init__'), None)
+            _a = _ast.unparse(_f.args).replace('self, ', '').replace('self', '') if _f else ''
+            _d = (_ast.get_docstring(_n) or '').strip().splitlines()
+            print(f"{_n.name}({_a})" + chr(10) + f"    {_d[0] if _d else ''}")
+    _sys.exit(0)
+
 import numpy as np
 import pypulseq as pp
 
@@ -164,14 +174,3 @@ def plot_waveforms(seq_file, png, t_window=None):
     fig.tight_layout(); fig.savefig(png, dpi=110); plt.close(fig); return png
 
 
-def _print_api(namespace):
-    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
-    import inspect
-    for name, f in sorted(namespace.items()):
-        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
-            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
-            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
-
-
-if __name__ == '__main__' and '--api' in __import__('sys').argv:
-    _print_api(dict(globals()))

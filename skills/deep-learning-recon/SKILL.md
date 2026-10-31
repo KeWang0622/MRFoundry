@@ -6,10 +6,11 @@ description: >-
   training (SSDU), diffusion or score-based priors, fastMRI, DIRECT,
   torchkbnufft. Prevents silent errors from train/test leakage, inconsistent
   normalization and masks, unfair classical baselines and metrics on the wrong
-  region or scale. Classical reconstruction belongs to mri-reconstruction.
+  region or scale. Classical reconstruction belongs to mri-reconstruction;
+  reviewing or writing a manuscript belongs to mri-research-workflow.
 metadata:
   author: Ke Wang
-  version: "0.11.0"
+  version: "0.12.0"
 ---
 
 # MRFoundry: Deep-Learning MRI Reconstruction

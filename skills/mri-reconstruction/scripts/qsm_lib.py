@@ -10,6 +10,16 @@ b0_dir is the unit vector of B0 in the array-axis frame (oblique slabs: not (0, 
 f = gamma_bar * B0 * 1e-6 * (d * chi) with D(k) = 1/3 - (k.b)^2/|k|^2 and k in cycles/mm per axis.
 Quick check of your data and geometry: python qsm_lib.py --selftest (synthetic head; prints correlations and scale).
 """
+if __name__ == '__main__' and '--api' in __import__('sys').argv:  # signatures only; works without numpy
+    import ast as _ast, sys as _sys
+    for _n in _ast.parse(open(__file__).read()).body:
+        if isinstance(_n, (_ast.FunctionDef, _ast.ClassDef)) and not _n.name.startswith('_'):
+            _f = _n if isinstance(_n, _ast.FunctionDef) else next((m for m in _n.body if isinstance(m, _ast.FunctionDef) and m.name == '__init__'), None)
+            _a = _ast.unparse(_f.args).replace('self, ', '').replace('self', '') if _f else ''
+            _d = (_ast.get_docstring(_n) or '').strip().splitlines()
+            print(f"{_n.name}({_a})" + chr(10) + f"    {_d[0] if _d else ''}")
+    _sys.exit(0)
+
 import numpy as np
 
 GAMMA_BAR_1H = 42.577478518e6  # Hz/T
@@ -264,19 +274,8 @@ def run_pipeline(magnitude, phase_rad, te, mask, voxel_size_mm, b0_dir, b0_T, ro
 
 
 
-def _print_api(namespace):
-    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
-    import inspect
-    for name, f in sorted(namespace.items()):
-        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
-            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
-            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
-
-
 if __name__ == '__main__':
     import sys
-    if '--api' in sys.argv:
-        _print_api(dict(globals()))
     if '--selftest' in sys.argv:
         h = synthetic_head()
         out = run_pipeline(h['mag'], h['phase'], h['te'], h['mask'], h['voxel_size_mm'], h['b0_dir'], h['b0_T'], h['rois'], 5)

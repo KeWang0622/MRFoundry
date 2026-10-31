@@ -1,6 +1,6 @@
 # Quantitative maps
 
-**Summary.** Use the tested helpers in `scripts/qmri_fit.py` and `scripts/qsm_lib.py` (numpy/scipy). State the
+**Summary.** Use the tested helpers in `scripts/qmri_fit.py`, `scripts/fatwater_lib.py` and `scripts/qsm_lib.py` (numpy/scipy). State the
 signal model and its time origin, check units, validate on data simulated by an independent route (closed form,
 quadrature, Bloch or EPG simulation of your exact timing), and calibrate any fixed nuisance setting on
 development data ([model calibration](../../mri-research/references/model-calibration.md)).
@@ -17,6 +17,20 @@ data so the Rician floor does not lengthen T2 or shorten T1), closed forms `erns
 `fit_dictionary(..., noise_sigma=sigma)`; sigma from the background (Rician). B1 above and below the value that
 makes the refocusing angle 180° give identical trains: keep the B1 grid on one side unless a B1 map exists.
 Cover the full B1 range expected (low B1 needs a grid reaching well below 0.5).
+
+## Water-fat
+
+`fatwater_lib.py` (test: `python scripts/test_fatwater_lib.py`). Form complex echo images first: undo any readout
+reversal of bipolar echoes in k-space, prewhiten, combine coils with ONE set of phase-preserving weights for all
+echoes (`sense_combine` with maps from the first echo or the ACS), crop readout oversampling. Then
+`fit_fat_water(echoes, te, fat_offsets_hz(B0, ppm, water_ppm), amplitudes, mask)`: multi-peak fat (the supplied
+spectrum, else the six-peak default), common R2* and field, field-map choice regularized by a smooth field (pure
+fat at field f fits almost as well as pure water at f plus the main fat offset; voxelwise minima swap isolated
+high-fat regions, most often at 1.5 T or with few echoes). Needs at least 4 echoes with R2* free.
+PDFF = `fat_fraction(water_real, fat_real, flip, TR, T1_water, T1_fat, b1)`: real amplitudes after the common
+phase (unbiased near 0 % and 100 %, unlike |F| / (|W| + |F|)) and spoiled-GRE T1/flip-angle weighting removed
+(omit it only when the protocol is proton-density weighted). Validate on a simulated phantom with vials from 0 to
+100 % fat at the task's field strength and echo times.
 
 ## ASL
 

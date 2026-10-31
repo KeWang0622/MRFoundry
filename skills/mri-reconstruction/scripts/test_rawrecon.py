@@ -146,3 +146,29 @@ assert ranked[-1][1] == 'cg-sense lam=0' and ranked[0][1] == 'cg-sense lam=0.05'
 print("rank_reconstructions (R=3, noisy simulation): " + "; ".join(f"{n} NRMSE {e:.3f}" for e, n in ranked))
 print("all B5 reconstruction-selection tests passed")
 
+
+
+# ---- B6: sampling pattern read from the mask, GRAPPA from the mask, phase-preserving combination ----
+for Rf, off, half in ((3, 1, 9), (2, 0, 8), (4, 2, 10), (3, 0, 12)):
+    mask = np.zeros(ny, bool); mask[off::Rf] = True; mask[ny // 2 - half:ny // 2 + half + 1] = True
+    pat = sampling_pattern(mask)
+    lo, hi = pat['acs']  # the contiguous run may include lattice lines adjacent to the calibration block
+    assert pat['R'] == Rf and pat['offset'] == off % Rf and pat['regular'] and ny // 2 - half - 1 <= lo <= ny // 2 - half and ny // 2 + half <= hi <= ny // 2 + half + 1, (Rf, pat)
+    noisy = ksp + 0.002 * (rng.normal(size=ksp.shape) + 1j * rng.normal(size=ksp.shape))
+    kg, _ = grappa_from_mask(noisy * mask[None, :, None], mask)
+    e, _ = nrmse(rss(ifft2c(ksp)), rss(ifft2c(kg)), obj > 0)
+    assert e < 0.06, (Rf, off, e)
+    print("sampling_pattern R=%d offset=%d ACS %s; grappa_from_mask NRMSE %.4f" % (Rf, off, pat['acs'], e))
+# the hand-derived estimate seen in an evaluation run (1/spacing of the first acquired lines) gives R=2 for R=3 data
+mask = np.zeros(ny, bool); mask[1::3] = True; mask[ny // 2 - 9:ny // 2 + 10] = True
+bad_R = max(2, int(round(1.0 / np.median(np.diff(np.flatnonzero(mask)[:8])))))
+assert bad_R == 2 and sampling_pattern(mask)['R'] == 3
+kb = grappa_2d(ksp * mask[None, :, None], bad_R, ksp[:, ny // 2 - 9:ny // 2 + 10, :])
+eb, _ = nrmse(rss(ifft2c(ksp)), rss(ifft2c(kb)), obj > 0)
+eg, _ = nrmse(rss(ifft2c(ksp)), rss(ifft2c(grappa_from_mask(ksp * mask[None, :, None], mask)[0])), obj > 0)
+assert eg < 0.03 and eb > 3 * eg, (eg, eb)
+print("a wrong R from a hand-derived pattern: NRMSE %.3f vs %.4f with sampling_pattern" % (eb, eg))
+comb = sense_combine(coil, sens)
+assert np.allclose(comb, img, atol=1e-10)
+print("sense_combine returns the complex image (linear in the data)")
+

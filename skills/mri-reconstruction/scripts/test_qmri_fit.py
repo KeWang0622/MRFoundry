@@ -125,3 +125,28 @@ assert abs(b_rice) < abs(b_plain) and abs(b_rice) < 0.05, (b_plain, b_rice)
 print(f"fit_dictionary(noise_sigma=...) removes most of the noise-floor T2 bias at low SNR: {b_plain:+.1%} -> {b_rice:+.1%}")
 print("all B5 quantitative model tests passed")
 
+
+
+# B6: root-sum-of-squares magnitude at low SNR biases mono-exponential T2 upward; the noise-floor model removes it
+rng7 = np.random.default_rng(7); te6 = np.arange(1, 7) * 15.0; t2v = 80.0; nv = 4000; Cc = 8
+wc = rng7.uniform(0.2, 1.0, (Cc, 1)); wc /= np.sqrt((wc ** 2).sum())
+sig = 0.06; sclean = np.exp(-te6 / t2v)[None, :] * np.ones((nv, 1))
+coils = wc[None] * sclean[:, None, :] + sig * (rng7.normal(size=(nv, Cc, 6)) + 1j * rng7.normal(size=(nv, Cc, 6)))
+magn = np.sqrt((np.abs(coils) ** 2).sum(1))
+_, t2_plain = fit_monoexp(te6, magn); _, t2_aware = fit_monoexp(te6, magn, noise_sigma=sig, n_channels=Cc)
+bp, ba = np.median(t2_plain) / t2v - 1, np.median(t2_aware) / t2v - 1
+assert bp > 0.04 and abs(ba) < 0.02, (bp, ba)
+_, t2_hi = fit_monoexp(te6, np.exp(-te6 / t2v)[None, :] * np.ones((5, 1)), noise_sigma=1e-6)
+assert np.allclose(t2_hi, t2v, rtol=1e-6)
+print(f"fit_monoexp(noise_sigma=, n_channels=): RSS of {Cc} channels at last-echo SNR {np.exp(-90 / 80) / sig:.1f}: median T2 bias {bp:+.1%} -> {ba:+.1%}")
+
+
+
+# B6: with refocusing below 180 deg, stimulated echoes carry T1: build the EPG dictionary with the sample's own T1
+sig_t1 = epg_cpmg(32, 0.008, 0.15, t1=0.4, refocus_deg=110 * 0.9, excite_deg=90 * 0.9)
+Dw, Pw = epg_t2_dictionary(32, 0.008, np.geomspace(0.05, 0.4, 90), np.linspace(0.75, 1.05, 31), t1=1.0, refocus_deg=110)
+Dr, Pr = epg_t2_dictionary(32, 0.008, np.geomspace(0.05, 0.4, 90), np.linspace(0.75, 1.05, 31), t1=0.4, refocus_deg=110)
+ew = fit_dictionary(np.abs(sig_t1)[None], Dw, Pw)[0][0, 0] / 0.15 - 1; er = fit_dictionary(np.abs(sig_t1)[None], Dr, Pr)[0][0, 0] / 0.15 - 1
+assert abs(ew) > 0.03 and abs(er) < 0.015, (ew, er)
+print(f"EPG dictionary T1: default T1 gives a T2 error of {ew:+.1%} at 110 deg refocusing; the sample's T1 gives {er:+.1%}")
+

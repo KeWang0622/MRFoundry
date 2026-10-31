@@ -8,6 +8,8 @@ Usage (all expectations optional; SI units, gradients in mT/m, slew in T/m/s):
   balanced SSFP:       --balanced --rf-phase-cycle 180 --te-half-tr
   spin echo / CPMG:    --te 0.08 --cpmg
   EPI (one or more lines per excitation): --epi --te 0.03 --echo-spacing 0.0008 --matrix 64 64 --fov 0.22
+  crushers and safety: --crusher-range 800 2000 --safety --b1rms-max 0.7 --b1peak-max 12 --grms-max 10 \\
+                       --pns-rheobase 50 --pns-chronaxie 0.36e-3 --pns-max 0.8
 
 What is measured from the read-back file (fresh pp.Sequence().read):
   * RF roles: excitation (< 135 deg), inversion (large pulse not followed by an ADC before the next
@@ -27,6 +29,11 @@ What is measured from the read-back file (fresh pp.Sequence().read):
   * --epi: TE per EXCITATION = its centre -> the sample closest to kx = ky = 0 over the whole echo train (without
     --epi every ADC line counts as its own echo); echo spacing = start-to-start time of consecutive lines.
   * Peak gradient/slew per axis and Pulseq timing errors. Number of excitations before the first ADC.
+  * Spin-echo trains: crusher moment (cycles/m) from each echo (the excitation for the first) to the next refocusing
+    centre and from it to the next echo (echo = 2 x refocusing centre - previous echo). Pulseq gradients are in
+    Hz/m and areas in 1/m: a value near 1e-5 means T/m was passed where Hz/m was expected.
+  * --safety: B1+rms over the whole file, B1 peak, gradient rms per axis and the ramp PNS fraction; a WARN line marks
+    any value within 2 % of its limit (raster rounding can cross it: design with a margin).
 Prints a compact summary and one PASS/FAIL line per expectation (add --json for every measurement);
 exits 1 on any FAIL. From Python: rep, checks = measure('sequence.seq', te=..., ...).
 Use the measured values in your report. Requires pypulseq >= 1.4 and numpy.
@@ -48,6 +55,38 @@ def _area(w, t0, t1):
         return 0.0
     tt = np.r_[t0, t[(t > t0) & (t < t1)], t1]
     return float(np.trapezoid(np.interp(tt, t, g, left=0, right=0), tt))
+
+def _sq_integral(w, t0=None, t1=None):
+    """Exact integral of g^2 dt for a piecewise-linear waveform (t, g)."""
+    t, g = w
+    if len(t) < 2:
+        return 0.0
+    dt = np.diff(t); g0, g1 = g[:-1], g[1:]
+    return float(np.sum(dt * (g0 * g0 + g0 * g1 + g1 * g1) / 3.0))
+
+def pns_ramps(w, rheobase, chronaxie, gamma):
+    """Ramp PNS model on a piecewise-linear waveform (t s, g Hz/m): a ramp is a maximal interval over which the
+    waveform changes monotonically with non-zero slope (consecutive segments of the same slope sign join; a flat
+    segment ends it). P = |dG| / (rheobase (tau + chronaxie)), dG in T/m, tau in s. Returns (max P, worst ramp)."""
+    t, g = w
+    if len(t) < 2:
+        return 0.0, None
+    g = g / gamma; dt = np.diff(t); dg = np.diff(g); ok = dt > 1e-12
+    t0, dt, dg = t[:-1][ok], dt[ok], dg[ok]
+    tol = 1e-9 * max(np.max(np.abs(g)), 1e-12)
+    sgn = np.where(np.abs(dg) <= tol * np.maximum(dt / 1e-5, 1), 0, np.sign(dg))
+    best, worst = 0.0, None; i = 0
+    while i < len(sgn):
+        if sgn[i] == 0:
+            i += 1; continue
+        j = i; tau = 0.0; dG = 0.0
+        while j < len(sgn) and sgn[j] == sgn[i] and (j == i or abs(t0[j] - (t0[j - 1] + dt[j - 1])) < 1e-9):
+            tau += dt[j]; dG += dg[j]; j += 1
+        P = abs(dG) / (rheobase * (tau + chronaxie))
+        if P > best:
+            best, worst = P, {'start_s': float(t0[i]), 'duration_s': float(tau), 'dG_mT_m': float(dG * 1e3)}
+        i = j
+    return float(best), worst
 
 def _rf(rf, block_start):
     rt = np.asarray(rf.t); sig = np.asarray(rf.signal)
@@ -76,8 +115,11 @@ def _uniq(x, nd=4):
 def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoil=None, max_grad=None, max_slew=None,
             gamma=42.576e6, ti=None, balanced=False, rf_phase_cycle=None, te_half_tr=False, cpmg=False,
             min_spoil_cycles=None, min_inversion_spoil_cycles=None, matrix=None, fov=None, monopolar=False,
-            balanced_tol=0.05, epi=False, echo_spacing=None):
-    """Return (report, checks). te/ti: list or float (s); tr (s); flip (deg, excitations); matrix (nx, ny); fov m or (fx, fy)."""
+            balanced_tol=0.05, epi=False, echo_spacing=None, crusher_range=None, crusher_axis='z', safety=False,
+            pns_rheobase=None, pns_chronaxie=None, b1rms_max=None, b1peak_max=None, grms_max=None, pns_max=None):
+    """Return (report, checks). te/ti: list or float (s); tr (s); flip (deg, excitations); matrix (nx, ny); fov m or (fx, fy).
+    crusher_range (lo, hi) cycles/m: spin-echo crusher moments on crusher_axis; safety: B1 rms/peak (uT), gradient rms
+    (mT/m) and, with pns_rheobase (T/m/s) and pns_chronaxie (s), the ramp PNS fraction, all from the exported file."""
     te = None if te is None else list(np.atleast_1d(te)); ti = None if ti is None else list(np.atleast_1d(ti))
     s = pp.Sequence(); s.read(str(seq_path)); rep = {}; checks = []
     ok, err = s.check_timing(); rep['timing_ok'] = bool(ok); rep['timing_errors'] = [str(e) for e in err][:5]
@@ -185,6 +227,18 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
             if p >= 0: tau.append(r['center'] - ec[p]); rel.append(wrap_deg(r['phase'] - exc[p]['phase']))
         rep['refocusing_after_excitation_ms'] = _uniq(np.array(tau) * 1e3, 4)[:12]
         rep['refocusing_minus_excitation_phase_deg'] = _uniq(rel, 2)
+        ax = {'x': 0, 'y': 1, 'z': 2}[crusher_axis]; pre, post = [], []
+        for p, e0 in enumerate(ec):
+            nxt = ec[p + 1] if p + 1 < len(ec) else total
+            echo = e0
+            for r in sorted([r for r in ref if e0 < r['center'] < nxt], key=lambda q: q['center']):
+                e_n = 2 * r['center'] - echo                      # ideal echo time after this refocusing pulse
+                pre.append(_area(waves[ax], echo, r['center'])); post.append(_area(waves[ax], r['center'], e_n)); echo = e_n
+        if pre:
+            pre, post = np.abs(pre), np.abs(post)
+            rep['crusher_moment_cycles_m'] = {'axis': crusher_axis, 'pre_min_max': [float(pre.min()), float(pre.max())],
+                                              'post_min_max': [float(post.min()), float(post.max())],
+                                              'max_rel_pre_post_mismatch': float(np.max(np.abs(pre - post) / np.maximum(np.maximum(pre, post), 1e-12)))}
     # --- Cartesian sampling
     if matrix is not None and fov is not None and adcs:
         nx, ny = int(matrix[0]), int(matrix[-1]); fx, fy = (fov, fov) if np.isscalar(fov) else (fov[0], fov[-1])
@@ -200,8 +254,24 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
         rep['ky_lines'] = len(_uniq(kys, 3)); exp_ky = (np.arange(ny) - ny // 2) / fy
         rep['ky_set_max_err_cycles_m'] = float(max(min(abs(exp_ky - v)) for v in kys)) if kys else None
         rep['ky_order_first_lines'] = [round(v * fy, 3) for v in kys[:6]]
+    # --- safety quantities of the whole exported file (nominal RF amplitude)
+    if safety or b1rms_max or b1peak_max or grms_max or pns_max:
+        e_rf = 0.0; peak = 0.0
+        for r in rfs:
+            rf = r['rf']; rt = np.asarray(rf.t); sig = np.abs(np.asarray(rf.signal)) / gamma
+            w = np.diff(np.r_[0., (rt[:-1] + rt[1:]) / 2, float(rf.shape_dur)]); e_rf += float(np.sum(sig ** 2 * w)); peak = max(peak, float(sig.max()))
+        rep['b1_rms_uT'] = float(np.sqrt(e_rf / total) * 1e6); rep['b1_peak_uT'] = peak * 1e6
+        rep['grad_rms_mT_m'] = [float(np.sqrt(_sq_integral(w) / total) / gamma * 1e3) for w in waves]
+        if pns_rheobase and pns_chronaxie:
+            pn = [pns_ramps(w, pns_rheobase, pns_chronaxie, gamma) for w in waves]
+            rep['pns_max_fraction_per_axis'] = [round(v[0], 5) for v in pn]
+            rep['pns_worst_ramp'] = pn[int(np.argmax([v[0] for v in pn]))][1]
     # --- checks
     def chk(name, cond, detail): checks.append({'item': name, 'pass': bool(cond), 'detail': detail})
+    def near(value, limit, upper=True):
+        """WARN when a measured value sits within 2 % of a limit: raster rounding can cross it."""
+        if limit and value is not None and (abs(value - limit) <= 0.02 * abs(limit)):
+            rep.setdefault('margin_warnings', []).append(f"{value:.6g} is within 2% of the limit {limit:g}: design inside the limit with a margin")
     chk('pulseq timing', rep['timing_ok'], rep['timing_errors'][:2])
     if max_grad: chk('peak gradient', max(rep['peak_grad_mT_m']) <= max_grad + 1e-3, rep['peak_grad_mT_m'])
     if max_slew: chk('peak slew', max(rep['peak_slew_T_m_s']) <= max_slew + 1e-3, rep['peak_slew_T_m_s'])
@@ -236,6 +306,21 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
              'hint': 'odd-only error: ADC not centred on reversed flat tops; both: prephaser or k=0 sample index'})
         chk('Cartesian ky line set', rep['ky_set_max_err_cycles_m'] is not None and rep['ky_set_max_err_cycles_m'] <= .01, rep['ky_set_max_err_cycles_m'])
         if monopolar: chk('monopolar readout', rep['readout_polarities'] == [1.0], rep['readout_polarities'])
+    if crusher_range is not None:
+        cm = rep.get('crusher_moment_cycles_m'); lo, hi = crusher_range
+        okc = cm is not None and lo <= min(cm['pre_min_max'][0], cm['post_min_max'][0]) and max(cm['pre_min_max'][1], cm['post_min_max'][1]) <= hi
+        chk(f'spin-echo crusher moments on {crusher_axis} within [{lo:g}, {hi:g}] cycles/m (Pulseq areas: Hz/m * s = 1/m)', okc,
+            cm if cm else 'no refocusing pulses found')
+        if cm:
+            for v in cm['pre_min_max'] + cm['post_min_max']:
+                near(v, lo); near(v, hi)
+    if b1rms_max: chk('B1+rms over the whole file (uT)', rep['b1_rms_uT'] <= b1rms_max, rep['b1_rms_uT']); near(rep['b1_rms_uT'], b1rms_max)
+    if b1peak_max: chk('B1 peak (uT)', rep['b1_peak_uT'] <= b1peak_max, rep['b1_peak_uT']); near(rep['b1_peak_uT'], b1peak_max)
+    if grms_max: chk('gradient rms per axis (mT/m)', max(rep['grad_rms_mT_m']) <= grms_max, rep['grad_rms_mT_m']); near(max(rep['grad_rms_mT_m']), grms_max)
+    if pns_max and 'pns_max_fraction_per_axis' in rep:
+        chk('ramp PNS fraction', max(rep['pns_max_fraction_per_axis']) <= pns_max, rep['pns_max_fraction_per_axis']); near(max(rep['pns_max_fraction_per_axis']), pns_max)
+    if max_grad: near(max(rep['peak_grad_mT_m']), max_grad)
+    if max_slew: near(max(rep['peak_slew_T_m_s']), max_slew)
     supplied = {'max_grad': max_grad, 'max_slew': max_slew, 'te': te, 'tr': tr, 'ti': ti, 'flip': flip,
                 'slice_thickness': slice_thickness, 'rf_spoil or rf_phase_cycle': rf_spoil if rf_spoil is not None else rf_phase_cycle,
                 'min_spoil_cycles': min_spoil_cycles, 'matrix and fov': matrix if fov is not None else None}
@@ -262,17 +347,28 @@ def main():
     ap.add_argument('--max-grad', type=float, help='mT/m'); ap.add_argument('--max-slew', type=float, help='T/m/s')
     ap.add_argument('--epi', action='store_true', help='several lines per excitation: TE to the k=0 sample of the train')
     ap.add_argument('--echo-spacing', type=float, help='EPI: maximum line period (s); must be constant')
+    ap.add_argument('--crusher-range', type=float, nargs=2, metavar=('LOW', 'HIGH'), help='spin-echo crusher moment range, cycles/m')
+    ap.add_argument('--crusher-axis', default='z', choices=['x', 'y', 'z'])
+    ap.add_argument('--safety', action='store_true', help='report B1 rms/peak (uT), gradient rms (mT/m) of the whole file')
+    ap.add_argument('--pns-rheobase', type=float, help='T/m/s (ramp model P = dG / (rheobase (tau + chronaxie)))')
+    ap.add_argument('--pns-chronaxie', type=float, help='s')
+    ap.add_argument('--b1rms-max', type=float); ap.add_argument('--b1peak-max', type=float)
+    ap.add_argument('--grms-max', type=float, help='mT/m'); ap.add_argument('--pns-max', type=float)
     ap.add_argument('--gamma', type=float, default=42.576e6); ap.add_argument('--json', action='store_true', help='print all measurements')
     a = ap.parse_args()
     fov = None if a.fov is None else (a.fov[0] if len(a.fov) == 1 else a.fov)
     rep, checks = measure(a.seq, a.te, a.tr, a.flip, a.slice_thickness, a.rf_spoil, a.max_grad, a.max_slew, a.gamma, a.ti,
                           a.balanced, a.rf_phase_cycle, a.te_half_tr, a.cpmg, a.min_spoil_cycles, a.min_inversion_spoil_cycles,
-                          a.matrix, fov, a.monopolar, epi=a.epi, echo_spacing=a.echo_spacing)
+                          a.matrix, fov, a.monopolar, epi=a.epi, echo_spacing=a.echo_spacing, crusher_range=a.crusher_range,
+                          crusher_axis=a.crusher_axis, safety=a.safety, pns_rheobase=a.pns_rheobase, pns_chronaxie=a.pns_chronaxie,
+                          b1rms_max=a.b1rms_max, b1peak_max=a.b1peak_max, grms_max=a.grms_max, pns_max=a.pns_max)
     keys = ['rf_roles', 'excitation_flip_deg', 'te_ms', 'echo_spacing_ms', 'tr_ms', 'ti_ms', 'refocusing_after_excitation_ms', 'excitations_before_first_adc',
-            'adc_samples', 'excitation_slice_fwhm_mm', 'peak_grad_mT_m', 'peak_slew_T_m_s']
+            'adc_samples', 'excitation_slice_fwhm_mm', 'peak_grad_mT_m', 'peak_slew_T_m_s', 'crusher_moment_cycles_m',
+            'b1_rms_uT', 'b1_peak_uT', 'grad_rms_mT_m', 'pns_max_fraction_per_axis']
     out = rep if a.json else {k: rep[k] for k in keys if k in rep}
     print(json.dumps({k: v for k, v in out.items() if k != 'checks'}, default=float))
     for c in checks: print(('PASS ' if c['pass'] else 'FAIL ') + c['item'] + ': ' + json.dumps(c['detail'], default=float))
+    for w_ in rep.get('margin_warnings', []): print('WARN ' + w_)
     if rep['not_checked']: print('NOT CHECKED (no expectation supplied): ' + ', '.join(rep['not_checked']))
     print('VERIFY SEPARATELY: ' + '; '.join(rep['never_checked_here']))
     sys.exit(1 if any(not c['pass'] for c in checks) else 0)

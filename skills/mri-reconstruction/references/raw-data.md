@@ -15,7 +15,8 @@ method and its regularization by simulated error; report SNR in defined units. H
 | `image_from_kspace(ksp, encoding_sign)`, `direct_dft_signed` | reconstruction honouring the encoding sign; explicit-sum forward model for checks |
 | `noise_covariance(noise[coil, samples])`, `scale_noise_covariance`, `prewhiten` | Psi = E[n n^H]; dwell-time conversion; whitening of noise, calibration and imaging data with one W |
 | `remove_readout_oversampling` | crop the central FOV after the readout transform |
-| `grappa_2d`, `pocs_partial_fourier`, `coil_maps_from_acs`, `sense_cg(lamda)` | parallel imaging and partial Fourier |
+| `sampling_pattern(mask)`, `grappa_from_mask` | R, line offset and ACS read from the mask (outer lines only), then GRAPPA |
+| `grappa_2d`, `pocs_partial_fourier`, `coil_maps_from_acs`, `sense_cg(lamda)`, `sense_combine` | parallel imaging, partial Fourier, phase-preserving coil combination |
 | `snr_units_image(coil_images, psi, n_averages, sens)` | Kellman–McVeigh SNR units (real and imaginary noise SD 1) |
 | `pseudo_replica` | noise maps, g-factor |
 | `rank_reconstructions(candidates, truth, sens, mask, psi)` | pick method and λ by simulated error with your noise |
@@ -66,6 +67,11 @@ axes (ky, kx) in grid units: swapping them transposes the image. Use density com
 calibrate absolute scale on a simulated object of known magnitude, and for radial data estimate gradient
 delays from the data (opposed or orthogonal spokes; BART `estdelay` implements RING) before the final
 reconstruction. EPI is Cartesian: regrid ramp samples and correct Nyquist ghosts, then reconstruct as Cartesian.
+Off-resonance during long readouts (spiral, EPI): `offres_least_squares(samples, kxy, t, fieldmap_hz, fov, phase_sign)` solves
+with the exact encoding including exp(phase_sign i 2 pi f t), t from the excitation centre; take the sign from
+the data convention and confirm it on a simulated point; estimate the field map from multi-echo phase
+(`mri-hardware` `fieldmap_multiecho`), smooth it with `smooth_field` (magnitude-squared weights), choose lamda by
+simulated error. Conjugate-phase or segmented approximations leave residual blur for large fields.
 
 ## Standalone entrypoints
 
