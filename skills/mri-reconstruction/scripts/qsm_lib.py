@@ -329,7 +329,7 @@ if __name__ == '__main__':
         kw.update({'shape': tuple(int(v) for v in o['shape'])} if 'shape' in o else {}, **({'b0_T': o['b0'][0]} if 'b0' in o else {}))
         h = synthetic_head(**kw)
         out = run_pipeline(h['mag'], h['phase'], h['te'], h['mask'], h['voxel_size_mm'], h['b0_dir'], h['b0_T'], h['rois'], 5)
-        deep = erode(h['mask'], h['voxel_size_mm'], 12)
+        deep = erode(h['mask'], h['voxel_size_mm'], 10)
         rm = roi_means(out['chi_ppm'], h['rois'], h['mask']); tm = roi_means(h['chi_ppm'], h['rois'], h['mask'])
         est = np.array([rm[k][0] for k in sorted(rm) if k != 5]); tru = np.array([tm[k][0] for k in sorted(tm) if k != 5])
         c = _corr(out['local_hz'][deep], h['local_hz'][deep])

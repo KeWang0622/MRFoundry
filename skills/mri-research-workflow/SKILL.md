@@ -68,7 +68,7 @@ overrides these defaults.
         --rerun "python <entrypoint> <documented arguments with {inputs} and {out}>" --inputs <input folder> \
         [--expect <files the entrypoint must write>] [--json report.json:key1,key2/sub] [--range FILE:LOW:HIGH]
 
-Deliver every listed output, build and simulation scripts and the helpers they import included, directly in the
+Deliver every listed output, scripts and the helper modules they import included, directly in the
 delivery folder (the folder the task names, else the workspace root), never in a subfolder the task does not name.
 The check fails on missing or misnamed deliverables, listed files in a subfolder, a script whose imported helper
 lies elsewhere (or only under `.agents`), an entrypoint stored apart from its outputs, no environment record when

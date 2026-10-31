@@ -80,7 +80,7 @@ def check_nested(required, nested_ok):
     nested = [n for n in required if len(Path(n).parts) > 1]
     if not nested or nested_ok:
         return True, []
-    return False, [f"FAIL {n} is filed in a subfolder: deliver every listed output, build and simulation scripts "
+    return False, [f"FAIL {n} is filed in a subfolder: deliver every listed output, scripts and their helper modules "
                    "included, directly in the delivery folder (pass --nested-ok only if the task names this path)"
                    for n in nested]
 

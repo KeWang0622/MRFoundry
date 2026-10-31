@@ -54,7 +54,7 @@ print("field beyond 1/(2 dTE): spatial default exact; temporal aliases, misfit f
 # 3) full pipeline on a synthetic head with strong air and sinus fields, oblique B0 and anisotropic voxels
 h = synthetic_head()
 out = run_pipeline(h['mag'], h['phase'], h['te'], h['mask'], h['voxel_size_mm'], h['b0_dir'], h['b0_T'], h['rois'], 5)
-deep = erode(h['mask'], h['voxel_size_mm'], 12)
+deep = erode(h['mask'], h['voxel_size_mm'], 10)
 c = np.corrcoef(out['local_hz'][deep], h['local_hz'][deep])[0, 1]
 rm = roi_means(out['chi_ppm'], h['rois'], h['mask']); tm = roi_means(h['chi_ppm'], h['rois'], h['mask'])
 est = np.array([rm[k][0] for k in sorted(rm) if k != 5]); tru = np.array([tm[k][0] for k in sorted(tm) if k != 5])
@@ -66,15 +66,15 @@ cv = np.corrcoef(v_loc[deep], h['local_hz'][deep])[0, 1]
 print(f"  (V-SHARP on the same field: deep corr {cv:.3f}; prefer PDF when air/sinus fields are strong)")
 
 # 4) Laplacian unwrapping loses the local field here; the misfit check flags it
-h = synthetic_head(shape=(56, 64, 40), voxel_size_mm=(1.5, 1.3, 2.0), b0_dir=(0.25, -0.4, 0.88),
-                   te=(0.0035, 0.008, 0.0125, 0.017), noise=0.02, seed=3)
-deep = erode(h['mask'], h['voxel_size_mm'], 12); w = np.sqrt(np.mean(h['mag'] ** 2, -1)) * h['mask']
+h = synthetic_head(shape=(52, 64, 36), voxel_size_mm=(1.7, 1.25, 2.4), b0_dir=(-0.43, -0.28, 0.86),
+                   te=(0.0032, 0.009, 0.0148, 0.0206), noise=0.02, seed=3)
+deep = erode(h['mask'], h['voxel_size_mm'], 10); w = np.sqrt(np.mean(h['mag'] ** 2, -1)) * h['mask']
 cc = {}
 for meth in ('laplacian', 'spatial'):
     f = multiecho_field_hz(h['mag'], h['phase'], h['te'], h['voxel_size_mm'], h['mask'], method=meth)
     loc, _ = pdf_background(f, h['mask'], h['voxel_size_mm'], h['b0_dir'], weights=w / w.max())
     cc[meth] = (np.corrcoef(loc[deep], h['local_hz'][deep])[0, 1], phase_misfit_fraction(h['mag'], h['phase'], h['te'], f, h['mask']))
-assert cc['spatial'][0] > 0.9 and cc['spatial'][1] < 0.01 and cc['laplacian'][0] < 0.8 and cc['laplacian'][1] > 0.5, cc
+assert cc['spatial'][0] > 0.9 and cc['spatial'][1] < 0.01 and cc['laplacian'][0] < 0.7 and cc['laplacian'][1] > 0.5, cc
 print('deep local-field corr and misfit, mask unwrap vs Laplacian:', cc)
 print("all qsm_lib tests passed")
 

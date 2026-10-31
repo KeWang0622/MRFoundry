@@ -403,10 +403,10 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
     if slice_thickness:
         chk('slice-selective excitation with small-tip FWHM within 20%', rep['excitation_slice_selective_all'] and all(abs(f - slice_thickness) <= .2 * slice_thickness for f in fw if f is not None), rep['excitation_slice_fwhm_mm'])
     if rep['rf_centre_slice_gradient_fraction_min'] is not None:
-        chk('slice-select gradient on at the centre of every selective RF pulse (at least 10% of its peak during the pulse)',
+        chk('selective RF pulses peak under their slice-select gradient (gradient at the RF centre >= 10% of its maximum during the pulse)',
             rep['rf_centre_slice_gradient_fraction_min'] >= 0.1,
             {'min_fraction': rep['rf_centre_slice_gradient_fraction_min'],
-             'hint': 'half pulse: RF on the plateau, centre at its end; then ramp down and rewind kz'})
+             'hint': 'half pulse: end the RF, with its centre, before the slice gradient ramps down; rewind afterwards'})
     if rf_spoil is not None and len(ph) >= 3:
         e = wrap_deg(np.diff(ph, 2) - rf_spoil); chk('quadratic RF spoiling increment', np.max(abs(e)) < .1, {'max_error_deg': float(np.max(abs(e))), 'hint': 'wrap increment and phase to [0,360) each update'})
     if rf_phase_cycle is not None and len(ph) >= 2:

@@ -354,12 +354,12 @@ with tempfile.TemporaryDirectory() as d:
 
 # ---- B8: half-pulse excitation; the slice gradient must be on at the RF centre -----------------------------------
 def half_pulse(path, on_plateau=True, ramp=1e-4, flat=4e-4, g=1e5):
-    """Half sinc ending at its peak (centre). on_plateau=False: RF continues over the ramp-down (gradient 0 at centre)."""
+    """Sinc truncated at its maximum, which is the RF centre. on_plateau=False: RF continues over the ramp-down (gradient 0 at centre)."""
     sysm = make_system(); seq = pp.Sequence(sysm); dt = sysm.rf_raster_time
     dur = flat if on_plateau else flat + ramp; n = int(round(dur / dt))
     t = (np.arange(n) + 0.5) * dt; gt = np.where(t < flat, g, g * (dur - t) / ramp) if not on_plateau else np.full(n, g)
     sig = np.sinc(np.linspace(-2, 0, n)) * gt / g
-    rf = pp.make_arbitrary_rf(sig, flip_angle=np.deg2rad(10), delay=ramp, system=sysm, center=dur, use='excitation')
+    rf = pp.make_arbitrary_rf(sig, flip_angle=np.deg2rad(30), delay=ramp, system=sysm, center=dur, use='excitation')
     gz = pp.make_extended_trapezoid('z', amplitudes=np.array([0, g, g, 0]), times=np.array([0, ramp, ramp + flat, 2 * ramp + flat]), system=sysm)
     for _ in range(2):
         seq.add_block(rf, gz)
@@ -368,7 +368,7 @@ def half_pulse(path, on_plateau=True, ramp=1e-4, flat=4e-4, g=1e5):
     seq.write(path); return path
 
 with tempfile.TemporaryDirectory() as d:
-    item = 'slice-select gradient on at the centre of every selective RF pulse (at least 10% of its peak during the pulse)'
+    item = 'selective RF pulses peak under their slice-select gradient (gradient at the RF centre >= 10% of its maximum during the pulse)'
     rep, ch = measure(half_pulse(os.path.join(d, 'hp.seq')))
     assert item not in failed(ch) and rep['rf_centre_slice_gradient_fraction_min'] > 0.9, (failed(ch), rep['rf_centre_slice_gradient_fraction_min'])
     rep, ch = measure(half_pulse(os.path.join(d, 'hp_ramp.seq'), on_plateau=False))
