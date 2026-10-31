@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased — sampling contracts, exact timing and KomaMRI replay (0.13.0, B7)
+## Unreleased — sampling requirements, exact timing and KomaMRI replay (0.13.0, B7)
 
 - All skills 0.13.0. pulse-sequence-design: `centered_readout` and `add_epi_readout` take `oversample` and `extra`
   (readouts that cover an interval with samples beyond both ends and a step below the gap limit; exactly n samples
@@ -17,14 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   komamripy install stalls; same signal as komamripy in the test); `replay_check` and
   `relative_difference_up_to_phase` re-simulate the delivered file and compare; documented and tested
   KomaMRI sign convention (never conjugate). The MRzero fallback is removed from the guidance. Checker: TE/TR/TI
-  tolerance 1 us by default (`--time-tol`, several `--tr` intervals), `--kx-cover`/`--max-gap` coverage contracts
+  tolerance 1 us by default (`--time-tol`, several `--tr` intervals), `--kx-cover`/`--max-gap` interval coverage
   with a margin, oversampled readouts accepted by the grid check, 3D `--matrix NX NY NZ`, `--line-repeats` and
   `--n-adc` (dummy repetitions with an ADC), acquisitions with and without ADC, and gradient continuity at block
   and event boundaries (arbitrary gradients with extrapolated first/last values). Tests include an independent
   integration of the trapezoids in the .seq text. `--rf-dead-time`, `--rf-ringdown-time` and `--adc-dead-time`
-  check dead times inside each block. The family table adds MP-RAGE (identical cycles, test-column null with the
-  actual spoiling), TSE phase-encode rewinding, UTE half-pulse pairs and spin-echo diffusion (equal crushers in
-  every volume, steady state before the first volume, equal signals without diffusion weighting).
+  check dead times inside each block. The family table adds MP-RAGE (same timing in every cycle, null checked by
+  simulation with the actual spoiling), TSE phase-encode rewinding, UTE half-pulse pairs and spin-echo diffusion
+  (equal crushers in every volume, steady state before the first volume, equal signals without diffusion weighting).
 - mri-research-workflow: `write_check.py --claims` with `--trace`/`--ids` FAILS claim records whose source field is
   not an entry of the source data; write-results asks for one record per source entry; write-proposal: controls
   supported only by records whose analysis varies the factor, sample-size inputs printed per record and matched

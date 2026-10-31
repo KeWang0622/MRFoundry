@@ -22,20 +22,20 @@ def test_results_writeup(d):
     # a fictional imaging trial: primary endpoint in percentage points, a secondary endpoint recorded in seconds and
     # reported in ms, and a post hoc age subgroup; the ledger uses its own key names
     src = write(d, "trial_numbers.json", {"rows": [
-        {"key": "Q1", "est": -6.4, "lo": -9.8, "hi": -3.0, "p": "<0.001", "n": 88},
+        {"key": "Q1", "est": -6.4, "lo": -9.8, "hi": -3.0, "p": "<0.001", "n": 93},
         {"key": "Q2", "est_s": -0.0048, "ci_s": [-0.0099, 0.0003], "p_bonf": 0.19, "n": 85},
         {"key": "Q3", "est": -7.9, "lo": -13.1, "hi": -2.7, "n": 29, "group": "age over 65"}]})
     bib = write(d, "fixture.bib", "@article{kim2018,\n title={A}\n}\n@book{roe2017, title={B}}\n")
     ledger = {"items": [
-        {"id": "L1", "entry": "Q1", "value": -6.4, "unit": "pp", "ci": [-9.8, -3.0], "p": "<0.001", "n": 88,
+        {"id": "L1", "entry": "Q1", "value": -6.4, "unit": "pp", "ci": [-9.8, -3.0], "p": "<0.001", "n": 93,
          "conclusion": "difference", "where": ["summary", "body"]},
         {"id": "L2", "entry": "Q2", "value": -4.8, "unit": "ms", "conf_low": -9.9, "conf_high": 0.3, "p": 0.19, "n": 85,
          "conclusion": "null", "where": ["body"]},
         {"id": "L3", "entry": "Q3", "value": -7.9, "unit": "percentage points", "ci": [-13.1, -2.7], "n": 29,
          "conclusion": "exploratory", "where": ["body"]}]}
     led = write(d, "ledger.json", ledger)
-    sm = write(d, "summary.md", "# Summary\nThe artefact rate differed by -6.4 percentage points (95% CI -9.8 to -3.0; p < 0.001; n = 88) [@kim2018].\n")
-    good = ("The artefact rate differed by -6.4 percentage points (95% CI -9.8 to -3.0, p < 0.001, n = 88).\n"
+    sm = write(d, "summary.md", "# Summary\nThe artefact rate differed by -6.4 percentage points (95% CI -9.8 to -3.0; p < 0.001; n = 93) [@kim2018].\n")
+    good = ("The artefact rate differed by -6.4 percentage points (95% CI -9.8 to -3.0, p < 0.001, n = 93).\n"
             "Lesion T2 did not differ between arms: -4.8 ms (95% CI -9.9 to 0.3, Bonferroni-adjusted p = 0.19, n = 85).\n"
             "In a post hoc analysis of participants older than 65 years, the difference was -7.9 percentage points (95% CI -13.1 to -2.7, n = 29) [@roe2017].\n")
     bd = write(d, "body.md", good)
@@ -44,11 +44,11 @@ def test_results_writeup(d):
     code, out = run(*base)
     assert code == 0, out
     assert "3 claims cite entries of the source data" in out, out
-    # a claim for a number that is not a source entry, with an invented source path
-    extra = json.loads(json.dumps(ledger)); extra["items"].append({"id": "L4", "entry": "design.enrolled_total", "value": 88, "where": ["body"]})
+    # a claim for a number that is not a source entry (the subgroup cut-off), with an invented source path
+    extra = json.loads(json.dumps(ledger)); extra["items"].append({"id": "L4", "entry": "methods.age_cutoff", "value": 65, "where": ["body"]})
     write(d, "ledger.json", extra)
     code, out = run(*base)
-    assert code == 1 and "not an entry of the source data" in out and "design.enrolled_total" in out, out
+    assert code == 1 and "not an entry of the source data" in out and "methods.age_cutoff" in out, out
     write(d, "ledger.json", ledger)
     # a semicolon starts a new clause: the clause with n has no label, and the label sentence is gone
     write(d, "body.md", good.replace("(95% CI -13.1 to -2.7, n = 29)", "(95% CI -13.1 to -2.7; n = 29)")

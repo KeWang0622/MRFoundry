@@ -206,7 +206,8 @@ def epi(path, n=16, fov=0.22, dwell=10e-6, te=0.02, odd_adc_shift=0.0, oversampl
 
 def seq_text_kx(path):
     """Independent forward calculation from the .seq TEXT (no pypulseq): integrate the exported trapezoids exactly
-    from each RF centre and return kx (cycles/m) at every ADC sample (Pulseq sample time delay + (i + 0.5) dwell).
+    from each RF centre and return kx (cycles/m) of each ADC sample; Pulseq places samples half a dwell after the ADC
+    delay and one dwell apart.
     Handles the trapezoid/ADC/RF subset used by the EPI fixtures (RF centre = its delay + half its shape duration)."""
     sec = None; blocks = []; trap = {}; adc = {}; rf = {}; raster = 1e-5
     for line in open(path):
@@ -258,8 +259,8 @@ with tempfile.TemporaryDirectory() as d:
     par = rep['kx_grid_max_err_by_line_parity']
     assert not kx['pass'] and par['even'] < 0.01 and par['odd'] > 1, par
     print(f"EPI with a mis-timed ADC on reversed lines: kx FAIL, error only on odd lines {par}")
-    # B7: coverage contracts. Exactly n samples put the end samples on the interval ends (knife edge): FAIL.
-    n, fov = 20, 0.21
+    # B7: interval coverage. Exactly n samples put the end samples on the interval ends (knife edge): FAIL.
+    n, fov = 20, 0.205
     pe, _ = epi(os.path.join(d, 'epi_exact.seq'), n=n, fov=fov, dwell=5e-6, te=0.027)
     rep, checks = measure(pe, te=0.027, matrix=(n, n), fov=fov, epi=True, kx_cover=(-n // 2, n - n // 2 - 1))
     cov = [c for c in checks if c['item'].startswith('readout coverage')][0]
@@ -269,7 +270,7 @@ with tempfile.TemporaryDirectory() as d:
         rep['kx_coverage_units_of_1_over_fov']['max_gap']))
     po, info = epi(os.path.join(d, 'epi_os.seq'), n=n, fov=fov, dwell=2.5e-6, te=0.027, oversample=2, extra=1)
     rep, checks = measure(po, te=0.027, matrix=(n, n), fov=fov, epi=True, kx_cover=(-n // 2, n - n // 2 - 1), line_repeats=1, n_adc=n,
-                          echo_spacing=info['line_period'] + 1e-9, max_grad=40, max_slew=150)
+                          echo_spacing=info['line_period'] + 1e-9, max_grad=36, max_slew=140)
     assert all(c['pass'] for c in checks), [c for c in checks if not c['pass']]
     kc = rep['kx_coverage_units_of_1_over_fov']; assert kc['min_margin_below_lo'] > 0.4 and kc['min_margin_above_hi'] > 0.4 and kc['max_gap'] < 0.51, kc
     # independent forward calculation from the .seq text equals the documented grid on both parities
@@ -296,7 +297,7 @@ with tempfile.TemporaryDirectory() as d:
     assert not failed(ch), failed(ch)
     assert rep['excitations_with_adc'] == 12 and rep['excitations_without_adc'] == 3, rep
     rep, ch = measure(cartesian_gre(os.path.join(d, 'g_dummy_adc.seq'), n=12, dummies=3, dummy_adc=True), matrix=(12, 12), fov=0.2, line_repeats=1, n_adc=12)
-    assert set(failed(ch)) == {'every line acquired exactly 1 time(s) (dummy repetitions must have no ADC)', 'number of ADC events = 12'}, failed(ch)
+    assert set(failed(ch)) == {'every line acquired exactly 1 time(s) (an ADC in a dummy repetition adds an acquisition)', 'number of ADC events = 12'}, failed(ch)
     print('dummy repetitions with an ADC: line-count and ADC-count checks FAIL', rep['line_acquisitions'])
     sysm = make_system(); T = 0.8e-3; r = sysm.grad_raster_time; t = (np.arange(int(round(T / r))) + 0.5) * r
     for name, wave, kw, nbad in [('jump', 20e3 * np.cos(np.pi * t / (2 * T)), {}, 1),
@@ -304,7 +305,7 @@ with tempfile.TemporaryDirectory() as d:
         seq = pp.Sequence(sysm); seq.add_block(pp.make_delay(1e-3))
         g = pp.make_arbitrary_grad('x', wave, system=sysm, **kw); seq.add_block(g); seq.add_block(pp.make_delay(1e-3))
         p = os.path.join(d, name + '.seq'); seq.write(p)
-        rep, ch = measure(p, max_slew=130)
+        rep, ch = measure(p, max_slew=140)
         jumps = rep['gradient_jumps_per_axis'][0]
         assert (jumps > 0) == (nbad > 0), (name, rep['gradient_jumps_per_axis'], rep['gradient_jump_examples'])
     print('arbitrary gradient starting at a nonzero value: continuity FAIL; first=0/last=0 with a waveform that starts and ends at 0: PASS')
@@ -312,8 +313,8 @@ print("all B7 sequence checks passed")
 
 
 # ---- B7: centered_readout with adc_shift (sub-raster TE) and an oversampled, extended single-line readout --------
-def gre_line(path, n=14, fov=0.23, dwell=20e-6, te=5.0037e-3, oversample=1, extra=0, shift=True):
-    sysm = make_system(); seq = pp.Sequence(sysm); rf, gz, reph = slice_selective_excitation(sysm, 10, 5e-3)
+def gre_line(path, n=14, fov=0.23, dwell=16e-6, te=5.0037e-3, oversample=1, extra=0, shift=True):
+    sysm = make_system(); seq = pp.Sequence(sysm); rf, gz, reph = slice_selective_excitation(sysm, 12, 5e-3)
     read0, adc0, _ = centered_readout(sysm, n, fov, dwell, oversample=oversample, extra=extra)
     c = extra + oversample * (n // 2); exc = pp.calc_duration(rf, gz); tpre = 1e-3
     fixed = (exc - rf_center_time(rf)) + tpre + adc_sample_time(adc0, c)
@@ -344,9 +345,9 @@ with tempfile.TemporaryDirectory() as d:
     sysm = make_system(); seq = pp.Sequence(sysm)
     rf = pp.make_block_pulse(np.pi / 6, duration=0.3e-3, delay=sysm.rf_dead_time, system=sysm)
     for adc_delay in (sysm.adc_dead_time, 0.0):
-        seq.add_block(rf); seq.add_block(pp.make_adc(40, dwell=4e-6, delay=adc_delay), pp.make_delay(0.3e-3))
+        seq.add_block(rf); seq.add_block(pp.make_adc(40, dwell=6.5e-6, delay=adc_delay), pp.make_delay(0.3e-3))
     p = os.path.join(d, 'dead.seq'); seq.write(p)
     rep, ch = measure(p, rf_dead_time=sysm.rf_dead_time, rf_ringdown_time=sysm.rf_ringdown_time, adc_dead_time=sysm.adc_dead_time)
-    dt = [c for c in ch if c['item'].startswith('RF dead')][0]
-    assert not dt['pass'] and dt['detail']['violations'] == 1 and 'ADC starts' in dt['detail']['first'][0], dt
+    dt = [c for c in ch if c['item'].startswith('RF and ADC events keep')][0]
+    assert not dt['pass'] and dt['detail']['count'] == 1 and 'ADC delay' in dt['detail']['first'][0], dt
     print('ADC without its dead time after the block start: dead-time check FAIL', dt['detail']['first'])

@@ -4,9 +4,9 @@
 
 1. Build the claim ledger first, in the schema the task gives: one record per reported source entry holding every
    number of that entry the text shows (estimate, interval, spread, p-value exactly as supplied, n), its unit and its
-   interpretation. The source field holds the entry's ID exactly as in the source data. Numbers that are not entries
-   (enrolment or analysed counts from the study description, adverse-event tallies) get no record unless the schema
-   asks; never invent an ID or a path for them. Convert units in code and round once.
+   interpretation. The source field holds the entry's ID exactly as in the source data. Numbers that come from
+   other parts of the source (descriptive or background fields) get no record unless the schema asks; never invent
+   an ID or a path for them. Convert units in code and round once.
 2. Report the primary endpoint and every prespecified secondary endpoint, significant or not; give the point
    estimate, its 95 % CI, the p-value and n for each. Draw inference from the comparison between groups; a change
    inside one group is description only.

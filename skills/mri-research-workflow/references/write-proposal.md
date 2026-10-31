@@ -16,10 +16,10 @@
    support only records that establish the rule they are cited for.
 5. Controls: include each confounder or protocol factor that the corpus shows to change the chosen measure in the
    chosen population, citing the records that demonstrate the effect: in code, list for each control the records
-   whose own analysis compares the measure across levels of that factor (with and without, early and late, high and
-   low) and cite only those. A record that applied, standardized, mentioned or recommended the control does not
-   support it. Add the physical dependencies of the measure: relaxation times depend on field strength and
-   mapping sequence, diffusion metrics on the b-values fitted, perfusion on labelling and delay.
+   whose own analysis compares the measure across two or more levels of that factor, and cite only those. A record
+   that only applied, mentioned or recommended the control does not support it. Add the physical dependencies of the
+   measure: relaxation times depend on field strength and mapping sequence, diffusion metrics on the b-values fitted,
+   perfusion on labelling and delay.
 6. Sample size: take each input from records the rules allow AND that match the proposed population, method,
    protocol and endpoint unit; print the candidate values per record with those fields before choosing. The SD is
    the between-participant SD of the endpoint (paired designs: SD of differences), not a within-subject or

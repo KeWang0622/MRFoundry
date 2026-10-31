@@ -53,11 +53,11 @@ def centered_readout(system, n, fov_m, dwell_s, axis='x', center_index=None, ove
     The ADC has N = oversample*n + 2*extra samples; sample i sits at k = (i - c) / (oversample*fov) with
     c = extra + oversample*(n//2) (or center_index), so k = 0 is sample c. Play a prephaser of area pre_area on the same
     axis before the readout block.
-    Choose by the sampling contract:
-      * 'sample i at k = (i - n//2)/FOV' (exact positions): oversample=1, extra=0 (the default).
-      * 'cover [-n/2, n/2-1]/FOV with no gap above 1/FOV' (coverage): oversample=2, extra>=1, so samples lie
-        beyond both ends and the spacing is below the gap limit. Exactly n samples put the end samples ON the interval
-        ends with spacing exactly at the limit; .seq files store gradient amplitudes with 6 significant digits, so
+    Choose by the sampling requirement:
+      * each sample index has a required k position: oversample=1, extra=0 (the default).
+      * an interval of k must be covered with a bounded spacing between samples: oversample=2, extra>=1, so samples
+        lie beyond both ends and the spacing is below the bound. Exactly n samples put the end samples ON the interval
+        ends with spacing exactly at the bound; .seq files store gradient amplitudes with 6 significant digits, so
         such designs fail coverage checks about half the time.
     adc_shift (s, multiple of the RF raster, on which Pulseq checks ADC delays) delays the ADC inside the flat top and
     moves the prephaser so sample c stays at k = 0: it moves the k = 0 sample by sub-raster amounts (exact TE).
@@ -81,12 +81,12 @@ def add_epi_readout(seq, system, nx, ny, fov_m, dwell_s, extra_blocks=(), read_a
     ramp-down. Each line has N = oversample*nx + 2*extra samples; on even lines sample s sits at
     kx = (s - c)/(oversample*fov) with c = extra + oversample*(nx//2), on odd lines the same grid is traversed
     backwards (k = 0 at sample N-1-c); line j sits at ky = (j - ny//2)/fov_y. N*dwell_s must be a multiple of the
-    gradient raster (with extra > 0, extra is raised until it is; the value used is returned). Sampling contract 'exact positions' -> oversample=1, extra=0; 'cover an interval with a maximum
-    gap' -> oversample=2, extra>=1 (see centered_readout). The line period is constant. Returns timing:
+    gradient raster (with extra > 0, extra is raised until it is; the value used is returned). Required k position per sample -> oversample=1, extra=0; interval coverage with a spacing
+    bound -> oversample=2, extra>=1 (see centered_readout). The line period is constant. Returns timing:
     line_period, prephaser_duration, n_samples, k0_index_even/odd and t_k0 = time from the start of the prephaser
     block to the sample at kx = ky = 0 (TE = excitation centre -> that sample).
     Verify the export with check_exported_seq.py --epi --matrix nx ny --fov F --te TE --echo-spacing ES
-    (and --kx-cover LO HI for a coverage contract)."""
+    (and --kx-cover LO HI for interval coverage)."""
     fov_y = fov_m if fov_y is None else fov_y
     r = system.grad_raster_time
     on = lambda N: abs(N * dwell_s / r - round(N * dwell_s / r)) < 1e-6
@@ -227,13 +227,14 @@ def _koma_julia(seq_file, arrays, rf_step_s, dt_s, gmax, smax, julia=None, proje
         return np.fromfile(fout, np.complex128)
 
 def relative_difference_up_to_phase(a, b):
-    """||a e^{i phi} - b|| / ||b|| with the best single phase phi: the usual measure for comparing a delivered
-    simulated signal (a) with an independent replay of the same exported file (b). Shapes must match."""
+    """Relative difference ||a e^{i phi} - b|| / ||b|| at the constant phase phi that minimizes it: compares a
+    delivered simulated signal (a) with a fresh simulation of the same exported file (b) while ignoring a constant
+    receiver phase. Shapes must match."""
     a = np.asarray(a, complex).ravel(); b = np.asarray(b, complex).ravel()
     if a.shape != b.shape:
-        raise ValueError(f'shapes differ: {a.shape} vs {b.shape} (ADC count, order or samples per ADC)')
-    c = np.vdot(a, b); ph = c / abs(c) if abs(c) > 0 else 1.0
-    return float(np.linalg.norm(a * ph - b) / np.linalg.norm(b))
+        raise ValueError(f'shapes differ: {a.shape} vs {b.shape} (number of ADC events, their order or their length)')
+    phi = np.angle(np.vdot(a, b))                         # minimizing phase (0 when a and b are orthogonal)
+    return float(np.linalg.norm(a * np.exp(1j * phi) - b) / np.linalg.norm(b))
 
 def replay_check(seq_file, delivered, x, y, z, rho, T1, T2, T2s=None, B0_Hz=None, tol=0.01, post=None, **kw):
     """Self-check before delivering: re-simulate the exported file with KomaMRI from scratch and compare.
@@ -241,14 +242,14 @@ def replay_check(seq_file, delivered, x, y, z, rho, T1, T2, T2s=None, B0_Hz=None
     fresh samples exactly as your pipeline does after simulation (a weighting of the whole object); it must not
     conjugate, rescale, reorder or demodulate again. A signal combined from several simulations (for example one per
     tissue, each weighted) is checked the same way: simulate each part with simulate_with_koma from scratch, combine as
-    your pipeline does and compare with relative_difference_up_to_phase. Prints and returns the relative difference after one global
-    phase; raises if it exceeds tol. Catches simulating another file, MRzero or homemade output, conjugation,
+    your pipeline does and compare with relative_difference_up_to_phase. Prints and returns that difference (a constant
+    phase removed); raises if it exceeds tol. Catches simulating another file, MRzero or homemade output, conjugation,
     Julia column-major reshapes, dropped spins and scale changes."""
     fresh = simulate_with_koma(seq_file, x, y, z, rho, T1, T2, T2s=T2s, B0_Hz=B0_Hz, **kw)['samples']
     if post is not None:
         fresh = post(fresh)
     d = relative_difference_up_to_phase(delivered, fresh)
-    print(f"replay check: relative difference after global phase {d:.2e} ({'PASS' if d <= tol else 'FAIL'}, tol {tol:g})")
+    print(f"replay check: difference to a fresh KomaMRI simulation {d:.2e}, constant phase removed ({'PASS' if d <= tol else 'FAIL'}, tol {tol:g})")
     if d > tol:
         raise AssertionError(f'delivered signal differs from a KomaMRI replay of {seq_file} by {d:.3g}')
     return d

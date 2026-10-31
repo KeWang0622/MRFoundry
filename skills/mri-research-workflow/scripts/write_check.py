@@ -26,8 +26,8 @@ check FAILs. Run it, fix every FAIL in the files (not in the checker), and run i
                               interpretation field (key with 'interpret' or 'conclusion') must read as no effect;
                               exploratory claims need 'exploratory' or 'post hoc' in that sentence;
                               percentage-point claims (unit pp) must not be written with '%'
-                              with --trace or --ids: each claim's source field (source, source_id, entry, ...)
-                              must be an entry ID of that source data (no invented IDs or paths for non-entries)
+                              with --trace or --ids: each claim's source field (a key such as source, entry or
+                              record) must be an entry ID of that source data (no invented IDs or paths)
   --null-phrases LIST         comma list or @task.json:key (default: a short list of common no-difference
                               phrases; pass the task's list when it gives one)
   --require-in TRIG::WORDS    every sentence of --texts/--loc files containing a trigger contains one of
@@ -501,7 +501,7 @@ ID_LIKE = re.compile(r"^[A-Za-z]{1,6}[-_]?\d{1,5}[a-z]?$")
 
 
 def _source_refs(paths):
-    """(entry IDs, loaded documents) of the source files: string values and dict keys that look like IDs (R12, Q1)."""
+    """(entry IDs, loaded documents) of the source files: string values and dict keys that look like IDs (K7, QA3)."""
     ids, docs = set(), []
     def walk(d):
         if isinstance(d, dict):
@@ -519,9 +519,9 @@ def _source_refs(paths):
 
 
 def check_claim_sources(claims, src_paths):
-    """Each claim's source field (source, source_id, entry, record, ...) must name an entry of the source data. When most
+    """Each claim's source field (a key such as source, entry or record) must name an entry of the source data. When most
     claims cite entry IDs, a claim citing anything else (a dotted path, a description, an invented ID) FAILS: the
-    ledger has one record per source entry, and numbers that are not entries need no claim unless the schema asks."""
+    ledger has one record per source entry, and numbers outside the entries need no claim unless the schema asks."""
     ids, docs = _source_refs(src_paths)
     refs = []
     for i, c in enumerate(claims):
@@ -538,7 +538,7 @@ def check_claim_sources(claims, src_paths):
             path_ok = by_id < 0.5 and any(get_paths(d, x) for d in docs)
             if not path_ok: bad.append(f"{cid}.{k}={x!r}")
     say("FAIL" if bad else "PASS", "claim sources: " + (f"not an entry of the source data: {bad[:8]} (one claim per source entry, with its ID "
-        "exactly as in the source; numbers that are not entries, such as enrolment counts, need no claim unless the schema asks)" if bad
+        "exactly as in the source; numbers outside the entries need no claim unless the schema asks)" if bad
         else f"{len(refs)} claims cite entries of the source data"))
 
 

@@ -10,8 +10,8 @@ Usage (all expectations optional; SI units, gradients in mT/m, slew in T/m/s):
   EPI (one or more lines per excitation): --epi --te 0.03 --echo-spacing 0.0008 --matrix 64 64 --fov 0.22
   crushers and safety: --crusher-range LOW HIGH --safety --b1rms-max UT --b1peak-max UT --grms-max MT_PER_M \\
                        --pns-rheobase T_PER_M_PER_S --pns-chronaxie S --pns-max FRACTION   (limits from the task)
-  sampling contract:   exact positions 'sample i at (i - n/2)/fov': --matrix NX NY [NZ] --fov F [FY FZ];
-                       coverage 'cover [lo, hi]/fov, gaps <= g/fov': add --kx-cover LO HI --max-gap G (units of 1/fov);
+  sampling:            required k position per sample index: --matrix NX NY [NZ] --fov F [FY FZ];
+                       interval coverage with a spacing bound: add --kx-cover LO HI --max-gap G (units of 1/fov);
                        acquired lines: --line-repeats R (each ky[,kz] line R times) and/or --n-adc N
   timing tolerance:    --time-tol S (default 1e-6 s; TE/TR/TI must match within it; --tr takes several intervals)
   dead times:          --rf-dead-time S --rf-ringdown-time S --adc-dead-time S (values from the task or system)
@@ -34,9 +34,9 @@ What is measured from the read-back file (fresh pp.Sequence().read):
   * --epi: TE per EXCITATION = its centre -> the sample closest to kx = ky = 0 over the whole echo train (without
     --epi every ADC line counts as its own echo); echo spacing = start-to-start time of consecutive lines.
   * Peak gradient/slew per axis and Pulseq timing errors. Number of excitations before the first ADC, with and
-    without ADC, and how often each (ky[, kz]) line is acquired (dummy repetitions must not carry an ADC).
+    without ADC, and how often each (ky[, kz]) line is acquired (an ADC in a dummy repetition counts as an acquisition).
   * Gradient continuity: arbitrary gradients whose first/last values jump against the neighbouring block (always checked).
-  * Coverage contracts (--kx-cover): samples must reach at least 0.05/fov beyond both ends and gaps must stay 1 % below
+  * Coverage (--kx-cover): samples must reach at least 0.05/fov beyond both ends and gaps must stay 1 % below
     the limit, because the .seq stores amplitudes with 6 significant digits and a grader integrates them its own way.
   * Spin-echo trains: gradient moment (cycles/m) on each side of every refocusing pulse, between its centre and the
     spin-echo times around it (the excitation centre before the first pulse; echo = 2 x refocusing centre - previous
@@ -186,11 +186,11 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
                                             [getattr(b, 'g' + a, None) for a in 'xyz']))
         bd = gblocks[-1][1]
         if b.rf is not None and (rf_dead_time is not None or rf_ringdown_time is not None):
-            if b.rf.delay < (rf_dead_time or 0) - 1e-9: dead.append(f'block {i}: RF starts {b.rf.delay * 1e6:.1f} us after the block start')
-            if bd - (b.rf.delay + float(b.rf.shape_dur)) < (rf_ringdown_time or 0) - 1e-9: dead.append(f'block {i}: RF ringdown does not fit')
+            if b.rf.delay < (rf_dead_time or 0) - 1e-9: dead.append(f'block {i}: RF delay {b.rf.delay * 1e6:.1f} us is shorter than the RF dead time')
+            if bd - (b.rf.delay + float(b.rf.shape_dur)) < (rf_ringdown_time or 0) - 1e-9: dead.append(f'block {i}: less than the RF ringdown time between the RF end and the block end')
         if b.adc is not None and adc_dead_time is not None:
-            if b.adc.delay < adc_dead_time - 1e-9: dead.append(f'block {i}: ADC starts {b.adc.delay * 1e6:.1f} us after the block start')
-            if bd - (b.adc.delay + b.adc.num_samples * b.adc.dwell) < adc_dead_time - 1e-9: dead.append(f'block {i}: ADC dead time after the last sample does not fit')
+            if b.adc.delay < adc_dead_time - 1e-9: dead.append(f'block {i}: ADC delay {b.adc.delay * 1e6:.1f} us is shorter than the ADC dead time')
+            if bd - (b.adc.delay + b.adc.num_samples * b.adc.dwell) < adc_dead_time - 1e-9: dead.append(f'block {i}: less than the ADC dead time between the last sample and the block end')
         if b.rf is not None: rfs.append(_rf(b.rf, t))
         if b.adc is not None: adcs.append(dict(start=t + b.adc.delay, adc=b.adc,
                                                end=t + b.adc.delay + b.adc.num_samples * b.adc.dwell))
@@ -325,7 +325,7 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
             errs.append(e); j = line.get(a['owner'], 0); line[a['owner']] = j + 1; par[j % 2].append(e)
             kys.append(float(np.median(a['k'][:, 1]))); kzs.append(float(np.median(a['k'][:, 2])))
         rep['kx_grid_max_err_cycles_m'] = float(max(errs)); rep['readout_polarities'] = _uniq(pol, 0)
-        rep['samples_per_adc_vs_matrix'] = f"{_uniq([a['adc'].num_samples for a in adcs], 0)} for nx = {nx}"
+        rep['readout_samples_vs_nx'] = f"{_uniq([a['adc'].num_samples for a in adcs], 0)} for nx = {nx}"
         rep['kx_grid_max_err_by_line_parity'] = {'even': max(par[0]) if par[0] else None, 'odd': max(par[1]) if par[1] else None}
         rep['ky_lines'] = len(_uniq(kys, 3)); exp_ky = (np.arange(ny) - ny // 2) / fy
         rep['ky_set_max_err_cycles_m'] = float(max(min(abs(exp_ky - v)) for v in kys)) if kys else None
@@ -369,7 +369,7 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
             rep.setdefault('margin_warnings', []).append(f"{value:.6g} is within 2% of the limit {limit:g}: design inside the limit with a margin")
     chk('pulseq timing', rep['timing_ok'], rep['timing_errors'][:2])
     if rf_dead_time is not None or rf_ringdown_time is not None or adc_dead_time is not None:
-        chk('RF dead/ringdown and ADC dead times inside each block', not dead, {'violations': len(dead), 'first': dead[:3]})
+        chk('RF and ADC events keep the dead and ringdown times of their blocks', not dead, {'count': len(dead), 'first': dead[:3]})
     if max_grad: chk('peak gradient', max(rep['peak_grad_mT_m']) <= max_grad + 1e-3, rep['peak_grad_mT_m'])
     if max_slew: chk('peak slew', max(rep['peak_slew_T_m_s']) <= max_slew + 1e-3, rep['peak_slew_T_m_s'])
     if te is not None and adcs:
@@ -407,14 +407,14 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
         chk('EPI echo spacing: constant and <= requested', len(es) == 1 and es[0] <= echo_spacing * 1e3 + 1e-3, es)
     if matrix is not None and fov is not None and adcs:
         chk('Cartesian kx grid (i - n//2)/fov sampled', rep['kx_grid_max_err_cycles_m'] <= .01,
-            {'max': rep['kx_grid_max_err_cycles_m'], 'by_line_parity': rep['kx_grid_max_err_by_line_parity'], 'samples': rep['samples_per_adc_vs_matrix'],
+            {'max': rep['kx_grid_max_err_cycles_m'], 'by_line_parity': rep['kx_grid_max_err_by_line_parity'], 'samples': rep['readout_samples_vs_nx'],
              'hint': 'odd-only error: ADC not centred on reversed flat tops; both: prephaser or k=0 sample index'})
         chk('Cartesian ky line set', rep['ky_set_max_err_cycles_m'] is not None and rep['ky_set_max_err_cycles_m'] <= .01, rep['ky_set_max_err_cycles_m'])
         if 'kz_set_max_err_cycles_m' in rep: chk('Cartesian kz partition set', rep['kz_set_max_err_cycles_m'] <= .01, rep['kz_set_max_err_cycles_m'])
         if monopolar: chk('monopolar readout', rep['readout_polarities'] == [1.0], rep['readout_polarities'])
         la = rep['line_acquisitions']
         if line_repeats is not None:
-            chk(f'every line acquired exactly {line_repeats} time(s) (dummy repetitions must have no ADC)',
+            chk(f'every line acquired exactly {line_repeats} time(s) (an ADC in a dummy repetition adds an acquisition)',
                 la['lines'] == la['expected_lines'] and la['min'] == la['max'] == line_repeats, la)
         elif la['min'] != la['max']:
             rep.setdefault('margin_warnings', []).append(f"lines are acquired unequally often {la}: dummies with ADC, navigators or a wrong partition/line loop?")
@@ -478,7 +478,7 @@ def main():
     ap.add_argument('--b1rms-max', type=float); ap.add_argument('--b1peak-max', type=float)
     ap.add_argument('--grms-max', type=float, help='mT/m'); ap.add_argument('--pns-max', type=float)
     ap.add_argument('--time-tol', type=float, default=1e-6, help='TE/TR/TI tolerance in s (default 1 us)')
-    ap.add_argument('--kx-cover', type=float, nargs=2, metavar=('LO', 'HI'), help='coverage contract in units of 1/fov, e.g. -N/2 N/2-1')
+    ap.add_argument('--kx-cover', type=float, nargs=2, metavar=('LO', 'HI'), help='interval to cover, in units of 1/fov, e.g. -N/2 N/2-1')
     ap.add_argument('--max-gap', type=float, default=1.0, help='largest allowed kx gap inside the coverage interval, units of 1/fov')
     ap.add_argument('--line-repeats', type=int, help='times every (ky[, kz]) line is acquired (1 for single-image Cartesian)')
     ap.add_argument('--n-adc', type=int, help='expected number of ADC events')

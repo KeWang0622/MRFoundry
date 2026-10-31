@@ -100,8 +100,8 @@ CUDA wheels on an incompatible machine.
   The Python interface is evolving: use its installed-version documentation.
 - **MRzero-Core / JEMRIS:** use their official installations and examples if
   chosen for the task. Their signals are not interchangeable with KomaMRI's
-  (scaling, sign and sample-timing conventions differ): when a reference
-  replays the file in KomaMRI, deliver KomaMRI output.
+  (scaling, sign and sample-timing conventions differ): when results will
+  be compared with a KomaMRI simulation of the same file, deliver KomaMRI output.
 
 ## Application entry points
 
