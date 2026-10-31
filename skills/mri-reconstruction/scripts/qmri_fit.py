@@ -221,7 +221,7 @@ def asl_cbf_pcasl(delta_m, m0, pld, label_duration, t1_blood=1.65, efficiency=0.
 
 def asl_effective_efficiency(labeling_efficiency, n_bs_pulses=0, bs_efficiency_per_pulse=1.0):
     """Labelling efficiency seen at readout with background suppression: alpha x eta_BS^n (consensus convention,
-    Alsop et al. 2015: each BS inversion pulse multiplies the label by its efficiency, typically 0.93-0.97).
+    Alsop et al. 2015: each BS inversion pulse multiplies the label by its efficiency, typically about 0.95).
     Omitting it underestimates CBF by the factor eta^n. Use the protocol's own definition of the per-pulse efficiency."""
     return float(labeling_efficiency) * float(bs_efficiency_per_pulse) ** int(n_bs_pulses)
 

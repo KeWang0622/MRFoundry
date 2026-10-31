@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writing check: run before finishing any write-up, proposal, review or plan (standard library only).
+r"""Writing check: run before finishing any write-up, proposal, review or plan (standard library only).
 This docstring is the whole manual (also printed by --help); the code below need not be read.
 
 Each flag adds one family of checks; every check prints PASS, FAIL or WARN and the exit code is 1 if any
@@ -9,7 +9,7 @@ check FAILs. Run it, fix every FAIL in the files (not in the checker), and run i
   --texts FILE ...            prose files (.md/.txt) and JSON outputs checked by --bib, --ids and the rules
   --bib refs.bib              every citation key in --texts ([@key], @key, \cite{key}) must be in the .bib;
                               DOIs, URLs, PMIDs, arXiv IDs, 'et al.' and author-year citations FAIL
-  --ids SOURCE.json           every record ID cited in --texts ([R04], "R04" in JSON) must exist in SOURCE
+  --ids SOURCE.json           every record ID cited in --texts ([A07], "A07" in JSON) must exist in SOURCE
   --quotes REVIEW.json --source PARAGRAPHS.json|.md
                               each issue's quote must be ONE contiguous verbatim passage of the paragraph or
                               table it is filed under (case and whitespace are ignored; no ellipsis)
@@ -212,7 +212,7 @@ def check_ids(texts, src):
     known = source_ids(src)
     prefixes = sorted({re.match(r"[A-Za-z]+", i).group(0) for i in known if re.match(r"[A-Za-z]+\d", i)})
     if not prefixes:
-        say("WARN", f"ids: no IDs like R01 found in {src}"); return
+        say("WARN", f"ids: no IDs like A07 found in {src}"); return
     mind = min(len(re.sub(r"^[A-Za-z]+", "", i)) for i in known if re.match(r"[A-Za-z]+\d+$", i))
     pat = re.compile(r"(?<![\w])(" + "|".join(map(re.escape, prefixes)) + r")(\d{%d,4})(?![\w*'])" % max(1, mind))
     for f in texts:

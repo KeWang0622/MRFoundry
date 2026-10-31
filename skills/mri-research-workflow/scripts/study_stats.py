@@ -210,7 +210,7 @@ def icc_ci(data, form='2,1', ci=0.95):
     """ICC with its F-based confidence interval for an (n subjects x k sessions/raters) array, complete data.
     Forms as in icc(): '1,1' one-way; '2,1' two-way random, absolute agreement (Shrout & Fleiss 1979; McGraw & Wong
     1996 ICC(A,1)); '3,1' two-way mixed, consistency; '1,k', '2,k', '3,k' for the mean of k measurements ('2,k'
-    bounds by Spearman-Brown of the '2,1' bounds). Returns (icc, (lo, hi)). Average hemispheres or ROIs per
+    bounds by Spearman-Brown of the '2,1' bounds). Returns (icc, (lo, hi)). Average regions or repeats per
     session first if the endpoint is their mean."""
     from scipy.stats import f as fdist
     Y = np.asarray(data, float); n, k = Y.shape; a = (1 - ci) / 2

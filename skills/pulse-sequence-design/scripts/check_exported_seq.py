@@ -8,8 +8,8 @@ Usage (all expectations optional; SI units, gradients in mT/m, slew in T/m/s):
   balanced SSFP:       --balanced --rf-phase-cycle 180 --te-half-tr
   spin echo / CPMG:    --te 0.08 --cpmg
   EPI (one or more lines per excitation): --epi --te 0.03 --echo-spacing 0.0008 --matrix 64 64 --fov 0.22
-  crushers and safety: --crusher-range 800 2000 --safety --b1rms-max 0.7 --b1peak-max 12 --grms-max 10 \\
-                       --pns-rheobase 50 --pns-chronaxie 0.36e-3 --pns-max 0.8
+  crushers and safety: --crusher-range LOW HIGH --safety --b1rms-max UT --b1peak-max UT --grms-max MT_PER_M \\
+                       --pns-rheobase T_PER_M_PER_S --pns-chronaxie S --pns-max FRACTION   (limits from the task)
 
 What is measured from the read-back file (fresh pp.Sequence().read):
   * RF roles: excitation (< 135 deg), inversion (large pulse not followed by an ADC before the next

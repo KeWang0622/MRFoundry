@@ -128,17 +128,17 @@ print("all B5 quantitative model tests passed")
 
 
 # B6: root-sum-of-squares magnitude at low SNR biases mono-exponential T2 upward; the noise-floor model removes it
-rng7 = np.random.default_rng(7); te6 = np.arange(1, 7) * 15.0; t2v = 80.0; nv = 4000; Cc = 8
+rng7 = np.random.default_rng(7); te6 = np.arange(1, 9) * 10.0; t2v = 80.0; nv = 4000; Cc = 8
 wc = rng7.uniform(0.2, 1.0, (Cc, 1)); wc /= np.sqrt((wc ** 2).sum())
 sig = 0.06; sclean = np.exp(-te6 / t2v)[None, :] * np.ones((nv, 1))
-coils = wc[None] * sclean[:, None, :] + sig * (rng7.normal(size=(nv, Cc, 6)) + 1j * rng7.normal(size=(nv, Cc, 6)))
+coils = wc[None] * sclean[:, None, :] + sig * (rng7.normal(size=(nv, Cc, 8)) + 1j * rng7.normal(size=(nv, Cc, 8)))
 magn = np.sqrt((np.abs(coils) ** 2).sum(1))
 _, t2_plain = fit_monoexp(te6, magn); _, t2_aware = fit_monoexp(te6, magn, noise_sigma=sig, n_channels=Cc)
 bp, ba = np.median(t2_plain) / t2v - 1, np.median(t2_aware) / t2v - 1
 assert bp > 0.04 and abs(ba) < 0.02, (bp, ba)
 _, t2_hi = fit_monoexp(te6, np.exp(-te6 / t2v)[None, :] * np.ones((5, 1)), noise_sigma=1e-6)
 assert np.allclose(t2_hi, t2v, rtol=1e-6)
-print(f"fit_monoexp(noise_sigma=, n_channels=): RSS of {Cc} channels at last-echo SNR {np.exp(-90 / 80) / sig:.1f}: median T2 bias {bp:+.1%} -> {ba:+.1%}")
+print(f"fit_monoexp(noise_sigma=, n_channels=): RSS of {Cc} channels at last-echo SNR {np.exp(-te6[-1] / t2v) / sig:.1f}: median T2 bias {bp:+.1%} -> {ba:+.1%}")
 
 
 
@@ -153,11 +153,11 @@ print(f"EPG dictionary T1: default T1 gives a T2 error of {ew:+.1%} at 110 deg r
 
 # B6: background-suppression efficiency and per-slice delays for 2D multislice pCASL
 assert abs(asl_effective_efficiency(0.85, 2, 0.95) - 0.85 * 0.95 ** 2) < 1e-12 and asl_effective_efficiency(0.85) == 0.85
-d = slice_delays(1.8, [0, 2, 4, 1, 3, 5], 0.05)
-assert np.allclose(d, [1.8, 1.95, 1.85, 2.0, 1.9, 2.05]), d
-cbf_true = 60.0; m0v = 1000.0; t1b = 1.65; tau = 1.8; aeff = asl_effective_efficiency(0.85, 4, 0.95)
+d = slice_delays(2.0, [0, 2, 4, 1, 3, 5], 0.04)
+assert np.allclose(d, [2.0, 2.12, 2.04, 2.16, 2.08, 2.2]), d
+cbf_true = 60.0; m0v = 1000.0; t1b = 1.65; tau = 1.5; aeff = asl_effective_efficiency(0.85, 4, 0.95)
 dm = cbf_true * 2 * aeff * t1b * m0v * (1 - np.exp(-tau / t1b)) * np.exp(-d / t1b) / (6000 * 0.9)
 cbf = asl_cbf_pcasl(dm, m0v, d, tau, efficiency=aeff)
-naive = asl_cbf_pcasl(dm, m0v, 1.8, tau, efficiency=0.85)
+naive = asl_cbf_pcasl(dm, m0v, 2.0, tau, efficiency=0.85)
 assert np.allclose(cbf, cbf_true) and naive.max() / cbf_true - 1 < -0.05 and naive.min() / cbf_true - 1 < -0.15
 print("asl_effective_efficiency and slice_delays: exact CBF; without them the error is %.0f%% to %.0f%%" % (100 * (naive.max() / cbf_true - 1), 100 * (naive.min() / cbf_true - 1)))

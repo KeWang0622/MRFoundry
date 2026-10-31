@@ -20,44 +20,44 @@ def write(d, name, content):
 
 def test_results_writeup(d):
     src = write(d, "results.json", {"entries": [
-        {"id": "E01", "estimate": -3.2, "ci": [-5.0, -1.4], "p": "<0.001", "n": 120},
-        {"id": "E02", "estimate_pa": -80.0, "ci_pa": [-210.0, 50.0], "p_holm": 0.42, "n": 118},
-        {"id": "E03", "estimate": -4.1, "ci": [-6.3, -1.9], "n": 41, "subgroup": "with condition"}]})
+        {"id": "E01", "estimate": -2.7, "ci": [-4.4, -1.0], "p": "<0.001", "n": 96},
+        {"id": "E02", "estimate_pa": -130.0, "ci_pa": [-320.0, 60.0], "p_holm": 0.27, "n": 94},
+        {"id": "E03", "estimate": -3.3, "ci": [-5.8, -0.8], "n": 33, "subgroup": "with condition"}]})
     bib = write(d, "refs.bib", "@article{smith2020,\n title={A}\n}\n@book{lee2019, title={B}}\n")
     claims = {"claims": [
-        {"claim_id": "C1", "source_id": "E01", "estimate": -3.2, "unit": "percentage_points", "ci_lower": -5.0, "ci_upper": -1.4,
-         "p_value": "<0.001", "n": 120, "interpretation": "effect_detected", "locations": ["abstract", "results"]},
-        {"claim_id": "C2", "source_id": "E02", "estimate": -0.08, "unit": "kPa", "ci_lower": -0.21, "ci_upper": 0.05,
-         "p_value": 0.42, "n": 118, "interpretation": "no_effect_detected", "locations": ["results"]},
-        {"claim_id": "C3", "source_id": "E03", "estimate": -4.1, "unit": "percentage_points", "ci_lower": -6.3, "ci_upper": -1.9,
-         "n": 41, "interpretation": "exploratory", "locations": ["results"]}]}
+        {"claim_id": "C1", "source_id": "E01", "estimate": -2.7, "unit": "percentage_points", "ci_lower": -4.4, "ci_upper": -1.0,
+         "p_value": "<0.001", "n": 96, "interpretation": "effect_detected", "locations": ["abstract", "results"]},
+        {"claim_id": "C2", "source_id": "E02", "estimate": -0.13, "unit": "kPa", "ci_lower": -0.32, "ci_upper": 0.06,
+         "p_value": 0.27, "n": 94, "interpretation": "no_effect_detected", "locations": ["results"]},
+        {"claim_id": "C3", "source_id": "E03", "estimate": -3.3, "unit": "percentage_points", "ci_lower": -5.8, "ci_upper": -0.8,
+         "n": 33, "interpretation": "exploratory", "locations": ["results"]}]}
     cl = write(d, "claims.json", claims)
-    ab = write(d, "abstract.md", "# Abstract\nThe primary endpoint differed by -3.2 percentage points (95% CI -5.0 to -1.4; p < 0.001; n = 120) [@smith2020].\n")
-    good = ("The primary endpoint differed by -3.2 percentage points (95% CI -5.0 to -1.4, p < 0.001, n = 120).\n"
-            "Stiffness did not differ between groups: -0.08 kPa (95% CI -0.21 to 0.05, Holm-adjusted p = 0.42, n = 118).\n"
-            "In an exploratory subgroup analysis, the difference was -4.1 percentage points (95% CI -6.3 to -1.9, n = 41) [@lee2019].\n")
+    ab = write(d, "abstract.md", "# Abstract\nThe primary endpoint differed by -2.7 percentage points (95% CI -4.4 to -1.0; p < 0.001; n = 96) [@smith2020].\n")
+    good = ("The primary endpoint differed by -2.7 percentage points (95% CI -4.4 to -1.0, p < 0.001, n = 96).\n"
+            "Tissue stiffness did not differ between groups: -0.13 kPa (95% CI -0.32 to 0.06, Holm-adjusted p = 0.27, n = 94).\n"
+            "In an exploratory subgroup analysis, the difference was -3.3 percentage points (95% CI -5.8 to -0.8, n = 33) [@lee2019].\n")
     rs = write(d, "results.md", good)
     base = ["--words", ab + ":250", "--texts", ab, rs, "--bib", bib, "--claims", cl, "--loc", "abstract=" + ab,
             "--loc", "results=" + rs, "--trace", src, "--scale", "0.001"]
     code, out = run(*base)
     assert code == 0, out
     # semicolon splits the clause: the second clause reports n without the label
-    write(d, "results.md", good.replace("(95% CI -6.3 to -1.9, n = 41)", "(95% CI -6.3 to -1.9; n = 41)")
+    write(d, "results.md", good.replace("(95% CI -5.8 to -0.8, n = 33)", "(95% CI -5.8 to -0.8; n = 33)")
           .replace("In an exploratory subgroup analysis, the", "The"))
     code, out = run(*base)
     assert code == 1 and "exploratory estimate without" in out, out
     # CI includes zero but the sentence has no no-difference phrase
-    write(d, "results.md", good.replace("Stiffness did not differ between groups:", "Stiffness was"))
+    write(d, "results.md", good.replace("Tissue stiffness did not differ between groups:", "Tissue stiffness was"))
     code, out = run(*base)
     assert code == 1 and "CI includes 0" in out, out
     # percentage points written as %, a missing n, a new statistic, an unknown key and a DOI
-    write(d, "results.md", good.replace("-3.2 percentage points", "-3.2%").replace(", n = 118", "")
+    write(d, "results.md", good.replace("-2.7 percentage points", "-2.7%").replace(", n = 94", "")
           .replace("[@lee2019]", "[@doe2021] (doi:10.1000/xyz), a 12.5% relative reduction"))
     code, out = run(*base)
-    for frag in ("not '%'", "C2.n=118 not in results", "doe2021", "DOI", "numbers not found in the sources"):
+    for frag in ("not '%'", "C2.n=94 not in results", "doe2021", "DOI", "numbers not found in the sources"):
         assert frag in out, (frag, out)
     # less precise text than ledger
-    write(d, "results.md", good.replace("-0.08 kPa", "-0.1 kPa"))
+    write(d, "results.md", good.replace("-0.13 kPa", "-0.1 kPa"))
     code, out = run(*base)
     assert "fewer decimals" in out or "not in results" in out, out
     # language rules from a task file
@@ -74,16 +74,16 @@ def test_results_writeup(d):
 def test_review(d):
     paras = write(d, "paragraphs.json", {"paragraphs": [
         {"id": "P01", "text": "We scanned 40 patients (age 61 \u00b1 8 years) and analysed 12,000 voxels with a t-test."},
-        {"id": "P02", "text": "Because image quality improved, the method will reduce biopsies in routine practice."},
+        {"id": "P02", "text": "Because the maps looked sharper, the protocol should replace the standard examination at every site."},
         {"id": "T1", "text": "| Group | ADC (mm\u00b2/s) |\n| A | 1.2 |"}]})
     issues = {"recommendation": "major_revision", "issues": [
         {"issue_id": "I1", "paragraph_id": "P01", "category": "statistical_unit_pseudoreplication", "quote": "analysed 12,000 voxels with a t-test"},
-        {"issue_id": "I2", "paragraph_id": "P02", "category": "unsupported_causal_or_clinical_claim", "quote": "the method will reduce biopsies in routine practice"}]}
+        {"issue_id": "I2", "paragraph_id": "P02", "category": "unsupported_causal_or_clinical_claim", "quote": "the protocol should replace the standard examination at every site"}]}
     rv = write(d, "review.json", issues)
     md = write(d, "review.md", "Major revision. P01: voxels as units. P02: clinical claim.\n")
     code, out = run("--quotes", rv, "--source", paras, "--mentions", rv + "=" + md, "--words", md + ":2000")
     assert code == 0, out
-    issues["issues"][1]["quote"] = "Because image quality improved ... routine practice"
+    issues["issues"][1]["quote"] = "Because the maps looked sharper ... every site"
     issues["issues"].append({"issue_id": "I3", "paragraph_id": "P02", "quote": "analysed 12,000 voxels"})
     issues["issues"].append({"issue_id": "I4", "paragraph_id": "T1", "quote": "Group | ADC (mm2/s)"})
     write(d, "review.json", issues)
@@ -93,10 +93,10 @@ def test_review(d):
 
 
 def test_ids_and_schema(d):
-    corpus = write(d, "corpus.json", {"records": [{"id": "R01", "n": 20}, {"id": "R02", "n": 31}, {"id": "R10", "n": 12}]})
-    md = write(d, "proposal.md", "BOLD R2* rose [R01; R02]. The gap [R10] remains; see R99.\n")
+    corpus = write(d, "corpus.json", {"records": [{"id": "R101", "n": 20}, {"id": "R102", "n": 31}, {"id": "R110", "n": 12}]})
+    md = write(d, "proposal.md", "BOLD R2* rose [R101; R102]. The gap [R110] remains; see R188.\n")
     code, out = run("--texts", md, "--ids", corpus)
-    assert code == 1 and "R99" in out and "'R2'" not in out, out
+    assert code == 1 and "R188" in out and "'R2'" not in out, out
     task = write(d, "task.json", {
         "design_vocabulary": {"type": ["cross_sectional", "cohort"], "recruitment": ["consecutive", "convenience"]},
         "factor_vocabulary": ["field_strength", "vendor"],
@@ -107,16 +107,16 @@ def test_ids_and_schema(d):
                    "sample_size": "{n_per_group (integer), sd, sources: [..]}",
                    "risks": "list of at least two {risk, mitigation}"}})
     good = {"design": {"type": "cohort", "recruitment": "consecutive", "description": "x"},
-            "audit": [{"record_ids": ["R01"], "factor": "vendor"}],
+            "audit": [{"record_ids": ["R101"], "factor": "vendor"}],
             "controls": [{"code": "blinded", "record_ids": []}],
-            "sample_size": {"n_per_group": 23, "sd": 86.0, "sources": ["R02"]},
+            "sample_size": {"n_per_group": 17, "sd": 41.0, "sources": ["R102"]},
             "risks": [{"risk": "a", "mitigation": "b"}, {"risk": "c", "mitigation": "d"}]}
     out_f = write(d, "out.json", good)
     code, out = run("--schema", task + ":schema=" + out_f)
     assert code == 0, out
     bad = json.loads(json.dumps(good))
     bad["design"]["recruitment"] = ["consecutive"]; bad["audit"][0]["factor"] = "sample size"
-    bad["controls"][0]["code"] = "blinding"; bad["sample_size"]["n_per_group"] = 22.4; del bad["sample_size"]["sd"]
+    bad["controls"][0]["code"] = "blinding"; bad["sample_size"]["n_per_group"] = 16.4; del bad["sample_size"]["sd"]
     bad["risks"] = bad["risks"][:1]
     write(d, "out.json", bad)
     code, out = run("--schema", task + ":schema=" + out_f)
