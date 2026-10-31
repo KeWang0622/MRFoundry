@@ -21,7 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with a margin, oversampled readouts accepted by the grid check, 3D `--matrix NX NY NZ`, `--line-repeats` and
   `--n-adc` (dummy repetitions with an ADC), acquisitions with and without ADC, and gradient continuity at block
   and event boundaries (arbitrary gradients with extrapolated first/last values). Tests include an independent
-  integration of the trapezoids in the .seq text.
+  integration of the trapezoids in the .seq text. `--rf-dead-time`, `--rf-ringdown-time` and `--adc-dead-time`
+  check dead times inside each block. The family table adds MP-RAGE (identical cycles, test-column null with the
+  actual spoiling), TSE phase-encode rewinding and UTE half-pulse pairs.
 - mri-research-workflow: `write_check.py --claims` with `--trace`/`--ids` FAILS claim records whose source field is
   not an entry of the source data; write-results asks for one record per source entry; write-proposal: controls
   supported only by records whose analysis varies the factor, sample-size inputs printed per record and matched
