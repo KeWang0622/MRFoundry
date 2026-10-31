@@ -14,6 +14,7 @@ Usage (all expectations optional; SI units, gradients in mT/m, slew in T/m/s):
                        coverage 'cover [lo, hi]/fov, gaps <= g/fov': add --kx-cover LO HI --max-gap G (units of 1/fov);
                        acquired lines: --line-repeats R (each ky[,kz] line R times) and/or --n-adc N
   timing tolerance:    --time-tol S (default 1e-6 s; TE/TR/TI must match within it; --tr takes several intervals)
+  dead times:          --rf-dead-time S --rf-ringdown-time S --adc-dead-time S (values from the task or system)
 
 What is measured from the read-back file (fresh pp.Sequence().read):
   * RF roles: excitation (< 135 deg), inversion (large pulse not followed by an ADC before the next
@@ -164,21 +165,32 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
             min_spoil_cycles=None, min_inversion_spoil_cycles=None, matrix=None, fov=None, monopolar=False,
             balanced_tol=0.05, epi=False, echo_spacing=None, crusher_range=None, crusher_axis='z', safety=False,
             pns_rheobase=None, pns_chronaxie=None, b1rms_max=None, b1peak_max=None, grms_max=None, pns_max=None,
-            time_tol=1e-6, kx_cover=None, max_gap=1.0, line_repeats=None, n_adc=None):
+            time_tol=1e-6, kx_cover=None, max_gap=1.0, line_repeats=None, n_adc=None, rf_dead_time=None, rf_ringdown_time=None,
+            adc_dead_time=None):
     """Return (report, checks). te/ti: list or float (s); tr (s); flip (deg, excitations); matrix (nx, ny); fov m or (fx, fy).
     crusher_range (lo, hi) cycles/m: spin-echo crusher moments on crusher_axis; safety: B1 rms/peak (uT), gradient rms
     (mT/m) and, with pns_rheobase (T/m/s) and pns_chronaxie (s), the ramp PNS fraction, all from the exported file.
     time_tol (s): TE/TR/TI tolerance (default 1 us; use the task's tolerance if it is tighter). kx_cover (lo, hi) in units
     of 1/fov: every ADC must sample beyond both ends with no gap above max_gap/fov. line_repeats: expected number of
-    acquisitions of every (ky[, kz]) line. n_adc: expected number of ADC events."""
+    acquisitions of every (ky[, kz]) line. n_adc: expected number of ADC events. rf_dead_time, rf_ringdown_time,
+    adc_dead_time (s): every RF/ADC starts at least the dead time after its block start and ends at least the
+    ringdown (RF) or dead time (ADC) before its block end."""
     te = None if te is None else list(np.atleast_1d(te)); ti = None if ti is None else list(np.atleast_1d(ti))
     tr = None if tr is None else list(np.atleast_1d(tr))
     s = pp.Sequence(); s.read(str(seq_path)); rep = {}; checks = []
     ok, err = s.check_timing(); rep['timing_ok'] = bool(ok); rep['timing_errors'] = [str(e) for e in err][:5]
     t = 0.; rfs = []; adcs = []; gblocks = []
+    dead = []
     for i in s.block_events:
         b = s.get_block(i); gblocks.append((t, s.block_durations[i] if hasattr(s, 'block_durations') else pp.calc_duration(b),
                                             [getattr(b, 'g' + a, None) for a in 'xyz']))
+        bd = gblocks[-1][1]
+        if b.rf is not None and (rf_dead_time is not None or rf_ringdown_time is not None):
+            if b.rf.delay < (rf_dead_time or 0) - 1e-9: dead.append(f'block {i}: RF starts {b.rf.delay * 1e6:.1f} us after the block start')
+            if bd - (b.rf.delay + float(b.rf.shape_dur)) < (rf_ringdown_time or 0) - 1e-9: dead.append(f'block {i}: RF ringdown does not fit')
+        if b.adc is not None and adc_dead_time is not None:
+            if b.adc.delay < adc_dead_time - 1e-9: dead.append(f'block {i}: ADC starts {b.adc.delay * 1e6:.1f} us after the block start')
+            if bd - (b.adc.delay + b.adc.num_samples * b.adc.dwell) < adc_dead_time - 1e-9: dead.append(f'block {i}: ADC dead time after the last sample does not fit')
         if b.rf is not None: rfs.append(_rf(b.rf, t))
         if b.adc is not None: adcs.append(dict(start=t + b.adc.delay, adc=b.adc,
                                                end=t + b.adc.delay + b.adc.num_samples * b.adc.dwell))
@@ -356,6 +368,8 @@ def measure(seq_path, te=None, tr=None, flip=None, slice_thickness=None, rf_spoi
         if limit and value is not None and (abs(value - limit) <= 0.02 * abs(limit)):
             rep.setdefault('margin_warnings', []).append(f"{value:.6g} is within 2% of the limit {limit:g}: design inside the limit with a margin")
     chk('pulseq timing', rep['timing_ok'], rep['timing_errors'][:2])
+    if rf_dead_time is not None or rf_ringdown_time is not None or adc_dead_time is not None:
+        chk('RF dead/ringdown and ADC dead times inside each block', not dead, {'violations': len(dead), 'first': dead[:3]})
     if max_grad: chk('peak gradient', max(rep['peak_grad_mT_m']) <= max_grad + 1e-3, rep['peak_grad_mT_m'])
     if max_slew: chk('peak slew', max(rep['peak_slew_T_m_s']) <= max_slew + 1e-3, rep['peak_slew_T_m_s'])
     if te is not None and adcs:
@@ -468,6 +482,8 @@ def main():
     ap.add_argument('--max-gap', type=float, default=1.0, help='largest allowed kx gap inside the coverage interval, units of 1/fov')
     ap.add_argument('--line-repeats', type=int, help='times every (ky[, kz]) line is acquired (1 for single-image Cartesian)')
     ap.add_argument('--n-adc', type=int, help='expected number of ADC events')
+    ap.add_argument('--rf-dead-time', type=float, help='s'); ap.add_argument('--rf-ringdown-time', type=float, help='s')
+    ap.add_argument('--adc-dead-time', type=float, help='s')
     ap.add_argument('--gamma', type=float, default=42.576e6); ap.add_argument('--json', action='store_true', help='print all measurements')
     a = ap.parse_args()
     fov = None if a.fov is None else (a.fov[0] if len(a.fov) == 1 else a.fov)
@@ -476,7 +492,8 @@ def main():
                           a.matrix, fov, a.monopolar, epi=a.epi, echo_spacing=a.echo_spacing, crusher_range=a.crusher_range,
                           crusher_axis=a.crusher_axis, safety=a.safety, pns_rheobase=a.pns_rheobase, pns_chronaxie=a.pns_chronaxie,
                           b1rms_max=a.b1rms_max, b1peak_max=a.b1peak_max, grms_max=a.grms_max, pns_max=a.pns_max,
-                          time_tol=a.time_tol, kx_cover=a.kx_cover, max_gap=a.max_gap, line_repeats=a.line_repeats, n_adc=a.n_adc)
+                          time_tol=a.time_tol, kx_cover=a.kx_cover, max_gap=a.max_gap, line_repeats=a.line_repeats, n_adc=a.n_adc,
+                          rf_dead_time=a.rf_dead_time, rf_ringdown_time=a.rf_ringdown_time, adc_dead_time=a.adc_dead_time)
     keys = ['rf_roles', 'excitation_flip_deg', 'te_ms', 'echo_spacing_ms', 'tr_ms', 'ti_ms', 'refocusing_after_excitation_ms', 'excitations_before_first_adc',
             'excitations_with_adc', 'excitations_without_adc', 'adc_samples', 'line_acquisitions', 'kx_coverage_units_of_1_over_fov', 'gradient_jumps_per_axis', 'excitation_slice_fwhm_mm', 'peak_grad_mT_m', 'peak_slew_T_m_s', 'crusher_moment_cycles_m',
             'b1_rms_whole_file_uT', 'b1_peak_whole_file_uT', 'grad_rms_mT_m', 'pns_max_fraction_per_axis']

@@ -339,3 +339,14 @@ with tempfile.TemporaryDirectory() as d:
     print('centered_readout: adc_shift puts the k = 0 sample on a sub-raster TE (grid exact); oversampled extended line covers with margin',
           rep['kx_coverage_units_of_1_over_fov'])
 print('all B7 readout checks passed')
+
+with tempfile.TemporaryDirectory() as d:
+    sysm = make_system(); seq = pp.Sequence(sysm)
+    rf = pp.make_block_pulse(np.pi / 6, duration=0.3e-3, delay=sysm.rf_dead_time, system=sysm)
+    for adc_delay in (sysm.adc_dead_time, 0.0):
+        seq.add_block(rf); seq.add_block(pp.make_adc(40, dwell=4e-6, delay=adc_delay), pp.make_delay(0.3e-3))
+    p = os.path.join(d, 'dead.seq'); seq.write(p)
+    rep, ch = measure(p, rf_dead_time=sysm.rf_dead_time, rf_ringdown_time=sysm.rf_ringdown_time, adc_dead_time=sysm.adc_dead_time)
+    dt = [c for c in ch if c['item'].startswith('RF dead')][0]
+    assert not dt['pass'] and dt['detail']['violations'] == 1 and 'ADC starts' in dt['detail']['first'][0], dt
+    print('ADC without its dead time after the block start: dead-time check FAIL', dt['detail']['first'])
