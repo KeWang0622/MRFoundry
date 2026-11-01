@@ -187,11 +187,11 @@ The hub links to primary papers, courses, datasets and software across MRI. It s
 
 MRFoundry is evaluated in preregistered paired trials: the same agent, language model, tools, inputs and time limit, with or without the skills installed, on held-out tasks written without access to the skills and checked by independent graders.
 
-- **Newest release on newly generated tasks** (0.14.0; new instances of 24 task families across ten MRI domains, generated and sealed by separate agents, opened only after the release was frozen): 43 of 49 paired trials verified with the skills and 31 of 49 without them (14 pairs gained, 2 lost; exact McNemar P = 0.004); in 3 of the gained pairs the run without skills failed only because required files were outside the delivery folder.
+- **Newest release on newly generated tasks** (0.14.0; new instances of 24 task families across ten MRI domains, generated and sealed by separate agents, opened only after the release was frozen): 112 of 146 paired trials verified with the skills and 88 of 146 without them (29 pairs gained, 5 lost; exact McNemar P < 0.001); in 3 of the gained pairs the run without skills failed only because required files were outside the delivery folder.
 - **Earlier held-out suites** (581 paired trials, 31 tasks, 19 language models; each suite used the release frozen before it): 67% to 74% verified completion, with 84 pairs passing only with MRFoundry and 46 only without it. Sequence design with Bloch simulation of the exported file: 60 of 118 to 97 of 118.
-- **Development record:** an earlier revision tested the same way on its own fresh tasks completed 75 of 112 against 70 without skills; its failures (deliverable layout, a UTE timing rule, QSM phase unwrapping) shaped the current release.
+- **Development record:** an earlier revision tested the same way on its own fresh tasks completed 151 of 203 against 137 without skills; its failures (deliverable layout, a UTE timing rule, QSM phase unwrapping) shaped the current release.
 
-Interim results, 31 October 2026, 22:00 PDT: 49 of 456 planned trials on the newly generated tasks, from the first models in a fixed preregistered order; the final analysis follows on 1 November. Results, tasks, graders and every started trial are reported in the accompanying manuscript.
+Final results at the preregistered cutoff (1 November 2026, 14:00 UTC): 146 of 456 planned trials on the new tasks, from the first seven of 19 models in a fixed order. Results, tasks, graders and every started trial are reported in the accompanying manuscript.
 
 ## Reliability and scope
 
