@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 HERE = Path(__file__).resolve().parent; sys.path.insert(0, str(HERE))
 os.environ.setdefault('PYTHON_JULIACALL_HANDLE_SIGNALS', 'yes'); os.environ.setdefault('JULIA_NUM_THREADS', '4')
-from mrfoundry_seqlib import simulate_with_koma, kspace_grid, plot_waveforms
+from mrfoundry_seqlib import simulate_with_koma, kspace_grid, plot_waveforms, replay_check
 from check_exported_seq import measure
 from test_seqlib import cartesian_gre
 
@@ -41,10 +41,15 @@ def main():
     sim = simulate_with_koma(seq, x, y, np.zeros_like(x), rho, np.full(rho.shape, 0.3), np.full(rho.shape, 0.005))
     np.savez(out / 'simulation.npz', raw_signal=sim['samples'], k_cycles_per_m=sim['k'], adc_times_s=sim['t'], fov_m=fov, matrix=np.array([n, n]),
              sequence_sha256=np.array(sha256(seq)), object_sha256=np.array(sha256(out / 'object.npz')))
+    # deliver the samples exactly as simulated (no conjugation, rescaling or reordering); before finishing, replay the
+    # DELIVERED file from scratch and compare with the DELIVERED archive, as a grader replaying the .seq would
+    arch = np.load(out / 'simulation.npz'); assert str(arch['sequence_sha256']) == sha256(seq), 'archive is not from this .seq'
+    replay = replay_check(seq, arch['raw_signal'], x, y, np.zeros_like(x), rho, np.full(rho.shape, 0.3), np.full(rho.shape, 0.005))
     img = reconstruct(out / 'simulation.npz', out / 'recon.npz')
     corr = float(np.corrcoef(abs(img).ravel(), rho.ravel())[0, 1]); assert corr > 0.98, f'orientation/centring mismatch: corr {corr:.3f}'
     report = {'measured_from_export': {k: rep[k] for k in ('te_ms', 'tr_ms', 'excitation_flip_deg', 'excitation_slice_fwhm_mm', 'excitations_before_first_adc')},
-              'checks': {c['item']: c['pass'] for c in checks}, 'bloch_simulator': 'KomaMRI via komamripy', 'image_object_correlation': corr}
+              'checks': {c['item']: c['pass'] for c in checks}, 'bloch_simulator': 'KomaMRI via komamripy', 'image_object_correlation': corr,
+              'replay_relative_difference': replay}
     (out / 'report.json').write_text(json.dumps(report, indent=1)); print(json.dumps(report))
 
 if __name__ == '__main__':

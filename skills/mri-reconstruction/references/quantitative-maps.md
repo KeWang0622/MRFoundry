@@ -1,6 +1,6 @@
 # Quantitative maps
 
-**Summary.** Use the tested helpers in `scripts/qmri_fit.py` and `scripts/qsm_lib.py` (numpy/scipy). State the
+**Summary.** Use the tested helpers in `scripts/qmri_fit.py`, `scripts/fatwater_lib.py` and `scripts/qsm_lib.py` (numpy/scipy). State the
 signal model and its time origin, check units, validate on data simulated by an independent route (closed form,
 quadrature, Bloch or EPG simulation of your exact timing), and calibrate any fixed nuisance setting on
 development data ([model calibration](../../mri-research/references/model-calibration.md)).
@@ -18,11 +18,28 @@ data so the Rician floor does not lengthen T2 or shorten T1), closed forms `erns
 makes the refocusing angle 180° give identical trains: keep the B1 grid on one side unless a B1 map exists.
 Cover the full B1 range expected (low B1 needs a grid reaching well below 0.5).
 
+## Water-fat
+
+`fatwater_lib.py` (test: `python scripts/test_fatwater_lib.py`). Form complex echo images first: undo any readout
+reversal of bipolar echoes in k-space, prewhiten, combine coils with ONE set of phase-preserving weights for all
+echoes (`sense_combine` with maps from the first echo or the ACS), crop readout oversampling. Then
+`fit_fat_water(echoes, te, fat_offsets_hz(b0_t, peaks_ppm, reference_ppm), amplitudes, mask)`: multi-peak fat (the supplied
+spectrum, else the six-peak default), common R2* and field, field-map choice regularized by a smooth field (pure
+fat at field f fits almost as well as pure water at f plus the main fat offset; voxelwise minima swap isolated
+high-fat regions, most often at 1.5 T or with few echoes). Needs at least 4 echoes with R2* free.
+PDFF = `fat_fraction(water_real, fat_real, flip, TR, T1_water, T1_fat, b1)`: real amplitudes after the common
+phase (unbiased near 0 % and 100 %, unlike |F| / (|W| + |F|)) and spoiled-GRE T1/flip-angle weighting removed
+(omit it only when the protocol is proton-density weighted). Validate on a simulated phantom with vials from 0 to
+100 % fat at the task's field strength and echo times.
+
 ## ASL
 
 - Group control and label volumes by their own delay (BIDS aslcontext, per-volume PLD) with
   `asl_pairs_by_delay`; volume order and pairing vary between datasets.
-- 2-D multi-slice: the effective delay of slice z is PLD + SliceTiming[z]; pass per-voxel delays.
+- 2-D multi-slice: the effective delay of slice z is PLD + SliceTiming[z] (`slice_delays(pld, acquisition_order,
+  spacing)` for an acquisition order); pass per-voxel delays.
+- Background suppression: `asl_effective_efficiency(alpha, n_pulses, eta_pulse)` (alpha x eta^n, consensus
+  convention); M0 has no background suppression.
 - M0 acquired with a finite TR: `m0_finite_tr(m0, tr, t1_tissue)`; blood M0 = M0 / λ inside the model.
 - Single delay: `asl_cbf_pcasl` / `asl_cbf_pasl` (consensus formula, Alsop et al. 2015).
 - Multiple delays: `fit_asl_multidelay(delta_m, m0, pld, tau)` with `asl_gkm_pcasl` (Buxton general kinetic
@@ -44,12 +61,15 @@ Cover the full B1 range expected (low B1 needs a grid reaching well below 0.5).
 
 ## QSM
 
-`qsm_lib.py` (`python qsm_lib.py --selftest`; tests compare the dipole kernel with the analytic field of a
-magnetized sphere):
+`qsm_lib.py` (tests compare the dipole kernel with the analytic field of a magnetized sphere). First
+`python qsm_lib.py --selftest --shape ... --voxel ... --b0-dir ... --b0 ... --te ...` with the data's own acquisition
+must PASS: the default-geometry self-test hid a field-map failure seen only with other echo spacing and grids.
 
 1. Phase in radians from the stored scaling; apply the stated sign convention.
-2. `multiecho_field_hz`: phase0 removed by division by the first echo; Laplacian unwrapping (default) or
-   temporal unwrapping when |f| < 1/(2 ΔTE_min). Field in Hz.
+2. `multiecho_field_hz`: phase0 removed by division by the first echo; the shortest echo difference is unwrapped
+   inside the mask only (`mask_unwrap`, default), later echoes temporally. Field in Hz;
+   `phase_misfit_fraction` < 0.01. Laplacian unwrapping (the old default) leaks noise and steep fields into the
+   brain; temporal unwrapping aliases when |f| > 1/(2 ΔTE_min).
 3. `pdf_background` (projection onto dipole fields) removes air/sinus fields; `vsharp` is faster and weaker
    with strong external sources. Values are reliable a few mm inside the mask; judge deep regions.
 4. `invert_cg_l2` (data term inside the mask, gradient regularization); `invert_tkd` as a check. B0 direction

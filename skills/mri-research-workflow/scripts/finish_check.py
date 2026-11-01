@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
-"""Finish check: run this before you report a task as done.
+"""Finish check: run this before you report a task as done. This docstring (--help) is the whole manual.
 
 It catches the packaging failures that most often make correct work unusable:
-missing or misnamed deliverables, an entrypoint stored apart from its outputs, a missing
-environment record, and an entrypoint that only works in your own working copy.
+missing or misnamed deliverables, scripts filed in a subfolder or apart from the helper modules they
+import, an entrypoint stored apart from its outputs, a missing environment record, and an
+entrypoint that only works in your own working copy.
 
   python finish_check.py --require fit.py report.json README.md cbf.nii.gz \
       --rerun "python fit.py --input {inputs}/data.nii.gz --outdir {out}" \
       --inputs inputs --expect cbf.nii.gz report.json --json report.json:method,limitations
 
-  --require   every deliverable name the task lists (files or folders). All must sit in ONE folder:
-              the folder the task names, else the workspace root (--root). A script in the root with
-              its outputs in out/ is reported as a split and fails.
+  --require   every deliverable name the task lists (files or folders); for a generic item (a kind of
+              script rather than a file name) name your actual files. All must sit in ONE folder: the folder the task
+              names, else the workspace root (--root). A script in the root with its outputs in out/ is
+              reported as a split and fails, and so is a name with a subfolder (scripts/build.py) unless
+              the task itself names that sub-path (then add --nested-ok). Every local module that a
+              required script imports must sit next to it (copies that exist only under .agents fail).
   --rerun     the documented command. It is run in a fresh temporary folder that contains only the
               entrypoint script(s) named in the command and a copy of --inputs; {inputs} and {out}
               are replaced by paths in that folder. "python" is replaced by --python (default:
@@ -69,6 +73,66 @@ def check_location(root, required):
     if ok:
         lines.append(f"PASS all {len(required)} required deliverables in ./{folder if folder not in (None, '.') else ''}")
     return ok, lines, folder
+
+
+def check_nested(required, nested_ok):
+    """FAIL for required names inside a subfolder: listed outputs belong directly in the delivery folder."""
+    nested = [n for n in required if len(Path(n).parts) > 1]
+    if not nested or nested_ok:
+        return True, []
+    return False, [f"FAIL {n} is filed in a subfolder: deliver every listed output, scripts and their helper modules "
+                   "included, directly in the delivery folder (pass --nested-ok only if the task names this path)"
+                   for n in nested]
+
+
+def _local_imports(path):
+    import ast
+    try:
+        tree = ast.parse(Path(path).read_text())
+    except (SyntaxError, UnicodeDecodeError, OSError):
+        return set()
+    mods = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            mods |= {a.name.split('.')[0] for a in node.names}
+        elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
+            mods.add(node.module.split('.')[0])
+    return mods
+
+
+def check_imports(root, required):
+    """Every local module imported by a required .py file must sit in that file's folder."""
+    root = Path(root); lines = []
+    for name in required:
+        if not name.endswith('.py'):
+            continue
+        for script in find_all(root, name)[:1]:
+            for mod in sorted(_local_imports(script)):
+                if (script.parent / f"{mod}.py").exists() or (script.parent / mod / "__init__.py").exists():
+                    continue
+                hits = [h for h in find_all(root, f"{mod}.py") if h.parent != script.parent]
+                agents = root / ".agents"
+                if not hits and agents.is_dir():
+                    hits = list(agents.rglob(f"{mod}.py"))[:1]
+                if hits:
+                    lines.append(f"FAIL {name} imports {mod}, found only at {hits[0].relative_to(root)}: "
+                                 f"copy it next to {name} and deliver it")
+    return not lines, lines
+
+
+CODE_SUFFIXES = ('.py', '.jl', '.R', '.m', '.sh', '.ipynb')
+
+
+def has_code(root, folder):
+    """True if a code file lies in the root or the deliverable folder (depth <= 2, tool folders skipped)."""
+    for base in {Path(root), Path(root) / (folder or '.')}:
+        for dirpath, dirnames, files in os.walk(base):
+            dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS and not d.startswith('.')]
+            if len(Path(dirpath).relative_to(base).parts) >= 2:
+                dirnames[:] = []
+            if any(f.endswith(CODE_SUFFIXES) for f in files):
+                return True
+    return False
 
 
 def check_env_record(root, folder):
@@ -201,6 +265,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--root', default='.')
     ap.add_argument('--require', nargs='+', default=[])
+    ap.add_argument('--nested-ok', action='store_true')
     ap.add_argument('--rerun')
     ap.add_argument('--inputs')
     ap.add_argument('--expect', nargs='*')
@@ -212,7 +277,14 @@ def main(argv=None):
     root = Path(a.root).resolve(); results = []
     ok_loc, lines, folder = check_location(root, a.require) if a.require else (True, [], '.')
     results.append(ok_loc); print("\n".join(lines))
-    ok_env, line = check_env_record(root, folder); results.append(ok_env); print(line)
+    if a.require:
+        for ok, lines in (check_nested(a.require, a.nested_ok), check_imports(root, a.require)):
+            results.append(ok)
+            if lines: print("\n".join(lines))
+    if a.rerun or has_code(root, folder):
+        ok_env, line = check_env_record(root, folder); results.append(ok_env); print(line)
+    else:
+        print("NOTE no code delivered: environment record not required")
     if a.json:
         ok, lines = check_json(root, folder, a.json); results.append(ok); print("\n".join(lines))
     if a.ranges:

@@ -8,6 +8,16 @@ units: divide each by its stored scale factor and by the number of transients if
 Frequency convention used here: a resonance at delta ppm evolves as exp(+2 pi i (delta - carrier) f0 1e-6 t) and
 spectrum(fid) places it at +delta on ppm_axis. If your data use the opposite sign, pass np.conj(fid).
 """
+if __name__ == '__main__' and '--api' in __import__('sys').argv:  # signatures only; works without numpy
+    import ast as _ast, sys as _sys
+    for _n in _ast.parse(open(__file__).read()).body:
+        if isinstance(_n, (_ast.FunctionDef, _ast.ClassDef)) and not _n.name.startswith('_'):
+            _f = _n if isinstance(_n, _ast.FunctionDef) else next((m for m in _n.body if isinstance(m, _ast.FunctionDef) and m.name == '__init__'), None)
+            _a = _ast.unparse(_f.args).replace('self, ', '').replace('self', '') if _f else ''
+            _d = (_ast.get_docstring(_n) or '').strip().splitlines()
+            print(f"{_n.name}({_a})" + chr(10) + f"    {_d[0] if _d else ''}")
+    _sys.exit(0)
+
 import numpy as np
 
 
@@ -137,14 +147,3 @@ def lcm_fit(fid, basis, dwell_s, f0_hz, carrier_ppm, ppm_range=(0.2, 4.2), basel
                 ppm=x, data=y, residual_sd=sd, crlb_like=dict(zip(names, crlb.tolist())))
 
 
-def _print_api(namespace):
-    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
-    import inspect
-    for name, f in sorted(namespace.items()):
-        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
-            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
-            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
-
-
-if __name__ == '__main__' and '--api' in __import__('sys').argv:
-    _print_api(dict(globals()))

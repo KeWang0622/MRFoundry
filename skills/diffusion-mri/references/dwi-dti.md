@@ -2,7 +2,8 @@
 
 [MRFoundry](https://github.com/KeWang0622/MRFoundry) · [Reference index](https://github.com/KeWang0622/MRFoundry/blob/main/REFERENCES.md)
 
-**Summary.** Fit DTI on b <= 1000 s/mm² shells (DKI on all shells including the higher ones), convert gradient tables in one declared
+**Summary.** Fit DTI on the shells the study or task model supports (a stated single-tensor model: every shell; in vivo with
+shells above about 1500 s/mm²: the lower shells; never a hard-coded cutoff in an entrypoint), DKI on all shells, convert gradient tables in one declared
 frame (FSL bvecs: array axes with x negated when det(affine) > 0) and verify with a forward phantom, report
 MD in stated units, and QC residuals and outliers. Helpers: `scripts/gradient_frames.py`.
 

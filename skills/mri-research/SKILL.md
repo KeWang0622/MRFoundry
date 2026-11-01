@@ -10,7 +10,7 @@ description: >-
   skills.
 metadata:
   author: Ke Wang
-  version: "0.11.0"
+  version: "0.14.0"
 ---
 
 # MRFoundry: MRI Research Hub
@@ -22,11 +22,11 @@ Find the row that matches the task, open that one file or skill, and work from i
 | Task | Go to |
 |---|---|
 | Pulse sequences, RF and gradient waveforms, Pulseq export, Bloch simulation | `pulse-sequence-design` skill |
-| k-space to images; T1/T2/T2*, EPG, ASL, DCE and QSM maps | `mri-reconstruction` skill (QSM: `scripts/qsm_lib.py`) |
+| k-space to images; T1/T2/T2*, EPG, water-fat (PDFF), ASL, DCE and QSM maps | `mri-reconstruction` skill (QSM: `scripts/qsm_lib.py`) |
 | Diffusion (ADC, DTI/DKI, fractions, tractography) | `diffusion-mri` skill |
 | Hardware, shimming, field maps, SAR, PNS, receiver noise | `mri-hardware` skill |
 | Trained reconstruction networks | `deep-learning-recon` skill |
-| Studies, statistics, deliverable checks, papers | `mri-research-workflow` skill (always run its finish check) |
+| Studies, statistics, sample size, write-ups, manuscript reviews, proposals, deliverable checks | `mri-research-workflow` skill (run its writing check and finish check) |
 | **MR spectroscopy quantification** | `scripts/mrs_lib.py` here (below) and [quantitative MRI and spectroscopy](references/quantitative-and-spectroscopy.md) |
 | Image analysis: registration, segmentation, FreeSurfer, fMRI/GLM, fMRIPrep | [analysis and processing](references/analysis-processing.md) |
 | File formats (DICOM, NIfTI orientation, BIDS, ISMRMRD, twix, P-file) and datasets | [data and formats](references/data-and-formats.md) |

@@ -11,7 +11,7 @@
 
 **MRI research guidance for your coding agent — from the question to the paper.**
 
-[![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/MRFoundry/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/MRFoundry/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](LICENSE) ![Version](https://img.shields.io/badge/version-0.11.0-1f6feb?style=flat-square&labelColor=000000) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/MRFoundry)
+[![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/MRFoundry/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/MRFoundry/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](LICENSE) ![Version](https://img.shields.io/badge/version-0.14.0-1f6feb?style=flat-square&labelColor=000000) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/MRFoundry)
 
 </div>
 
@@ -187,10 +187,11 @@ The hub links to primary papers, courses, datasets and software across MRI. It s
 
 MRFoundry is evaluated in preregistered paired trials: the same agent, language model, tools, inputs and time limit, with or without the skills installed, on held-out tasks written without access to the skills and checked by independent graders.
 
-- **Sequence design with Bloch simulation of the exported sequence** (19 language models, three tasks): verified completion rose from 38 of 88 to 71 of 88 paired trials, and no model did worse with the skills.
-- **Across MRI domains** (interim, 31 October 2026; 487 paired trials, 31 tasks): 68% to 76% verified completion, with 73 pairs passing only with MRFoundry and 33 only without it. Gains are largest where MRI-specific details decide correctness (sequence design, spectroscopy, functional MRI, relaxometry); reconstruction, hardware, statistics and writing tasks that strong models already solve show no gain yet and are the focus of the next revision.
+- **Newest release on newly generated tasks** (0.14.0; new instances of 24 task families across ten MRI domains, generated and sealed by separate agents, opened only after the release was frozen): 43 of 49 paired trials verified with the skills and 31 of 49 without them (14 pairs gained, 2 lost; exact McNemar P = 0.004); in 3 of the gained pairs the run without skills failed only because required files were outside the delivery folder.
+- **Earlier held-out suites** (581 paired trials, 31 tasks, 19 language models; each suite used the release frozen before it): 67% to 74% verified completion, with 84 pairs passing only with MRFoundry and 46 only without it. Sequence design with Bloch simulation of the exported file: 60 of 118 to 97 of 118.
+- **Development record:** an earlier revision tested the same way on its own fresh tasks completed 75 of 112 against 70 without skills; its failures (deliverable layout, a UTE timing rule, QSM phase unwrapping) shaped the current release.
 
-Results, tasks, graders and every started trial are reported in the accompanying manuscript.
+Interim results, 31 October 2026, 22:00 PDT: 49 of 456 planned trials on the newly generated tasks, from the first models in a fixed preregistered order; the final analysis follows on 1 November. Results, tasks, graders and every started trial are reported in the accompanying manuscript.
 
 ## Reliability and scope
 
@@ -209,6 +210,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md) an
 ## Updates
 
 - **On main:** agent-owned application setup and project research memory across all seven skills.
+- **[v0.14.0](CHANGELOG.md):** deliverables checked where the task expects them, a slice-gradient check at the centre of every selective RF pulse (including UTE half pulses), and in-mask phase unwrapping with a self-check for QSM field maps.
+- **[v0.13.0](CHANGELOG.md):** coverage-safe EPI and Cartesian readouts, exact sub-raster timing, block-boundary gradient continuity and acquired-line checks for exported sequences; a lean KomaMRI install and a replay check for delivered simulations; claim-ledger source checks.
+- **[v0.12.0](CHANGELOG.md):** a writing checker for results sections, reviews, proposals and study plans; ICC confidence intervals and sample-size helpers; GRAPPA from a sampling mask, noise-floor-aware T2 fits, water-fat separation, off-resonance-corrected spiral reconstruction; crusher and safety measurements of exported sequences.
 - **[v0.11.0](CHANGELOG.md):** lean skill files with route tables, a finish check, and tested helpers for QSM, MRS, ASL, DCE, SNR units, shimming and EPI.
 - **v0.8.0:** venue-specific paper writing, evidence-linked project memory, diffusion/sequence guidance and annotated references.
 - **[v0.7.0](https://github.com/KeWang0622/MRFoundry/releases/tag/v0.7.0):** updated BART upstream guidance, reconstruction caveats and upstream monitoring.
@@ -238,7 +242,7 @@ If this helps your research or tooling, please cite it (GitHub's
   author  = {Wang, Ke},
   title   = {MRFoundry: MRI research guidance for coding agents},
   year    = {2026},
-  version = {0.11.0},
+  version = {0.14.0},
   url     = {https://github.com/KeWang0622/MRFoundry}
 }
 ```

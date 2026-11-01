@@ -146,3 +146,38 @@ assert ranked[-1][1] == 'cg-sense lam=0' and ranked[0][1] == 'cg-sense lam=0.05'
 print("rank_reconstructions (R=3, noisy simulation): " + "; ".join(f"{n} NRMSE {e:.3f}" for e, n in ranked))
 print("all B5 reconstruction-selection tests passed")
 
+
+
+# ---- B6: sampling pattern read from the mask, GRAPPA from the mask, phase-preserving combination ----
+for Rf, off, half in ((3, 1, 6), (2, 1, 8), (4, 2, 11), (3, 0, 12)):
+    mask = np.zeros(ny, bool); mask[off::Rf] = True; mask[ny // 2 - half:ny // 2 + half + 1] = True
+    pat = sampling_pattern(mask)
+    lo, hi = pat['acs']  # the contiguous run may include lattice lines adjacent to the calibration block
+    assert pat['R'] == Rf and pat['offset'] == off % Rf and pat['regular'] and ny // 2 - half - 1 <= lo <= ny // 2 - half and ny // 2 + half <= hi <= ny // 2 + half + 1, (Rf, pat)
+    noisy = ksp + 0.002 * (rng.normal(size=ksp.shape) + 1j * rng.normal(size=ksp.shape))
+    kg, _ = grappa_from_mask(noisy * mask[None, :, None], mask)
+    e, _ = nrmse(rss(ifft2c(ksp)), rss(ifft2c(kg)), obj > 0)
+    assert e < 0.06, (Rf, off, e)
+    print("sampling_pattern R=%d offset=%d ACS %s; grappa_from_mask NRMSE %.4f" % (Rf, off, pat['acs'], e))
+# a hand-derived estimate of the kind seen in an evaluation run (1/spacing of the first acquired lines) returns 2 for any R >= 3
+mask = np.zeros(ny, bool); mask[1::4] = True; mask[ny // 2 - 11:ny // 2 + 12] = True
+bad_R = max(2, int(round(1.0 / np.median(np.diff(np.flatnonzero(mask)[:8])))))
+assert bad_R == 2 and sampling_pattern(mask)['R'] == 4
+kb = grappa_2d(ksp * mask[None, :, None], bad_R, ksp[:, ny // 2 - 11:ny // 2 + 12, :])
+eb, _ = nrmse(rss(ifft2c(ksp)), rss(ifft2c(kb)), obj > 0)
+eg, _ = nrmse(rss(ifft2c(ksp)), rss(ifft2c(grappa_from_mask(ksp * mask[None, :, None], mask)[0])), obj > 0)
+assert eg < 0.03 and eb > 2 * eg, (eg, eb)
+print("a wrong R from a hand-derived pattern: NRMSE %.3f vs %.4f with sampling_pattern" % (eb, eg))
+comb = sense_combine(coil, sens)
+assert np.allclose(comb, img, atol=1e-10)
+print("sense_combine returns the complex image (linear in the data)")
+
+
+# B6: rank by the endpoint, not the image: a biased-scale candidate wins on NRMSE (scale fitted) but loses on ROI mean
+cand2 = {'exact': lambda k: rss(ifft2c(k)), 'scaled': lambda k: 0.8 * rss(ifft2c(k))}
+mfull = np.ones(ny, bool)
+roi_err = lambda rec, tr: abs(np.mean(np.abs(rec)[obj > 0]) / np.mean(np.abs(tr)[obj > 0]) - 1)
+r_img = rank_reconstructions(cand2, rss(coil), sens, mfull, n_rep=1, region=obj > 0, noise_scale=0.0)
+r_end = rank_reconstructions(cand2, rss(coil), sens, mfull, n_rep=1, noise_scale=0.0, metric=roi_err)
+assert abs(r_img[0][0] - r_img[1][0]) < 1e-9 and r_end[0][1] == 'exact' and r_end[1][0] > 0.15, (r_img, r_end)
+print("rank_reconstructions(metric=...) ranks by the endpoint (ROI mean error %.2f for a scaled candidate)" % r_end[1][0])

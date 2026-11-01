@@ -7,6 +7,16 @@ check that the fit recovers them; if the closed-form model is biased for your ti
 incomplete recovery between inversions with readout perturbations), fit against simulated signals
 with fit_dictionary instead. Tested with numpy 2.x (python test_qmri_fit.py).
 """
+if __name__ == '__main__' and '--api' in __import__('sys').argv:  # signatures only; works without numpy
+    import ast as _ast, sys as _sys
+    for _n in _ast.parse(open(__file__).read()).body:
+        if isinstance(_n, (_ast.FunctionDef, _ast.ClassDef)) and not _n.name.startswith('_'):
+            _f = _n if isinstance(_n, _ast.FunctionDef) else next((m for m in _n.body if isinstance(m, _ast.FunctionDef) and m.name == '__init__'), None)
+            _a = _ast.unparse(_f.args).replace('self, ', '').replace('self', '') if _f else ''
+            _d = (_ast.get_docstring(_n) or '').strip().splitlines()
+            print(f"{_n.name}({_a})" + chr(10) + f"    {_d[0] if _d else ''}")
+    _sys.exit(0)
+
 import numpy as np
 
 def _flat(images, mask):
@@ -14,17 +24,33 @@ def _flat(images, mask):
     m = np.ones(sh, bool) if mask is None else np.asarray(mask, bool)
     return im.reshape(-1, im.shape[-1]), m.ravel(), sh
 
-def fit_monoexp(te, images, mask=None, iters=20):
+def fit_monoexp(te, images, mask=None, iters=20, noise_sigma=None, n_channels=1):
     """S(TE) = S0 exp(-TE / T2) for magnitude multi-echo data (T2 or T2*). Returns (S0, T2).
-    Log-linear fit weighted by S^2, then Gauss-Newton refinement on the magnitude signal."""
+    Log-linear fit weighted by S^2, then Gauss-Newton refinement on the magnitude signal.
+    Low SNR at late echoes: pass noise_sigma (SD of ONE real noise component of the combined image; scalar or a
+    map of the image shape, e.g. 1 after snr_units_image, or from pseudo_replica) and n_channels (1 for a complex,
+    phase-preserving combination such as sense_combine; the number of channels for root-sum-of-squares). The
+    model is then sqrt(f^2 + 2 n_channels sigma^2) (magnitude noise floor), which removes the T2 overestimate."""
     te = np.asarray(te, float); Y, m, sh = _flat(np.abs(images), mask); S0 = np.full(len(Y), np.nan); T2 = S0.copy()
-    y = np.clip(Y[m], 1e-12, None); w = y ** 2; A = np.stack([np.ones_like(te), -te], 1)
-    L = np.log(y); ATA = np.einsum('ve,ei,ej->vij', w, A, A); ATb = np.einsum('ve,ei,ve->vi', w, A, L)
+    y = np.clip(Y[m], 1e-12, None)
+    c = None
+    if noise_sigma is not None:
+        sig = np.broadcast_to(np.asarray(noise_sigma, float), sh).reshape(-1)[m] if np.ndim(noise_sigma) else np.full(len(y), float(noise_sigma))
+        c = (2.0 * n_channels * sig ** 2)[:, None]
+        y0 = np.sqrt(np.clip(y ** 2 - c, (0.05 * y) ** 2, None))
+    else:
+        y0 = y
+    w = y0 ** 2; A = np.stack([np.ones_like(te), -te], 1)
+    L = np.log(y0); ATA = np.einsum('ve,ei,ej->vij', w, A, A); ATb = np.einsum('ve,ei,ve->vi', w, A, L)
     p = np.linalg.solve(ATA, ATb[..., None])[..., 0]; s0 = np.exp(p[:, 0]); r2 = np.clip(p[:, 1], 1e-6, None)
     for _ in range(iters):
-        e = np.exp(-np.outer(r2, te)); f = s0[:, None] * e; J = np.stack([e, -te * f], 2); r = y - f
+        e = np.exp(-np.outer(r2, te)); f = s0[:, None] * e; J = np.stack([e, -te * f], 2)
+        if c is not None:
+            mod = np.sqrt(f ** 2 + c); J = J * (f / mod)[..., None]; r = y - mod
+        else:
+            r = y - f
         H = np.einsum('vei,vej->vij', J, J) + 1e-12 * np.eye(2); g = np.einsum('vei,ve->vi', J, r)
-        d = np.linalg.solve(H, g[..., None])[..., 0]; s0 = s0 + d[:, 0]; r2 = np.clip(r2 + d[:, 1], 1e-6, None)
+        d = np.linalg.solve(H, g[..., None])[..., 0]; s0 = np.clip(s0 + d[:, 0], 1e-12, None); r2 = np.clip(r2 + d[:, 1], 1e-6, None)
     S0[m] = s0; T2[m] = 1 / r2
     return S0.reshape(sh), T2.reshape(sh)
 
@@ -169,7 +195,9 @@ def epg_cpmg(n_echoes, esp, t2, t1=1.0, refocus_deg=180.0, excite_deg=90.0):
 
 
 def epg_t2_dictionary(n_echoes, esp, t2_grid, b1_grid, t1=1.0, refocus_deg=180.0, excite_deg=90.0):
-    """Dictionary over (T2, B1 scale) for fit_dictionary: B1 scales both the excitation and refocusing angles.
+    """Dictionary over (T2, B1 scale) for fit_dictionary, built with the sample's own T1 (pass it).
+    B1 scales both the excitation and refocusing angles. Below 180 deg refocusing, stimulated echoes decay with T1:
+    a default T1 biases T2 by several percent.
     Refocusing angles a and 360 - a give identical echo trains, so B1 above and below the value that makes
     the refocusing angle 180 deg cannot be distinguished: keep the grid on one side or use a measured B1 map.
     Returns (dictionary [n_t2 * n_b1, n_echoes], params [n, 2] = (T2, B1))."""
@@ -184,9 +212,31 @@ def epg_t2_dictionary(n_echoes, esp, t2_grid, b1_grid, t1=1.0, refocus_deg=180.0
 def asl_cbf_pcasl(delta_m, m0, pld, label_duration, t1_blood=1.65, efficiency=0.85, partition=0.9):
     """PCASL CBF in ml/100 g/min: 6000 * lambda * dM * exp(PLD/T1b) / (2 alpha T1b M0 (1 - exp(-tau/T1b))).
     delta_m = control - label (same scaling as m0); times in s; t1_blood 1.65 s is the 3 T consensus value;
-    m0 must be the equilibrium (proton-density) signal, corrected if its TR was short."""
+    m0 must be the equilibrium (proton-density) signal, corrected if its TR was short (m0_finite_tr with the
+    tissue T1 map); efficiency must include background suppression (asl_effective_efficiency); pld may be an
+    array broadcast over slices (slice_delays)."""
     return 6000 * partition * np.asarray(delta_m) * np.exp(pld / t1_blood) / (
         2 * efficiency * t1_blood * np.asarray(m0) * (1 - np.exp(-label_duration / t1_blood)))
+
+
+def asl_effective_efficiency(alpha, n_pulses=0, eta_pulse=1.0):
+    """Labelling efficiency seen at readout with background suppression: alpha x eta^n (consensus convention,
+    Alsop et al. 2015: each background-suppression inversion multiplies the label by its inversion efficiency eta,
+    slightly below 1). Omitting it underestimates CBF by the factor eta^n. Use the protocol's own definition of eta."""
+    return float(alpha) * float(eta_pulse) ** int(n_pulses)
+
+
+def slice_delays(pld_first_s, acquisition_order, spacing_s, n_slices=None):
+    """Post-labelling delay of every slice INDEX for 2D multislice readouts: the slice acquired r-th (position r in
+    acquisition_order, 0-based) has PLD + r x spacing. acquisition_order lists slice indices in the order they were
+    excited (interleaved orders included). Returns an array indexed by slice index."""
+    order = [int(i) for i in acquisition_order]; n = int(n_slices or (max(order) + 1))
+    out = np.full(n, np.nan)
+    for r, z in enumerate(order):
+        out[z] = float(pld_first_s) + r * float(spacing_s)
+    if np.isnan(out).any():
+        raise ValueError('acquisition_order does not cover every slice index')
+    return out
 
 
 def asl_cbf_pasl(delta_m, m0, ti, ti1, t1_blood=1.65, efficiency=0.98, partition=0.9):
@@ -348,14 +398,3 @@ def fit_tofts_linear(t, ct, cp, extended=True):
     return tuple(v.reshape(sh) for v in o)
 
 
-def _print_api(namespace):
-    """Signatures and one-line summaries of the public functions (python <module>.py --api)."""
-    import inspect
-    for name, f in sorted(namespace.items()):
-        if inspect.isfunction(f) and not name.startswith('_') and f.__module__ == '__main__':
-            doc = ((inspect.getdoc(f) or '').splitlines() or [''])[0]
-            print(f"{name}{inspect.signature(f)}" + chr(10) + f"    {doc}")
-
-
-if __name__ == '__main__' and '--api' in __import__('sys').argv:
-    _print_api(dict(globals()))

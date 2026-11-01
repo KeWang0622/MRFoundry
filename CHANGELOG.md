@@ -5,6 +5,93 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] — 2026-10-31: deliverable layout, half-pulse RF centre, robust QSM field map
+
+- All skills 0.14.0. mri-research-workflow: deliver every listed output, scripts and the helper modules they
+  import included, directly in the delivery folder (no `scripts/` subfolder unless the task
+  names it). `finish_check.py` FAILS a required name inside a subfolder (`--nested-ok` when the task names that
+  path) and a required script whose imported local module lies in another folder or only under `.agents`, and
+  NOTEs code left in subfolders; for a generic item (a kind of script) the actual files go in `--require`.
+- pulse-sequence-design: the UTE half-pulse row now plays each half pulse on the slice-gradient plateau with its
+  centre on its last sample and cancels the remaining slice-gradient area with one ramp-down lobe before the ADC (a
+  pulse that continues into the ramp-down peaks where the slice gradient is nearly 0). `check_exported_seq.py` always measures the slice-select gradient at
+  the centre of each selective RF pulse as a fraction of its maximum during the pulse
+  (`rf_centre_slice_gradient_fraction_min`) and fails below 10 %. Endpoint guidance: compute reported endpoints with the code that
+  measures the delivered image and state the reading of an ambiguous region rule; one script per stage in the
+  workspace root.
+- mri-reconstruction: `qsm_lib.multiecho_field_hz` defaults to `method='spatial'`: the shortest echo difference is
+  unwrapped inside the mask only (`mask_unwrap`, least squares on wrapped neighbour differences of mask voxels, then
+  made congruent with the data), later echoes temporally. The old Laplacian default spread errors from noise-only
+  regions and steep fields into the brain (deep local-field correlation 0.43 against 0.94 on a test head with longer
+  echo spacing and an oblique anisotropic grid). New self-check `phase_misfit_fraction` (returned by
+  `run_pipeline`; field must reproduce every echo phase and not jump by 1/(2 dTE) between neighbours) and
+  `qsm_lib.py --selftest --shape --voxel --b0-dir --b0 --te` to test the chain with the data's own acquisition.
+
+## [0.13.0] — 2026-10-31: sampling requirements, exact timing and KomaMRI replay
+
+- All skills 0.13.0. pulse-sequence-design: `centered_readout` and `add_epi_readout` take `oversample` and `extra`
+  (readouts that cover an interval with samples beyond both ends and a step below the gap limit; exactly n samples
+  put the end samples on the interval ends, and the 6-digit amplitudes of a .seq move them inside about half the
+  time) and `adc_shift` (sub-raster k = 0 sample time); `slice_selective_excitation(center_shift=)` and
+  `split_interval` hit TE/TI/TR within the RF raster where `fill_delay` leaves up to half a block raster;
+  `kspace_grid(drop_off_grid=True)` for oversampled lines; `simulate_with_koma(backend='julia')` with
+  `koma_sim.jl` and `setup_koma_julia.sh` (lean Julia 1.10 + KomaMRICore install inside the workspace when the
+  komamripy install stalls; same signal as komamripy in the test); `replay_check` and
+  `relative_difference_up_to_phase` re-simulate the delivered file and compare; documented and tested
+  KomaMRI sign convention (never conjugate). The MRzero fallback is removed from the guidance. Checker: TE/TR/TI
+  tolerance 1 us by default (`--time-tol`, several `--tr` intervals), `--kx-cover`/`--max-gap` interval coverage
+  with a margin, oversampled readouts accepted by the grid check, 3D `--matrix NX NY NZ`, `--line-repeats` and
+  `--n-adc` (dummy repetitions with an ADC), acquisitions with and without ADC, and gradient continuity at block
+  and event boundaries (arbitrary gradients with extrapolated first/last values). Tests include an independent
+  integration of the trapezoids in the .seq text. `--rf-dead-time`, `--rf-ringdown-time` and `--adc-dead-time`
+  check dead times inside each block. The family table adds MP-RAGE (same timing in every cycle, null checked by
+  simulation with the actual spoiling), TSE phase-encode rewinding, UTE half-pulse pairs and spin-echo diffusion
+  (equal crushers in every volume, steady state before the first volume, equal signals without diffusion weighting).
+- mri-research-workflow: `write_check.py --claims` with `--trace`/`--ids` FAILS claim records whose source field is
+  not an entry of the source data; write-results asks for one record per source entry; write-proposal: controls
+  supported only by records whose analysis varies the factor, sample-size inputs printed per record and matched
+  to population, protocol and endpoint unit.
+- mri-hardware: size the design from the safety limit before building; simulated signals via KomaMRI with the
+  replay check. mri-research tool setup: lean KomaMRI install instead of a different simulator.
+
+## [0.12.0] — 2026-10-31 (evaluated, not released separately): writing checker, study-design statistics and fixes from held-out trials
+
+- All skills 0.12.0. mri-research-workflow: new `write_check.py` (+ test, standard library): word limits,
+  closed citation sets (.bib keys or corpus record IDs; DOIs, URLs and author-year citations fail), verbatim
+  review quotes filed under the right paragraph, IDs mentioned in the report, claim ledger against the texts
+  (every number in each listed text, same rounding, no-difference phrase in the sentence of a CI that includes
+  0, interpretation consistent with the CI, exploratory label in every clause, percentage points), task language
+  rules (`--require-in`, `--forbid-in`, word lists read from task.json), numbers traceable to the source with unit
+  conversions, JSON numbers stated in the prose, and prose schemas (keys, lists, integers, vocabularies).
+  Four short procedures (`write-results.md`, `write-review.md`, `write-proposal.md`, `plan-sample-size.md`)
+  replace the long route to the paper-writing guide for these tasks; SKILL.md lists six rules for every
+  write-up. `study_stats.py` adds `icc_ci` (F-based CIs for all six ICC forms, checked against psych::ICC),
+  `two_sample_t` (pooled or Welch, Hedges g), `n_per_group`, `n_paired` (normal or exact t),
+  `sd_of_differences`, `inflate_for_loss`, `combined_fraction`, `n_total_unbalanced`. `inline_helpers.py` (+ test) copies
+  tested helpers with their dependencies into a one-file entrypoint. `finish_check.py` asks for an environment
+  record only when code is delivered. Description covers write-ups, reviews and proposals.
+- mri-reconstruction: `sampling_pattern` and `grappa_from_mask` (R, offset and ACS read from the mask; a
+  hand-derived R was wrong in a held-out run), `sense_combine`, `rank_reconstructions(metric=)` for endpoint-based
+  selection, noise-floor model in `fit_monoexp(noise_sigma=, n_channels=)` (RSS T2 bias +16 % -> -0.5 % in the
+  test), EPG dictionary built with the sample's T1, `asl_effective_efficiency` (background suppression) and
+  `slice_delays`; new `fatwater_lib.py` (+ test): multi-peak water-fat separation with common R2*, field-map choice
+  regularized by a smooth field (prevents swaps in isolated high-fat regions), common-phase real amplitudes and
+  T1/flip-angle corrected PDFF, tested on 0-100 % vials at 1.5 T and 3 T; `mrfoundry_reconlib.py` adds
+  `offres_encoding`, `offres_least_squares` (exact off-resonance model for spiral/EPI) and `smooth_field`
+  (local-plane normalized convolution, exact for linear fields at edges); deep-learning-recon notes that a
+  classical candidate tuned to zero regularization is zero filling.
+- diffusion-mri: shells for ADC/DTI come from the study or task model (the former "b <= 1000" default made
+  entrypoints fail on other schemes); `adc_fit` uses every b-value unless `bmax` is given.
+- pulse-sequence-design: checker `--crusher-range` (spin-echo crusher moments in cycles/m on both sides of
+  every refocusing pulse), `--safety` (B1+rms, B1 peak, gradient rms, ramp PNS from the exported file with
+  limits) and margin warnings within 2 % of a limit; CPMG builder in the tests; Pulseq units stated.
+- mri-hardware: routes safety numbers of exported sequences and off-resonance correction; design-with-margin
+  rule. deep-learning-recon: catalogue moved to `references/methods-and-frameworks.md`; endpoint-based tuning;
+  manuscripts routed to mri-research-workflow.
+- Every helper module prints `--api` without importing numpy.
+
+Motivated by held-out A/B trials (skill-hurt and both-fail cases); no task instance values.
+
 ## [0.11.0] — 2026-10-31: lean retrieval, finish check and tested helpers
 
 - All skills 0.11.0: SKILL.md files rewritten as short route tables (task -> one helper or reference),
