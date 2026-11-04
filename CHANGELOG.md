@@ -5,6 +5,10 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- Use the approved blue-and-ivory MRI mascot in repository logos, icons and illustration aliases; retain the original outlined wordmarks. Remove the duplicate mascot from the README header and document current and historical artwork provenance.
+
 ## [0.14.0] — 2026-10-31: deliverable layout, half-pulse RF centre, robust QSM field map
 
 - All skills 0.14.0. mri-research-workflow: deliver every listed output, scripts and the helper modules they
