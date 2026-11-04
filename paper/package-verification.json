@@ -1,13 +1,13 @@
 {
-  "revision": 52,
+  "revision": 53,
   "file": "MRFoundry-paper-source.zip",
   "canonical_root": "MRFoundry-paper",
-  "sha256": "a7472c57a91bc0559728c63b77218c2d14a5ea2a6e33b9f27edfdc7c52cef242",
-  "bytes": 37291425,
-  "entries": 235,
-  "pdf_sha256": "e716a9afdc6da0e30ff89bdf36d9356a8f1b4ca7264629be8e9dead8d48483fa",
-  "workspace_qa_sha256": "1ce1cd8ecc7d9d7a14cb9ec553c78e7cad0d925152c98039bd5df5b3ae463a8d",
-  "inventory_sha256": "20eb77c43a808475a07f2e910326a550882ad2197297c2aede0bc91781950e97",
+  "sha256": "84f6d916b294bf2c0de86436e2eb60e2384ec521146c5bd718835657e238bdd1",
+  "bytes": 68893029,
+  "entries": 240,
+  "pdf_sha256": "c2cc49d9adaadc09f69583e8967e414faaab22f44b1b0d6a66dc38cd8a4fa9a7",
+  "workspace_qa_sha256": "4cd979a71491f772080d180e1dd227c6621dc3d5535cbfa97a604706b118d485",
+  "inventory_sha256": "a33b21436ef68738cb0fe7f0dd668745966d679a1a6dc590783ef69c73f50f0a",
   "pages": 12,
   "citations": 48,
   "portability_status": "passed",
@@ -46,9 +46,9 @@
       "svg_identical": true
     }
   },
-  "portability_proof_sha256": "1d0d8f614afc6f9408888124922cfbd389f3c42f7396690cd8855ab704f8a7b2",
-  "portability_log_sha256": "543113a70929475e1c987c777c91982151d2cf16ef63aea9c0f4649290432d10",
-  "rebuilt_pdf_sha256": "f5317a0f44e5b824d152444003172955c190924e5a651f700878b34ffb6b501d",
+  "portability_proof_sha256": "b032265c9bd61afe192ca56d648fb9fda1c436f493c97f9dd54bf8c7424864cd",
+  "portability_log_sha256": "8556c83b4d1fcc959cf1b37861c17443e2260146d735e76318ee3cec1b4bca8f",
+  "rebuilt_pdf_sha256": "df0761e4fd4d5c779ec9e2dd035170555ee53dae8328dd3fa993cfc017c26d98",
   "portability_checks": {
     "inventory_receipt_matches": true,
     "figure1:pptx_all_zip_member_bytes_identical": true,
@@ -90,7 +90,7 @@
   },
   "public_receipt": {
     "derived_from": "Completed local package verification",
-    "source_receipt_sha256": "320f0726ecf29ae82b8fb99abd42387c0b19b0d912cd8fa1e2eff2da221a4442",
+    "source_receipt_sha256": "4ca0a8a3bde01ce2b5f8bac82434dffa09a8170026bd6b09e83ae13127b86ee5",
     "omitted_local_path_fields": [],
     "note": "Archive/source hashes and tested results are retained. Local work logs and private review materials are not included. This verifies document and figure rebuilding, not new scientific runs."
   }

@@ -2,12 +2,14 @@
 
 **MRFoundry: Knowledge-Guided Agent Loops for End-to-End MRI Research**
 
-**WORKING DRAFT — 3 November 2026.** This author-side manuscript is not submitted or accepted. It introduces the MRFoundry toolbox, illustrates supervised MRI workflows, and reports a bounded comparison using [MRI Agent Bench](https://github.com/KeWang0622/MRIAgentBench).
+**WORKING DRAFT — 4 November 2026.** This author-side manuscript is not submitted or accepted. It introduces the MRFoundry toolbox, illustrates supervised MRI workflows, and reports a bounded comparison using [MRI Agent Bench](https://github.com/KeWang0622/MRIAgentBench).
 
-- **[Read the manuscript](manuscript.pdf)** — 12 pages in the supplied MRM template, including figures, tables and references; 3,315 body words and a 177-word abstract.
+- **[Read the manuscript](manuscript.pdf)** — 12 pages in the supplied MRM template, including figures, tables and references; 3,311 body words and a 177-word abstract.
 - **Supporting Information:** [MRI demonstration evidence](supporting-information/SI-workflow-evidence.pdf), [offline comparison tables](supporting-information/SI-offline-evaluation.pdf), and [evaluation protocol](supporting-information/SI-offline-protocol.pdf).
-- **[Download the portable source ZIP](MRFoundry-paper-source.zip)** — 37.3 MB; manuscript sources, editable figures, Supporting Information, and retained evidence.
+- **[Download the portable source ZIP](MRFoundry-paper-source.zip)** — 68.9 MB; manuscript sources, editable figures, Supporting Information, and retained evidence.
 - **[Package-verification receipt](package-verification.json)** — exact hashes and completed document/figure rebuild checks.
+
+Figures 2–5 now reuse Figure 1’s original researcher artwork. Six reporting corrections remove an unsupported sequence-adapter assertion and clarify the extruded-2D phantom, Figure 3 scale, saved diffusion residuals, post-sanitization FA checks, and the common host system-skill catalogs used in both evaluation arms. Numerical outcomes, table result cells, references and original evidence are unchanged. Three independent AI review scopes informed these corrections; they do not represent human peer review or journal approval.
 
 The [evidence archive](evidence/README.md) preserves original demonstration scripts, reports and input identities. The [historical evaluation record](evidence/evaluation/HISTORICAL-EXECUTION.md) documents retained settings and unavailable records; [input sources and licenses](evidence/INPUTS-AND-LICENSES.md) identify public datasets without duplicating full raw acquisitions. Private Hard tasks, scoring materials and per-task traces are excluded.
 
