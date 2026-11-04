@@ -1,0 +1,3 @@
+# Preserve approved document/archive bytes; do not normalize or text-diff them.
+*.pdf binary
+*.zip binary

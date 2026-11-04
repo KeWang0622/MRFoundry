@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Add the current MRFoundry working paper, three Supporting Information PDFs and one verified portable source archive. Keep the paper explicitly unsubmitted, retain the published evidence entry and distinguish document rebuilding from scientific reproduction.
+
 - Publish an inspectable paper-evidence archive with original demonstration scripts, saved reports, public input identities and historical evaluation provenance. Preserve existing outcomes and document archival-code portability limits.
 
 - Use the approved blue-and-ivory MRI mascot in repository logos, icons and illustration aliases; retain the original outlined wordmarks. Remove the duplicate mascot from the README header and document current and historical artwork provenance.
