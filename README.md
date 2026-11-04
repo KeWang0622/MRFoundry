@@ -36,7 +36,7 @@ Start with a request in your agent:
 
 The skills guide tool selection, setup, execution and checks. Scientific applications such as PyPulseq, KomaMRI and BART are installed separately as needed; the agent is instructed to handle routine setup in an isolated environment and test an upstream example before use.
 
-**[Explore the interactive tutorial →](https://kewang0622.github.io/slides/mrfoundry/)** — agents, skills, MRI examples and the self-improvement workflow. [Presentation information](presentations/README.md).
+**[Explore the interactive tutorial →](https://kewang0622.github.io/slides/mrfoundry/)** — agents, skills, MRI examples and the self-improvement workflow. [Presentation information](presentations/README.md). [Paper evidence](paper/README.md).
 
 <details>
 <summary>Install one skill, choose an agent, or update</summary>

@@ -1,0 +1,12 @@
+{
+  "original_file": "manuscript/work-v41/offline_data.py",
+  "original_sha256": "1477ac3c9f8c1467c9b313a14a6d4023cd05a7857d54502fbff6428a66286b08",
+  "extracted_functions": [
+    "mcn",
+    "boot"
+  ],
+  "extraction": "AST source spans copied verbatim; imports and explanatory module docstring added; no function execution",
+  "extracted_sha256": "fbbca125d528da407be5b64baa5a7c31dc0bfbf12ab0307ec93739893401b2c8",
+  "source_label": "retained handoff analysis source; not a new run",
+  "statistics_recomputed": false
+}

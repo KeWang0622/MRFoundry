@@ -1,0 +1,245 @@
+{
+  "scope": "Demonstration archive only; evaluation/ has separate provenance",
+  "operation": "Copy original scripts/reports/sequence/waveform arrays; extract public input identities; no scientific execution or metric calculation",
+  "files": [
+    {
+      "path": "demonstrations/sequence/original/design_sequence.py",
+      "historical_source": "outputs/golden-angle-gre/design_sequence.py",
+      "sha256": "32c5f638d2a8b3ef50ab6fcf073c401eea11c76827af3242c8d99d29af0ef1a6",
+      "bytes": 5253,
+      "role": "Original coarse-phantom sequence design/simulation record; no dense extension",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/original/simulate_koma.py",
+      "historical_source": "outputs/golden-angle-gre/simulate_koma.py",
+      "sha256": "6eac8795990a85513f5abe022a07a0a917ab1ea7be2566e2d395b23ef6d23a3d",
+      "bytes": 3982,
+      "role": "Original coarse-phantom sequence design/simulation record; no dense extension",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/original/golden_angle_radial_gre.seq",
+      "historical_source": "outputs/golden-angle-gre/golden_angle_radial_gre.seq",
+      "sha256": "c4a48a23df86531e0c49a6246a7e39a2a98e7104cf4fb87c07d29dc9cac7b309",
+      "bytes": 147490,
+      "role": "Original coarse-phantom sequence design/simulation record; no dense extension",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/original/design_report.json",
+      "historical_source": "outputs/golden-angle-gre/design_report.json",
+      "sha256": "a4b15628207f81b14e317bd7fccd3513f10585fd3b55c8c015a426adaf1aeb2f",
+      "bytes": 774,
+      "role": "Original coarse-phantom sequence design/simulation record; no dense extension",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/original/koma_report.json",
+      "historical_source": "outputs/golden-angle-gre/koma_report.json",
+      "sha256": "648399ad74e8ce66b1764ee4133a33fbfc51332f3fb552e503cdb76045b7f4f7",
+      "bytes": 789,
+      "role": "Original coarse-phantom sequence design/simulation record; no dense extension",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/original/pulseq_test_report.txt",
+      "historical_source": "outputs/golden-angle-gre/pulseq_test_report.txt",
+      "sha256": "92f741f9b1c7ea86a665b0260f936f026bb56feeda17f59d85b03356e44dae0f",
+      "bytes": 783,
+      "role": "Original coarse-phantom sequence design/simulation record; no dense extension",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/original/requirements.lock.txt",
+      "historical_source": "outputs/golden-angle-gre/requirements.lock.txt",
+      "sha256": "cc62ed6e0ec32f024b7985aaf029a4ed6d348d146ba5cfe0f30b89cc4624556e",
+      "bytes": 446,
+      "role": "Original coarse-phantom sequence design/simulation record; no dense extension",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/original/JuliaProject.toml",
+      "historical_source": "outputs/golden-angle-gre/JuliaProject.toml",
+      "sha256": "60795cf972d14a7370d8946467831cd64bf68a25abb7d29c3e0a35e17d3755f2",
+      "bytes": 616,
+      "role": "Original coarse-phantom sequence design/simulation record; no dense extension",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/original/JuliaManifest.toml",
+      "historical_source": "outputs/golden-angle-gre/JuliaManifest.toml",
+      "sha256": "53dfb32c1d260ea5436852d4773d6247a438b38e7239270d549f4336f1e11632",
+      "bytes": 66512,
+      "role": "Original coarse-phantom sequence design/simulation record; no dense extension",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/original/trajectory.npz",
+      "historical_source": "outputs/golden-angle-gre/trajectory.npz",
+      "sha256": "2999c9c223ea2d7bbd3e3ecf80596ce6b46ae9af8ae3cecd193cb61309f9ca9b",
+      "bytes": 139502,
+      "role": "Original coarse-phantom sequence design/simulation record; no dense extension",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/later-audit/extract_sequence_evidence.py",
+      "historical_source": "outputs/mrm-toolbox/sequence-evidence-v22/extract_sequence_evidence.py",
+      "sha256": "f5e823f11c4003b5243f253e88cbdb3dc592b58c87e786c1ba06f52d9a5ce0fb",
+      "bytes": 11933,
+      "role": "Later readback/audit source; historical figure/table references are not current numbering",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/later-audit/compile_evidence.py",
+      "historical_source": "outputs/mrm-toolbox/sequence-evidence-v22/compile_evidence.py",
+      "sha256": "84f8f64bb748afb9f3ede094f73ecf8464940ec54be1cb071bd16f154d1efdfa",
+      "bytes": 4987,
+      "role": "Later readback/audit source; historical figure/table references are not current numbering",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/later-audit/sequence-audit.json",
+      "historical_source": "outputs/mrm-toolbox/sequence-evidence-v22/sequence-audit.json",
+      "sha256": "2109f285fc147c52524497bc3b7a9d49522fcdaea81379ec8a333e567f612ff5",
+      "bytes": 5070,
+      "role": "Later readback/audit source; historical figure/table references are not current numbering",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/later-audit/sequence-arrays.npz",
+      "historical_source": "outputs/mrm-toolbox/sequence-evidence-v22/sequence-arrays.npz",
+      "sha256": "e72149cea4273542a419747799f54a7b5adbbf95dc7c8fa8583fc3887eb4dd21",
+      "bytes": 228208,
+      "role": "Later readback/audit source; historical figure/table references are not current numbering",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/sequence/later-audit/waveforms-first-three-TR.json",
+      "historical_source": "outputs/mrm-toolbox/sequence-evidence-v22/waveforms-first-three-TR.json",
+      "sha256": "184414d655658c14253a9a4d7763609089fa449913a35d9c9dfadb19b1b01599",
+      "bytes": 350906,
+      "role": "Later readback/audit source; historical figure/table references are not current numbering",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/acquired/code/run_m4raw.py",
+      "historical_source": "outputs/mrm-toolbox/real-data-v19/code/run_m4raw.py",
+      "sha256": "c7d4d18a1db19a2cabfb8a2582c9706c0bdf7db2a0053a9915e1a5dbfc6b83e1",
+      "bytes": 11146,
+      "role": "Original acquired-data demonstration code or recorded environment",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/acquired/code/finalize_evidence.py",
+      "historical_source": "outputs/mrm-toolbox/real-data-v19/code/finalize_evidence.py",
+      "sha256": "ef1412cd9bf30181332c44f2f70d3db6182134bf596ab69ad483b4933a02e16a",
+      "bytes": 14281,
+      "role": "Original acquired-data demonstration code or recorded environment",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/acquired/code/run_dwi.py",
+      "historical_source": "outputs/mrm-toolbox/real-data-v19/code/run_dwi.py",
+      "sha256": "6a956ee1c499e54e75b08555d12958ba0aa4299b1b63fd5def68bfbd3d1fc748",
+      "bytes": 6357,
+      "role": "Original acquired-data demonstration code or recorded environment",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/acquired/code/requirements-scientific.txt",
+      "historical_source": "outputs/mrm-toolbox/real-data-v19/code/requirements-scientific.txt",
+      "sha256": "661fb62ec776e489f6d380dff36957ecec48ca4f7f40efa4fe4b98fb8abc4dc5",
+      "bytes": 135,
+      "role": "Original acquired-data demonstration code or recorded environment",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/acquired/code/environment-full.lock.txt",
+      "historical_source": "outputs/mrm-toolbox/real-data-v19/code/environment-full.lock.txt",
+      "sha256": "d1ff34df5aa75601b9983e5bd768c0c24a3dacd0f53790501ec59dd829d909a3",
+      "bytes": 699,
+      "role": "Original acquired-data demonstration code or recorded environment",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/acquired/m4raw/report.json",
+      "historical_source": "outputs/mrm-toolbox/real-data-v19/m4raw/report.json",
+      "sha256": "ea0cb0adb2708b8409ca078fd5e46ce70f546a765a85b3ff6301f42a93e1e4fc",
+      "bytes": 8233,
+      "role": "Saved M4Raw report; initial and final solvers explicitly distinguished",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/acquired/m4raw/initial-sense-report.json",
+      "historical_source": "outputs/mrm-toolbox/real-data-v19/m4raw/initial-sense-report.json",
+      "sha256": "47665340b56ad64afc5dc5e14ad901aa475e103dbe28814ec627f4c208955cde",
+      "bytes": 6498,
+      "role": "Saved M4Raw report; initial and final solvers explicitly distinguished",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/acquired/m4raw/diagnostic-roi.json",
+      "historical_source": "outputs/mrm-toolbox/real-data-v19/m4raw/diagnostic-roi.json",
+      "sha256": "f09cbc9a2db421f571d609c0564e73dd13d9a95d77589e0a9ffede8596db94c9",
+      "bytes": 933,
+      "role": "Saved M4Raw report; initial and final solvers explicitly distinguished",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/acquired/source/calibration-first-diagnostic.json",
+      "historical_source": "outputs/mrm-toolbox/real-data-v19/source/calibration-first-diagnostic.json",
+      "sha256": "e20f25fd1ac2491ce67d25bd7a31c6f953d0255f8bfc5ddcdce03a2b4b19f422",
+      "bytes": 1065,
+      "role": "Saved diagnostic or selected public acquisition identity",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/acquired/source/calibration-diagnostic.json",
+      "historical_source": "outputs/mrm-toolbox/real-data-v19/source/calibration-diagnostic.json",
+      "sha256": "feee66443fa35f502a120c7df9327f4cc44dc912dc70ded65953ed53b171f488",
+      "bytes": 1019,
+      "role": "Saved diagnostic or selected public acquisition identity",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/acquired/source/l1-diagnostic.json",
+      "historical_source": "outputs/mrm-toolbox/real-data-v19/source/l1-diagnostic.json",
+      "sha256": "21eb87fdaf1e7dcd4daf93b7b3c17e0160ef238d41e229d8cf133f9cb51e2014",
+      "bytes": 373,
+      "role": "Saved diagnostic or selected public acquisition identity",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/acquired/source/selected-acquisition.json",
+      "historical_source": "outputs/mrm-toolbox/real-data-v19/source/selected-acquisition.json",
+      "sha256": "fa954199998dee094f4857b1f2651b04e6bfa7dbf041c61a247aee0a785214d4",
+      "bytes": 638,
+      "role": "Saved diagnostic or selected public acquisition identity",
+      "original_bytes_preserved": true
+    },
+    {
+      "path": "demonstrations/acquired/diffusion/report.json",
+      "historical_source": "outputs/mrm-toolbox/real-data-v19/dwi/report.json",
+      "sha256": "5f7ff7f8789ae48d94f6d88784c68daba9e6fbfa5002a268a957ffba508ba8d5",
+      "bytes": 4578,
+      "role": "Saved supplemental Stanford HARDI tensor analysis report",
+      "original_bytes_preserved": true
+    }
+  ],
+  "generated_documents": [
+    "README.md",
+    "INPUTS-AND-LICENSES.md",
+    "demonstrations/input-identities.json",
+    "demonstrations/acquired/source/selected-file-inventory.tsv",
+    "verify-demo-archive.py"
+  ],
+  "not_reproducibility_claim": "These original workspace scripts have not been ported or rerun; recorded environment versions are evidence, not a tested installation guarantee.",
+  "generated_file_hashes": {
+    "README.md": "2ede7061f57af27473eb27a1896fe51faa70f4ca443351484b0c7ab5c192e465",
+    "INPUTS-AND-LICENSES.md": "9b44d0855529c9785bf068e44854b183e921e45a49c1243b25f695f560e95be0",
+    "demonstrations/input-identities.json": "3b89794e5efa5669bcea3f848ededf9e3e64aea5478f8b60148bfdba46414083",
+    "demonstrations/acquired/source/selected-file-inventory.tsv": "078eeb1f853ea3417ec4bbe3703c39e62f8af5107decab14c417ec9e902f2d38",
+    "verify-demo-archive.py": "fd7b2f8e06b69ea04aa8eb873336fdae33329631068d406867338faaa0ab12f3"
+  }
+}

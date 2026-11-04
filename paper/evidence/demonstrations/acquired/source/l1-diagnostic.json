@@ -1,0 +1,16 @@
+[
+  {
+    "stride": 2,
+    "seconds": 2.0818642920348793,
+    "image_nrmse": 0.30333995819091797,
+    "data_residual": 0.30879274010658264,
+    "heldout_residual": 0.8572069406509399
+  },
+  {
+    "stride": 4,
+    "seconds": 1.933851124951616,
+    "image_nrmse": 0.33618998527526855,
+    "data_residual": 0.24835798144340515,
+    "heldout_residual": 0.9138197302818298
+  }
+]

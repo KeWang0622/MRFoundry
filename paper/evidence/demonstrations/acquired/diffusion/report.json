@@ -1,0 +1,160 @@
+{
+  "task": "Inspect acquired diffusion data, fit a tensor summary, and report the maps with fit checks and interpretation limits.",
+  "source": {
+    "name": "Stanford HARDI",
+    "url": "https://purl.stanford.edu/yx282xq2090",
+    "authors": "Rokem, Yeatman, Pestilli and Wandell (2013)",
+    "license": "Open Data Commons Public Domain Dedication and License1.0",
+    "license_url": "https://opendatacommons.org/licenses/pddl/1-0/",
+    "data_urls": [
+      "https://stacks.stanford.edu/file/druid:yx282xq2090/dwi.nii.gz",
+      "https://stacks.stanford.edu/file/druid:yx282xq2090/dwi.bvals",
+      "https://stacks.stanford.edu/file/druid:yx282xq2090/dwi.bvecs"
+    ],
+    "hashes": {
+      "dwi.nii.gz": {
+        "md5": "0b18513b46132b4d1051ed3364f2acbc",
+        "sha256": "2c22516114eb4acbedf0052bc4fda6d0549a8c34758da69164a219d39bafd656"
+      },
+      "dwi.bvals": {
+        "md5": "4e08ee9e2b1d2ec3fddb68c70ae23c36",
+        "sha256": "aa9399094599ddd516603ad81272892bdda85c2d9bee5314086efce8db231e4d"
+      },
+      "dwi.bvecs": {
+        "md5": "4c63a586f29afc6a48a5809524a76cb4",
+        "sha256": "42dd0ed0b39824bac888be7f3d68e9dd4c6a85f1c8bfa26a050653c618111723"
+      }
+    },
+    "source_record_sha256": "44b99e68406a969f6fa97601ba7b64c8babee337cc037f95c7ff1bd16ec45602"
+  },
+  "input": {
+    "acquired_human_data": true,
+    "raw_kspace": false,
+    "shape": [
+      81,
+      106,
+      76,
+      160
+    ],
+    "voxel_mm": [
+      2.0,
+      2.0,
+      2.0
+    ],
+    "native_axes": [
+      "R",
+      "A",
+      "S"
+    ],
+    "b0_count": 10,
+    "DW_count": 150,
+    "b_values_s_mm2": [
+      0.0,
+      2000.0
+    ],
+    "direction_norm_range": [
+      0.9999922788701922,
+      1.0000064760290306
+    ],
+    "preprocessing": "Provider already applied motion correction to meanb0 with SPM/mrVista. No new preprocessing here."
+  },
+  "method": {
+    "DIPY": "1.12.1",
+    "fit": "TensorModel WLS",
+    "mask": "median_otsu(radius3,numpass1,dilate1), holes filled independently per displayed axial slice",
+    "slices_zero_based": [
+      30,
+      38,
+      46
+    ],
+    "prediction_S0": "Mean of10b0 volumes",
+    "residual": "L2(Sfit-Smeasured)/L2(Smeasured) pervoxel; all160volumes"
+  },
+  "metrics_by_slice": {
+    "30": {
+      "mask_voxels": 4799,
+      "median_relative_signal_residual": 0.10237802692012768,
+      "residual_p10_p90": [
+        0.0544300921364488,
+        0.21523084486845218
+      ],
+      "FA_range_in_mask": [
+        0.0,
+        0.9999961219125545
+      ],
+      "MD_range_mm2_s": [
+        5.000068246931515e-10,
+        0.002530335470419207
+      ]
+    },
+    "38": {
+      "mask_voxels": 4834,
+      "median_relative_signal_residual": 0.08946366037424554,
+      "residual_p10_p90": [
+        0.04688771848255138,
+        0.16487632641814853
+      ],
+      "FA_range_in_mask": [
+        0.0,
+        0.9999973352390528
+      ],
+      "MD_range_mm2_s": [
+        5.000068246931515e-10,
+        0.0026507006408728363
+      ]
+    },
+    "46": {
+      "mask_voxels": 4365,
+      "median_relative_signal_residual": 0.09047636202199502,
+      "residual_p10_p90": [
+        0.04668037778931879,
+        0.14898342544065482
+      ],
+      "FA_range_in_mask": [
+        0.0,
+        0.9999978117147958
+      ],
+      "MD_range_mm2_s": [
+        5.000068246931515e-10,
+        0.0026945844262463736
+      ]
+    }
+  },
+  "display": {
+    "b0_window": [
+      0,
+      3989.3408203125
+    ],
+    "FA_window": [
+      0,
+      1
+    ],
+    "MD_window_mm2_s": [
+      0,
+      0.003
+    ],
+    "residual_window": [
+      0,
+      0.2
+    ],
+    "native_render": "flipud(array.T) fromsourceRAS; leftL,rightR,topA",
+    "orientation_labels_supported_by_affine": true,
+    "PNG": "nearest-neighbor6x enlargement; no generated detail",
+    "isotropic_in_plane_mm": 2,
+    "b0_common_window_across_slices": true
+  },
+  "software": {
+    "python": "3.12.14 (main, Aug 25 2026, 13:50:33) [Clang 22.1.3 ]",
+    "dipy": "1.12.1",
+    "numpy": "2.5.3",
+    "nibabel": "5.4.2",
+    "platform": "macOS-26.6.2-arm64-arm-64bit"
+  },
+  "limitations": [
+    "Illustrative tensor summary on one acquired subject; b=2000s/mm2 is not an optimal conventional DTI protocol",
+    "No susceptibility/eddy correction or independent verification of the source preprocessing and gradient frame",
+    "Unit-norm and volume-count checks do not establish correct bvector-to-anatomy alignment",
+    "Fit residual is model agreement, not a pass/fail clinical threshold",
+    "No tractography, group statistics, biological diagnosis or agent-performance benchmark"
+  ]
+}
