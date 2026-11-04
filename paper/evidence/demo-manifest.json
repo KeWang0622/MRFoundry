@@ -239,7 +239,7 @@
     "README.md": "2ede7061f57af27473eb27a1896fe51faa70f4ca443351484b0c7ab5c192e465",
     "INPUTS-AND-LICENSES.md": "9b44d0855529c9785bf068e44854b183e921e45a49c1243b25f695f560e95be0",
     "demonstrations/input-identities.json": "3b89794e5efa5669bcea3f848ededf9e3e64aea5478f8b60148bfdba46414083",
-    "demonstrations/acquired/source/selected-file-inventory.tsv": "078eeb1f853ea3417ec4bbe3703c39e62f8af5107decab14c417ec9e902f2d38",
+    "demonstrations/acquired/source/selected-file-inventory.tsv": "41fea4081cb9bd9802d3e8fc3d1948a2c3e16e8102856bea37ab5b2588e65bc1",
     "verify-demo-archive.py": "fd7b2f8e06b69ea04aa8eb873336fdae33329631068d406867338faaa0ab12f3"
   }
 }
