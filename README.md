@@ -185,11 +185,16 @@ The hub links to primary papers, courses, datasets and software across MRI. It s
 
 ## Does it help?
 
-MRFoundry is evaluated in preregistered paired trials: the same agent, language model, tools, inputs and time limit, with or without the skills installed, on held-out tasks written without access to the skills and checked by independent graders.
+The **3 November 2026 offline evaluation** in [MRI Agent Bench](https://github.com/KeWang0622/MRIAgentBench) compares the same agent, model, task inputs, tools and time budget with and without the frozen **MRFoundry 0.14.0** skills. The skills arm also receives a project-level instruction explaining how to find them. Web search is disabled. **Verified completion** means every automated task check passed.
 
-The current release (0.14.0) was tested on new instances of 24 task families across ten MRI domains, generated and sealed by separate agents and opened only after the release was frozen. The tests were preregistered: a first run, an independent repeat of every task-model combination of the first run, and further models in a fixed order. Across all 324 paired trials from ten language models, the agent completed 242 with the skills and 197 without them (75% versus 61%; difference 14 points, 95% CI 6 to 23, bootstrap over task families and models). In the first run it completed 112 of 146 with the skills and 88 without them (exact McNemar P < 0.001), and an independent repeat of 95 task-model combinations again favored the skills (23 versus 5; sign test P < 0.001). Completion was higher in nine of ten domains, equal in one, none lower. In sequence design with Bloch simulation of the exported file, completion rose from 42 to 59 of 98. No model completed fewer tasks with the skills; in 4 of the gained pairs the run without skills failed only because required files were outside the delivery folder.
+| Set | Without skills | With MRFoundry | Change in completion rate, percentage points (95% CI) |
+|---|---:|---:|---:|
+| Core (240 pairs) | 162/240 (67.5%) | 188/240 (78.3%) | +10.8 (+0.8 to +21.2) |
+| Hard (134 pairs) | 49/134 (36.6%) | 60/134 (44.8%) | +8.2 (−3.9 to +19.7) |
 
-Final results at the preregistered cutoffs (1 November 2026, 14:00 UTC; 2 November 2026, 05:00 UTC), with ten of 19 planned models reached. Results, tasks, graders and every started trial are reported in the accompanying manuscript. Earlier revisions and earlier held-out suites, including domains in which earlier revisions did not help, are reported in the manuscript's Supporting Information.
+Core covers 24 task types across ten MRI domains and ten models, with one sealed instance per task type. Hard combines two model cohorts with different task coverage; its confidence interval includes zero. Improvements are not uniform across MRI domains. This is a maintainer-run preview on one agent host; independent expert review and reliability across repeated executions remain unassessed.
+
+Browse the [public Core tasks](https://github.com/KeWang0622/MRIAgentBench/tree/main/families) and the [full results, methods and limitations](https://github.com/KeWang0622/MRIAgentBench/blob/main/docs/OFFLINE-RESULTS.md). Only aggregate Hard results are public; Hard task materials, per-task outcomes and execution traces remain private.
 
 ## Reliability and scope
 
