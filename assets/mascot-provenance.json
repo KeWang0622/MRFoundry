@@ -1,0 +1,49 @@
+{
+  "updated": "2026-11-03",
+  "artwork_source": "OpenAI image generation; user-approved clean-alpha MRI mascot",
+  "scientific_data": false,
+  "approved_asset": "mri-mascot.png",
+  "approved_sha256": "38441d0eeaf6ab83d9880368f5e31b7fc5f8be6b575101018b1969f8503332c7",
+  "source_concept_sha256": "47df99ebc2d862d6ade9a24a9102861ea075830e654701e447672e5241a7116c",
+  "generation_prompt": "mascot-generation-prompt.txt",
+  "alpha_cleanup_prompt": "mascot-alpha-prompt.txt",
+  "composition": "SVG lockups embed the approved raster mascot beside the original outlined wordmark. The mascot is not a vector redraw.",
+  "derivatives": "Trim transparent padding; resize the trimmed image for icon sizes. The full-size mascot aliases are identical to the approved source.",
+  "original_wordmarks_unchanged": {
+    "mrfoundry-wordmark-light.svg": "9f99ccd6bee6c5727aaf73550b1939158dea67d03f9c8102a823762f5372c78c",
+    "mrfoundry-wordmark-dark.svg": "0a61d063b3092d3400c3ff13f005155ab6d17355c6949ca1dfc4ef4fcc91e929"
+  },
+  "aliases": {
+    "mri-mascot-transparent.png": "mri-mascot.png",
+    "mri-agent-transparent.png": "mri-mascot.png",
+    "logo.svg": "mrfoundry-mark.svg",
+    "mrfoundry-mark-light.svg": "mrfoundry-mark.svg",
+    "mrfoundry-mark-dark.svg": "mrfoundry-mark.svg"
+  },
+  "asset_sha256": {
+    "favicon.ico": "38bceb961288963b24b18ed8ad024e2208a80a43b2a734c20323aca04e832b8c",
+    "logo.svg": "0540792d4e7756cfe00aa0956b93ebb496026dab6a0886fdfa8e3afa66c06b6c",
+    "mark-108.png": "817df59a26f8763b3adf6c6bd0280542df9730a2dd8811ac55b074587c0bc2f1",
+    "mark-128.png": "59a147e4f8cf16166896dc94a24b9a138d8d744659fe8989330a6366d5440eca",
+    "mark-24.png": "663bc4694dfc892cd4fd07dac48ebdea942961d2eadfef8624794b93c13b2b8a",
+    "mark-256.png": "6e893df664f8f1dfa90b4fee28fa29e3410137376d0ed005c03370be39edd2b2",
+    "mark-32.png": "e9cc48873cda0c3b681e9e4d5e5f65effbc2913adef34e22203618199f3e7242",
+    "mark-48.png": "3741a0095b9e11bfcf3102c60f7bfea1146ec224503f20dafe8610ade52bdb8d",
+    "mark-512.png": "9582472cd072aefb5153f17316cc3e00be6942de0c91644542e287aaf2d62184",
+    "mark-64.png": "c38a2d0019b4798057f50b4d2706756e17ede2747c6e54a7c264ce64950cfc6e",
+    "mrfoundry-logo-dark.png": "ceb06ed8460b420f0c385ecb7cc47d90777200a024b1b447fcaafb9f9195d460",
+    "mrfoundry-logo-dark.svg": "14840bb8496edb6b9d913e53b26981316ac6463fe17fd4a59de8e7858ee15957",
+    "mrfoundry-logo-light.png": "4a7f3f986914ea3b80accb9e50925d56051c75f1ad7a50bdb94edc6ba88c0a5c",
+    "mrfoundry-logo-light.svg": "94fc1af0b8d8c1ac993a703e97dfff32095a1ce2afdbb01cba22c66e505fa16e",
+    "mrfoundry-mark-dark.svg": "0540792d4e7756cfe00aa0956b93ebb496026dab6a0886fdfa8e3afa66c06b6c",
+    "mrfoundry-mark-light.svg": "0540792d4e7756cfe00aa0956b93ebb496026dab6a0886fdfa8e3afa66c06b6c",
+    "mrfoundry-mark.png": "9582472cd072aefb5153f17316cc3e00be6942de0c91644542e287aaf2d62184",
+    "mrfoundry-mark.svg": "0540792d4e7756cfe00aa0956b93ebb496026dab6a0886fdfa8e3afa66c06b6c",
+    "mrfoundry-mascot-trimmed.png": "4041656387757ecd7f679d9fcb25dc4291f4a8b42ab72496fe2bb4a9332e2acd",
+    "mrfoundry-wordmark-dark.svg": "0a61d063b3092d3400c3ff13f005155ab6d17355c6949ca1dfc4ef4fcc91e929",
+    "mrfoundry-wordmark-light.svg": "9f99ccd6bee6c5727aaf73550b1939158dea67d03f9c8102a823762f5372c78c",
+    "mri-agent-transparent.png": "38441d0eeaf6ab83d9880368f5e31b7fc5f8be6b575101018b1969f8503332c7",
+    "mri-mascot-transparent.png": "38441d0eeaf6ab83d9880368f5e31b7fc5f8be6b575101018b1969f8503332c7",
+    "mri-mascot.png": "38441d0eeaf6ab83d9880368f5e31b7fc5f8be6b575101018b1969f8503332c7"
+  }
+}
