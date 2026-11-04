@@ -1,0 +1,22 @@
+{
+  "engine": "KomaMRI via komamripy",
+  "official_epi_smoke_test_pass": true,
+  "full_exported_sequence_simulated": true,
+  "spins": 13497,
+  "phantom": "KomaMRI built-in brain2D ss=16 replicated at 33 z positions from -4 to +4 mm",
+  "adc_samples": 8192,
+  "finite_nonzero_signal": true,
+  "cpu_seconds_rf10us": 8.164917945861816,
+  "rf_step_us": [
+    10,
+    5
+  ],
+  "gradient_max_step_us": 10,
+  "relative_signal_change_rf_step_halving": 0.0007095703244156769,
+  "limitations": [
+    "Coarse phantom; spatial convergence not established.",
+    "Uniform receive and transmit sensitivity; no gradient delays/eddy currents or motion.",
+    "Phantom default relaxation and chemical-shift parameters retained.",
+    "No PNS, SAR, gradient heating or vendor interpreter validation."
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "scan_id": "2022061203",
+  "sequence": "T2",
+  "repetition": "1",
+  "participant_split": "validation",
+  "motion_type": "none",
+  "relative_path": "multicoil_val/2022061203_T201.h5",
+  "source_archive": "M4RawV1.5_multicoil_val.zip",
+  "source_member": "multicoil_val/2022061203_T201.h5",
+  "bytes": "12214819",
+  "source_crc32": "aebe5fde",
+  "slices": "18",
+  "coils": "4",
+  "frequency_encode": "256",
+  "phase_encode": "256",
+  "kspace_dtype": "complex64",
+  "target_dtype": "float32",
+  "acquired_pe_lines": "195",
+  "rss_relative_l2": "8.817296017922907e-08",
+  "acquisition": "AXT2",
+  "native_axis_order": "slice,coil,FE,PE"
+}

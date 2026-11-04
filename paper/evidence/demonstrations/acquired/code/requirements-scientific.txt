@@ -1,0 +1,9 @@
+sigpy==0.1.27
+dipy==1.12.1
+numpy==2.5.3
+scipy==1.18.1
+h5py==3.16.0
+nibabel==5.4.2
+matplotlib==3.11.2
+Pillow==12.3.0
+PyWavelets==1.10.0

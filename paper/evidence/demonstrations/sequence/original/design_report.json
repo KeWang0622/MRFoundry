@@ -1,0 +1,33 @@
+{
+  "pypulseq_version": "1.5.0.post1",
+  "simulation_only": true,
+  "fov_mm": 220.0,
+  "matrix": 64,
+  "resolution_mm": 3.4375,
+  "slice_mm": 5.0,
+  "flip_deg": 10.0,
+  "te_ms": 5.000000000000317,
+  "tr_ms": 15.0,
+  "spokes": 128,
+  "dummy_excitations": 200,
+  "duration_s": 4.919999999999982,
+  "golden_angle_deg": 111.24611797498108,
+  "timing_pass": true,
+  "peak_gradient_mTm": [
+    7.808801495385486,
+    7.8087085795119835,
+    12.735396049939453
+  ],
+  "peak_slew_Tms": [
+    88.96746495335336,
+    88.9664063428303,
+    125.2661906554341
+  ],
+  "rms_gradient_mTm": [
+    2.1097938836018497,
+    2.11482743297862,
+    5.2872618362691
+  ],
+  "trajectory_error_cycles_per_m": 1.4028046280145645e-08,
+  "roundtrip_trajectory_error_cycles_per_m": 0.0016200239131194394
+}

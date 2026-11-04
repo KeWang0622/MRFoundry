@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "scope": "Historical offline Core/Hard execution; static-source curation only",
+  "compiled_on": "2026-11-03",
+  "study_checkout": {
+    "commit": "8cede909b1808bc09dea00cc1dd3cd0789c74ac6",
+    "clean": true,
+    "commit_role": "handoff snapshot, not immutable per-trial deployed state"
+  },
+  "evaluated_skills_commit": "bd49b9556146bcd70ab1026c52d67713f4cf2e7f",
+  "source_policy": "Sources hashed and essential facts extracted; complete logs/private records not copied.",
+  "original_source_root_identifier": "mri-agent-study repository at handoff commit",
+  "sources": [
+    {
+      "id": "S01",
+      "source_repository": "mri-agent-study",
+      "path": "runner/linux/README.md",
+      "sha256": "209d46ea92eb38c32b437cf8f53852a1921c176ef290fa9bf308ad1c816df974",
+      "bytes": 9013,
+      "lines": 130,
+      "role": "Dated Linux/offline runtime, effort probes, disk and memory incidents.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S02",
+      "source_repository": "mri-agent-study",
+      "path": "runner/linux/build_runner4l.py",
+      "sha256": "fedd572bfacaf93b9377752460fcb94df010823a092a5e7872a953109b53edb8",
+      "bytes": 16287,
+      "lines": 159,
+      "role": "Asserted Linux patch recipe over archived runner4; final retained source state.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S03",
+      "source_repository": "mri-agent-study",
+      "path": "runner/linux/codex-config.toml",
+      "sha256": "23454e58d3211ea01f319d68982e7a131e2dc3f88e4689ccaeeb65d69b9942c2",
+      "bytes": 430,
+      "lines": 11,
+      "role": "Common gateway configuration template.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S04",
+      "source_repository": "mri-agent-study",
+      "path": "runner/linux/nssandbox.py",
+      "sha256": "220d01a2c8bd27fffd78b7784e730c5ef8c488ac073b017f3199c66f936f8319",
+      "bytes": 14679,
+      "lines": 373,
+      "role": "Namespace, allowlist proxy and inherited RLIMIT_DATA implementation.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S05",
+      "source_repository": "mri-agent-study",
+      "path": "runner/linux/batch_env.sh",
+      "sha256": "fe676171ba84eee88046455522321f96565f6548996a1605b5ee001c8b733334",
+      "bytes": 462,
+      "lines": 5,
+      "role": "Pinned executable paths and evaluated skills/discovery arms.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S06",
+      "source_repository": "mri-agent-study",
+      "path": "runner/linux/run_offline_batch.sh",
+      "sha256": "ce35c4e895363db92cf6a75394ba6a1e8e1172511b3b8cf9a94de754fdd3365e",
+      "bytes": 539,
+      "lines": 7,
+      "role": "Explicit offline search and package-host allowlist.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S07",
+      "source_repository": "mri-agent-study",
+      "path": "runner/linux/start_proxy.sh",
+      "sha256": "300f75ca45d216fd73fafafb2799c57d9953557ac6fc9c8d30d44f7572f47645",
+      "bytes": 1079,
+      "lines": 13,
+      "role": "Study gateway version and local transport.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S08",
+      "source_repository": "mri-agent-study",
+      "path": "runner/runner4/common.py",
+      "sha256": "5f4c191cc9c05ee457952ede8e5d4dc3d10a19a7bddaee5b88f5adac67fec5da",
+      "bytes": 11433,
+      "lines": 165,
+      "role": "Archived transport, host overrides, numerical thread settings and termination.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S09",
+      "source_repository": "mri-agent-study",
+      "path": "runner/runner4/prepare.py",
+      "sha256": "ec2f49320b46543f557079eb3c8e7dc0dfe5f2418733f84a7eecb86f17ab0e9d",
+      "bytes": 13958,
+      "lines": 162,
+      "role": "Archived clean setup, frozen skills, exact project instruction extraction and preflight.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S10",
+      "source_repository": "mri-agent-study",
+      "path": "runner/runner4/stage.py",
+      "sha256": "17c626e6361a0426825aeec9a39a861cbceacc7d46d28f6d2ff8799a9ab7e168",
+      "bytes": 2129,
+      "lines": 32,
+      "role": "Identical task/input staging; no added generic task preamble.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S11",
+      "source_repository": "mri-agent-study",
+      "path": "runner/runner4/run3.py",
+      "sha256": "50d15b453c3203109aacf605f1e7efd7b9fdb6efaf5ac17c4e2a523770298b84",
+      "bytes": 4657,
+      "lines": 64,
+      "role": "Concurrent arm turn, wall-clock cap and explicit no-implicit-retry behavior.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S12",
+      "source_repository": "mri-agent-study",
+      "path": "runner/runner4/pipeline4.py",
+      "sha256": "b8ed5cb524522d8479621dc50cf58ddc36366f22bd7c086b925964d8d03c4318",
+      "bytes": 4500,
+      "lines": 46,
+      "role": "Preparation/staging/execution/grading wrapper and watchdogs.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S13",
+      "source_repository": "mri-agent-study",
+      "path": "runner/runner4/batch7.py",
+      "sha256": "a245fbe89b85a5d642e79f6d0c9636ce5828da00489ce1cbf85c93b338861ccf",
+      "bytes": 2845,
+      "lines": 35,
+      "role": "Queue, CPU/niceness/credit gates; Linux changes are in S02.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S14",
+      "source_repository": "mri-agent-study",
+      "path": "runner/linux/mem_guard.py",
+      "sha256": "cf05822fe115f7356bd8f039107ae20349dbd6d3a6e417c0aa358939ffbda8d5",
+      "bytes": 3631,
+      "lines": 86,
+      "role": "Pod anonymous-memory guard implementation; historical thresholds documented in its header and S19.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S15",
+      "source_repository": "mri-agent-study",
+      "path": "runner/linux/disk_guard.py",
+      "sha256": "10e54f3dc6aecb019fc7c6dc8166eaa7b648f81b33402239b8d0ef429fa09168",
+      "bytes": 6443,
+      "lines": 136,
+      "role": "Disk pause/cleanup and arm storage-stop implementation.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S16",
+      "source_repository": "mri-agent-study",
+      "path": "runner/linux/budget_guard.py",
+      "sha256": "8b348ee3f2806586bdb42231a465f8963ce62bfa899ee1ddb8bf22552eaaa8dc",
+      "bytes": 1894,
+      "lines": 43,
+      "role": "Budget pause implementation; supplied ceiling recorded in S19.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S17",
+      "source_repository": "mri-agent-study",
+      "path": "runner/linux/batch_keeper.sh",
+      "sha256": "d2dedea6119f2555ebc8d4ac5958d42070defaf9acb8137b7b92512b8af4502e",
+      "bytes": 1167,
+      "lines": 14,
+      "role": "Restart missing-output queue entries; no automatic retry of existing outputs.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S18",
+      "source_repository": "mri-agent-study",
+      "path": "docs/research/FAIRNESS-PROTOCOL.md",
+      "sha256": "9c1ae5a58d5d2399365e719c41c7eb38b179a534db3f546192a5409e4f23da8e",
+      "bytes": 64989,
+      "lines": 468,
+      "role": "Dated research recommendations, not an execution ledger.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S19",
+      "source_repository": "mri-agent-study",
+      "path": "docs/PROGRESS-LOG.md",
+      "sha256": "b7fba59f99f157bc1fa02afaa8a3086fe7592456af5f272fd29dbd9055cf120e",
+      "bytes": 79431,
+      "lines": 606,
+      "role": "Contemporaneous operational chronology; only relevant aggregate facts extracted.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S20",
+      "source_repository": "mri-agent-study",
+      "path": "remote/pod_setup.sh",
+      "sha256": "87ed5153e5543b4b82845a589d2a87d5e46e5cbd71e42518f8a858b3eb688886",
+      "bytes": 6578,
+      "lines": 71,
+      "role": "Documented installation versions and build recipe; not an immutable container manifest.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S21",
+      "source_repository": "mri-agent-study",
+      "path": "manuscript/work-v41/make_si_offline.py",
+      "sha256": "b725e5d01b30848fe6e3ee33f61e093686de2eb4fcc203c6148f31c3b1d4ca32",
+      "bytes": 12447,
+      "lines": 148,
+      "role": "Requested alias-to-public-label mapping and cap function; not executed for this curation.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S22",
+      "source_repository": "mri-agent-study",
+      "path": "manuscript/outputs-v41/supporting-information/SI-evaluation.tex",
+      "sha256": "bc40ba587a895a5aa7082a7b34f608604f187168080645287926797324e4405a",
+      "bytes": 12613,
+      "lines": 155,
+      "role": "Frozen original supplement, including aggregate cap counts and exclusion disclosure; private rows not copied.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S23",
+      "source_repository": "mri-agent-study",
+      "path": "manuscript/work-v41/eval-v41/offline-pairs.json",
+      "sha256": "86d2320eef791d4a3bd9fa310f886edba435f8f51bde69bafbed808a59b67760",
+      "bytes": 101496,
+      "lines": 5612,
+      "role": "Frozen analysis membership; inspected only for set/model counts and privacy scan, no statistics recomputed.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S24",
+      "source_repository": "mri-agent-study",
+      "path": "docs/research/results/OFFLINE-RESULTS-20261103.md",
+      "sha256": "942cfc76bd7c5ee7a262ffb67948141248cedd3d75c49c25018623011b720d17",
+      "bytes": 3446,
+      "lines": 52,
+      "role": "Contemporaneous completion date; broad no-rerun wording qualified by setup incident records.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S25",
+      "source_repository": "mri-agent-study",
+      "path": "env/requirements-study-py3.12.14.txt",
+      "sha256": "d1ff34df5aa75601b9983e5bd768c0c24a3dacd0f53790501ec59dd829d909a3",
+      "bytes": 699,
+      "lines": 42,
+      "role": "Retained study/grader requirements, not a per-arm post-install package lock.",
+      "original_copied_to_public_package": false
+    },
+    {
+      "id": "S26",
+      "source_repository": "MRFoundry",
+      "commit": "bd49b9556146bcd70ab1026c52d67713f4cf2e7f",
+      "path": "skills/mri-research/references/agents-pointer.md",
+      "git_blob": "f66d3dd92e82fb53c1734fd5dce0228c8310276e",
+      "sha256": "de6c338b731b0695a3546f357d31124325221a69d2cd7387f9461b924f6ca45e",
+      "bytes": 1465,
+      "role": "Exact evaluated-commit discovery instruction; only the public markdown block is reproduced.",
+      "original_copied_to_public_package": false,
+      "extracted_agents_md_sha256": "7e8405a8fb05d5d2316f3238e887c64c09e629454c6483a5e159b76db62f856c",
+      "extracted_agents_md_bytes": 1111
+    }
+  ],
+  "request_alias_to_publication_label": {
+    "claude-haiku-5-5": "Claude Haiku 5.5",
+    "claude-opus-5-5": "Claude Opus 5.5",
+    "claude-sonnet-5-5": "Claude Sonnet 5.5",
+    "gemini-3.8-flash": "Gemini 3.8 Flash",
+    "gemini-4-argon": "Gemini 4 Argon",
+    "gpt-5.3-codex": "GPT-5.3 Codex",
+    "gpt-6.1-sol": "GPT-6.1 Sol",
+    "gpt-6.1-terra": "GPT-6.1 Terra",
+    "kimi-k3": "Kimi K3",
+    "mai-code-1.1-flash": "MAI Code 1.1 Flash"
+  },
+  "backend_snapshot_mapping": "unknown: request aliases do not identify immutable effective provider snapshots",
+  "hard_cap_type_counts": {
+    "120": 3,
+    "150": 6,
+    "180": 2,
+    "210": 4
+  },
+  "setup_failure_units": "paired preparation events before any model turn",
+  "setup_failures": {
+    "core": 94,
+    "hard": 49,
+    "total": 143,
+    "window_utc": [
+      "2026-11-03T00:45:00Z",
+      "2026-11-03T02:45:00Z"
+    ],
+    "times_approximate": true
+  },
+  "unknown_fields": [
+    "effective provider snapshot per request",
+    "immutable container digest",
+    "guaranteed per-arm hardware allocation",
+    "complete deployed runner/config per trial",
+    "complete pair-by-policy exposure ledger",
+    "active-pair policy transition record",
+    "arm-specific guard termination counts",
+    "provider/gateway retry histories",
+    "per-arm final dependency locks"
+  ],
+  "generated_files": [
+    {
+      "path": "HISTORICAL-EXECUTION.md",
+      "sha256": "1c1664b1bfe4451132dcd4ad5cedb8d717c9048bc0425af44b8ca18975e6c18c",
+      "bytes": 13721
+    }
+  ],
+  "verification": {
+    "no_runner_model_grader_or_statistics_execution": true,
+    "original_sources_unchanged": true,
+    "exact_discovery_instruction_from_evaluated_git_object": true,
+    "private_hard_identity_scan_count": 45,
+    "private_hard_identity_matches": 0
+  }
+}
