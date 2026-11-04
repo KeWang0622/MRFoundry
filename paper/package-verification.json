@@ -1,0 +1,97 @@
+{
+  "revision": 51,
+  "file": "MRFoundry-paper-source.zip",
+  "canonical_root": "MRFoundry-paper",
+  "sha256": "d1a4819b0840caf411c3f942e6fa04793e4062996302ad46aad1465c996aab25",
+  "bytes": 54191042,
+  "entries": 235,
+  "pdf_sha256": "6a27997dc33bc73932c7ef325566422e1091020609f7047071a322a18a76d395",
+  "workspace_qa_sha256": "182bd2235cb69829f58b739e5b5f7a344bf0daa0b37628e95329f10992827e06",
+  "inventory_sha256": "d6b4f3528a9ff023dc5b582022f14cce1d2ec30bb4f3c002ced9be934d819e0e",
+  "pages": 11,
+  "citations": 48,
+  "portability_status": "passed",
+  "scientific_runs_performed": false,
+  "full_pdf_recompile": "passed",
+  "figure_rebuilds": {
+    "1": {
+      "pptx_all_zip_member_bytes_identical": true,
+      "publication_png_pixels_identical": true,
+      "publication_pdf_text_identical": true,
+      "publication_pdf_geometry_identical": true
+    },
+    "2": {
+      "pptx_all_zip_member_bytes_identical": true,
+      "publication_png_pixels_identical": true,
+      "publication_pdf_text_identical": true,
+      "publication_pdf_geometry_identical": true
+    },
+    "3": {
+      "pptx_all_zip_member_bytes_identical": true,
+      "publication_png_pixels_identical": true,
+      "publication_pdf_text_identical": true,
+      "publication_pdf_geometry_identical": true
+    },
+    "4": {
+      "pptx_all_zip_member_bytes_identical": true,
+      "publication_png_pixels_identical": true,
+      "publication_pdf_text_identical": true,
+      "publication_pdf_geometry_identical": true
+    },
+    "5": {
+      "pptx_all_zip_member_bytes_identical": true,
+      "publication_png_pixels_identical": true,
+      "publication_pdf_text_identical": true,
+      "publication_pdf_geometry_identical": true,
+      "svg_identical": true
+    }
+  },
+  "portability_proof_sha256": "80f785645d3cd6a723f1fbe223f4c587517ced7c22e6917ca384b06d58027dbb",
+  "portability_log_sha256": "07cc000e32ae550ca2365b706dff543e8cf34501bb2237b95dfd391dce84b95b",
+  "rebuilt_pdf_sha256": "527987663adbbfad0952bf35b204ea11a1b757673dd96644b47ba54975f4e522",
+  "portability_checks": {
+    "inventory_receipt_matches": true,
+    "figure1:pptx_all_zip_member_bytes_identical": true,
+    "figure1:publication_png_pixels_identical": true,
+    "figure1:publication_pdf_text_identical": true,
+    "figure1:publication_pdf_geometry_identical": true,
+    "figure2:pptx_all_zip_member_bytes_identical": true,
+    "figure2:publication_png_pixels_identical": true,
+    "figure2:publication_pdf_text_identical": true,
+    "figure2:publication_pdf_geometry_identical": true,
+    "figure3:pptx_all_zip_member_bytes_identical": true,
+    "figure3:publication_png_pixels_identical": true,
+    "figure3:publication_pdf_text_identical": true,
+    "figure3:publication_pdf_geometry_identical": true,
+    "figure4:pptx_all_zip_member_bytes_identical": true,
+    "figure4:publication_png_pixels_identical": true,
+    "figure4:publication_pdf_text_identical": true,
+    "figure4:publication_pdf_geometry_identical": true,
+    "figure5:pptx_all_zip_member_bytes_identical": true,
+    "figure5:publication_png_pixels_identical": true,
+    "figure5:publication_pdf_text_identical": true,
+    "figure5:publication_pdf_geometry_identical": true,
+    "figure5:svg_identical": true,
+    "rebuilt:latex/manuscript.tex": true,
+    "rebuilt:word-count.json": true,
+    "rebuilt:heading-map.json": true,
+    "bibtex_no_errors": true,
+    "no_missing_glyphs_or_citations": true,
+    "page_count_preserved": true,
+    "full_pdf_text_matches": true,
+    "all_page_geometry_matches": true,
+    "all_citation_destinations_match": true,
+    "all_native_external_links_match": true,
+    "figure1:fresh_pdf_embedded": true,
+    "figure2:fresh_pdf_embedded": true,
+    "figure3:fresh_pdf_embedded": true,
+    "figure4:fresh_pdf_embedded": true,
+    "figure5:fresh_pdf_embedded": true
+  },
+  "public_receipt": {
+    "derived_from": "Completed local package verification",
+    "source_receipt_sha256": "f6e6e25c5d7a1760e5ebdbf6304ae41e974ce810bcff4a316f570b4142e732ce",
+    "omitted_local_path_fields": [],
+    "note": "Archive/source hashes and tested results are retained. Local work logs and private review materials are not included. This verifies document and figure rebuilding, not new scientific runs."
+  }
+}
