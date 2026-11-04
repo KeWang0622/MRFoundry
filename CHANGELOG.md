@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Unify the working paper’s researcher artwork and correct six reporting points: the unsupported sequence-adapter assertion, extruded-2D phantom, Figure 3 scale, saved diffusion residuals, post-sanitization FA checks, and matched common host system-skill catalogs. Refresh the affected Supporting Information and verified source package; preserve numerical outcomes, table result cells, references and original evidence.
+
 - Expand the working paper’s toolbox methods and discussion, restore the agent illustrations while keeping the MRFoundry brand mark, and simplify the comparison-table labels. Preserve numerical results, Supporting Information and the evidence archive.
 
 - Add the current MRFoundry working paper, three Supporting Information PDFs and one verified portable source archive. Keep the paper explicitly unsubmitted, retain the published evidence entry and distinguish document rebuilding from scientific reproduction.

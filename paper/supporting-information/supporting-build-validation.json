@@ -1,0 +1,17 @@
+{
+  "SI-workflow-evidence": {
+    "markdown_sha256": "7579e228722b0b27f4d79a9d05669d81aeaf953671f616f2b18f4300b524175f",
+    "pdf_sha256": "a4a09854d2c4effc3f4eb65803d531895135ef93677924c6f7d719d977c7f987",
+    "pages": 3
+  },
+  "SI-offline-protocol": {
+    "markdown_sha256": "bc818382bc967c92e550721f51df80e25225e90c4cd9836028f493bf0bd20bbd",
+    "pdf_sha256": "d6aff16c25a596e502ddf7867e31cfc5a1ff8a4be63d6ec99921754a1c2f619c",
+    "pages": 3
+  },
+  "SI-offline-evaluation": {
+    "markdown_sha256": "768c49cdaef3107b87c4358ed9b9ac44e165235a2a8eeb53048f9bd59838f69e",
+    "pdf_sha256": "d797112102791eb45cfc6786ff6aa98d0833c9285bb83afdf5d30de48746b6ba",
+    "pages": 3
+  }
+}
