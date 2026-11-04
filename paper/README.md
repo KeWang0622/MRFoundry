@@ -4,9 +4,9 @@
 
 **WORKING DRAFT — 3 November 2026.** This author-side manuscript is not submitted or accepted. It introduces the MRFoundry toolbox, illustrates supervised MRI workflows, and reports a bounded comparison using [MRI Agent Bench](https://github.com/KeWang0622/MRIAgentBench).
 
-- **[Read the manuscript](manuscript.pdf)** — 11 pages in the supplied MRM template, including figures, tables and references.
+- **[Read the manuscript](manuscript.pdf)** — 12 pages in the supplied MRM template, including figures, tables and references; 3,315 body words and a 177-word abstract.
 - **Supporting Information:** [MRI demonstration evidence](supporting-information/SI-workflow-evidence.pdf), [offline comparison tables](supporting-information/SI-offline-evaluation.pdf), and [evaluation protocol](supporting-information/SI-offline-protocol.pdf).
-- **[Download the portable source ZIP](MRFoundry-paper-source.zip)** (54.2 MB) — manuscript sources, editable figures, Supporting Information, and retained evidence.
+- **[Download the portable source ZIP](MRFoundry-paper-source.zip)** — 37.3 MB; manuscript sources, editable figures, Supporting Information, and retained evidence.
 - **[Package-verification receipt](package-verification.json)** — exact hashes and completed document/figure rebuild checks.
 
 The [evidence archive](evidence/README.md) preserves original demonstration scripts, reports and input identities. The [historical evaluation record](evidence/evaluation/HISTORICAL-EXECUTION.md) documents retained settings and unavailable records; [input sources and licenses](evidence/INPUTS-AND-LICENSES.md) identify public datasets without duplicating full raw acquisitions. Private Hard tasks, scoring materials and per-task traces are excluded.
