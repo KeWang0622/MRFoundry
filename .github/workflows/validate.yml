@@ -78,8 +78,11 @@ jobs:
         with:
           # Publisher pages (Wiley/Elsevier/RSNA/…) block bots with 403 but are
           # valid in a browser; GitHub can rate-limit with 429 — accept both.
+          # IEEE returns a 202 bot response for this DOI. Validate its Crossref
+          # registration record while retaining the canonical citation link.
           args: >-
             --accept 200,206,301,302,307,308,400,403,429
+            --remap '^https://doi\.org/10\.1109/TMI\.2006\.885337$ https://api.crossref.org/works/10.1109/TMI.2006.885337'
             --max-concurrency 8
             --max-retries 3
             --timeout 30
