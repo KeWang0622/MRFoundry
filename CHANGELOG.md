@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Connect Figure 3’s researcher-feedback arrow to an explicit source and the KomaMRI panel, and separate its output connector. Refresh the working manuscript and editable source archive with scoped visual and rebuild checks; preserve manuscript prose, scientific panels, all numerical results and other figures.
+
 - Expand and reorganize the working paper to 3,491 body words, retain five Methods subsections, and present four direct Results subsections. Clarify helper scripts, the frozen-package intervention, current source references, figure notes and diffusion signal prediction. Refresh the reviewed manuscript, workflow-evidence supplement and verified source package; preserve every figure visual, numerical result and original evidence file.
 
 - Unify the working paper’s researcher artwork and correct six reporting points: the unsupported sequence-adapter assertion, extruded-2D phantom, Figure 3 scale, saved diffusion residuals, post-sanitization FA checks, and matched common host system-skill catalogs. Refresh the affected Supporting Information and verified source package; preserve numerical outcomes, table result cells, references and original evidence.
