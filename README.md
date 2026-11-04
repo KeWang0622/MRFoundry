@@ -194,7 +194,7 @@ The **3 November 2026 offline evaluation** in [MRI Agent Bench](https://github.c
 
 Core covers 24 task types across ten MRI domains and ten models, with one sealed instance per task type. Hard combines two model cohorts with different task coverage; its confidence interval includes zero. Improvements are not uniform across MRI domains. This is a maintainer-run preview on one agent host; independent expert review and reliability across repeated executions remain unassessed.
 
-Browse the [public Core tasks](https://github.com/KeWang0622/MRIAgentBench/tree/main/families) and the [full results, methods and limitations](https://github.com/KeWang0622/MRIAgentBench/blob/main/docs/OFFLINE-RESULTS.md). The public Hard release contains aggregate results only.
+Browse the [public Core tasks](https://github.com/KeWang0622/MRIAgentBench/tree/main/families) and the [full results, methods and limitations](https://github.com/KeWang0622/MRIAgentBench/blob/main/docs/OFFLINE-RESULTS.md). Only aggregate Hard results are public; Hard task materials, per-task outcomes and execution traces remain private.
 
 ## Reliability and scope
 
