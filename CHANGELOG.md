@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Add Atakan Topcu, Hossein Momeni and Molin Zhang to the paper, with the confirmed affiliations; retain Ke Wang as corresponding author. Update PDF metadata, the rebuild source and portable manuscript archive without changing scientific content.
+
 - Connect Figure 3’s researcher-feedback arrow to an explicit source and the KomaMRI panel, and separate its output connector. Refresh the working manuscript and editable source archive with scoped visual and rebuild checks; preserve manuscript prose, scientific panels, all numerical results and other figures.
 
 - Expand and reorganize the working paper to 3,491 body words, retain five Methods subsections, and present four direct Results subsections. Clarify helper scripts, the frozen-package intervention, current source references, figure notes and diffusion signal prediction. Refresh the reviewed manuscript, workflow-evidence supplement and verified source package; preserve every figure visual, numerical result and original evidence file.
