@@ -7,21 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- Add Atakan Topcu, Hossein Momeni and Molin Zhang to the paper, with the confirmed affiliations; retain Ke Wang as corresponding author. Update PDF metadata, the rebuild source and portable manuscript archive without changing scientific content.
-
-- Connect Figure 3’s researcher-feedback arrow to an explicit source and the KomaMRI panel, and separate its output connector. Refresh the working manuscript and editable source archive with scoped visual and rebuild checks; preserve manuscript prose, scientific panels, all numerical results and other figures.
-
-- Expand and reorganize the working paper to 3,491 body words, retain five Methods subsections, and present four direct Results subsections. Clarify helper scripts, the frozen-package intervention, current source references, figure notes and diffusion signal prediction. Refresh the reviewed manuscript, workflow-evidence supplement and verified source package; preserve every figure visual, numerical result and original evidence file.
-
-- Unify the working paper’s researcher artwork and correct six reporting points: the unsupported sequence-adapter assertion, extruded-2D phantom, Figure 3 scale, saved diffusion residuals, post-sanitization FA checks, and matched common host system-skill catalogs. Refresh the affected Supporting Information and verified source package; preserve numerical outcomes, table result cells, references and original evidence.
-
-- Expand the working paper’s toolbox methods and discussion, restore the agent illustrations while keeping the MRFoundry brand mark, and simplify the comparison-table labels. Preserve numerical results, Supporting Information and the evidence archive.
-
-- Add the current MRFoundry working paper, three Supporting Information PDFs and one verified portable source archive. Keep the paper explicitly unsubmitted, retain the published evidence entry and distinguish document rebuilding from scientific reproduction.
-
-- Publish an inspectable paper-evidence archive with original demonstration scripts, saved reports, public input identities and historical evaluation provenance. Preserve existing outcomes and document archival-code portability limits.
-
-- Use the approved blue-and-ivory MRI mascot in repository logos, icons and illustration aliases; retain the original outlined wordmarks. Remove the duplicate mascot from the README header and document current and historical artwork provenance.
+- Simplify public documentation around installation, skills, tutorials and contributions; consolidate release history in this changelog.
+- Add the blue-and-ivory MRI mascot to repository logos and icons.
 
 ## [0.14.0] — 2026-10-31: deliverable layout, half-pulse RF centre, robust QSM field map
 

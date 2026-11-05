@@ -11,7 +11,7 @@ Every check here exists because something actually broke once.
   4. `description` is at most 1024 characters -- the hard limit skill validators
      enforce. A too-long description fails silently at install time.
   5. One source of truth for the version: all seven SKILL.md files, CITATION.cff,
-     and the README badge must agree. v0.6.0 claimed to have "aligned all version
+     and any optional README version fields must agree. v0.6.0 claimed to have "aligned all version
      numbers" while five skills sat at 0.1.0.
   6. The skills listed in skills.sh.json exactly match the skills/<name>/ folders.
   7. Every relative Markdown link inside skills/ resolves on disk, and every
@@ -138,9 +138,7 @@ elif distinct:
 
     readme = open("README.md", encoding="utf-8").read()
     badge = re.search(r"badge/version-([0-9][^-\s)]*)-", readme)
-    if not badge:
-        fail("README.md: version badge not found")
-    elif badge.group(1) != version:
+    if badge and badge.group(1) != version:
         fail(f"README.md badge version {badge.group(1)} != skill version {version}")
     bibtex = re.search(r"version\s*=\s*\{([^}]+)\}", readme)
     if bibtex and bibtex.group(1) != version:
