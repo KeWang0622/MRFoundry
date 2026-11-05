@@ -1,15 +1,14 @@
 {
-  "updated": "2026-11-03",
-  "artwork_source": "OpenAI image generation; user-approved clean-alpha MRI mascot",
+  "artwork_source": "OpenAI image generation; transparent MRI mascot",
   "scientific_data": false,
-  "approved_asset": "mri-mascot.png",
-  "approved_sha256": "38441d0eeaf6ab83d9880368f5e31b7fc5f8be6b575101018b1969f8503332c7",
+  "asset": "mri-mascot.png",
+  "sha256": "38441d0eeaf6ab83d9880368f5e31b7fc5f8be6b575101018b1969f8503332c7",
   "source_concept_sha256": "47df99ebc2d862d6ade9a24a9102861ea075830e654701e447672e5241a7116c",
   "generation_prompt": "mascot-generation-prompt.txt",
   "alpha_cleanup_prompt": "mascot-alpha-prompt.txt",
-  "composition": "SVG lockups embed the approved raster mascot beside the original outlined wordmark. The mascot is not a vector redraw.",
-  "derivatives": "Trim transparent padding; resize the trimmed image for icon sizes. The full-size mascot aliases are identical to the approved source.",
-  "original_wordmarks_unchanged": {
+  "composition": "Self-contained SVG lockups combine an embedded raster mascot with an outlined vector wordmark.",
+  "derivatives": "Icon sizes use the mascot with transparent padding trimmed. Full-size mascot aliases are identical to the source asset.",
+  "wordmark_sha256": {
     "mrfoundry-wordmark-light.svg": "9f99ccd6bee6c5727aaf73550b1939158dea67d03f9c8102a823762f5372c78c",
     "mrfoundry-wordmark-dark.svg": "0a61d063b3092d3400c3ff13f005155ab6d17355c6949ca1dfc4ef4fcc91e929"
   },

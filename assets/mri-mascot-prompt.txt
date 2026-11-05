@@ -1,7 +1,0 @@
-HISTORICAL PROMPT — superseded by the approved mascot on 2026-11-03.
-Retained for provenance; not a specification for the current artwork.
-Current prompts: mascot-generation-prompt.txt and mascot-alpha-prompt.txt.
-
-Edited with the built-in OpenAI image generation tool on 2026-10-29. Decorative identity artwork; not a scanner photograph or scientific result.
-
-Use case: lighting-weather. Edit target: this exact MRFoundry MRI mascot. Keep its full geometry, composition, long blue/cream magnet barrel, raised top rear service cover, face, head-coil cradle, deep tunnel, patient table, palette and fine seams unchanged. Make a premium dark-background hero version. Place it on a subtle dark studio floor with a small soft contact shadow and almost-black navy background #0b121a, gentle blue rim lighting. Background must be uniform and quiet toward all canvas edges so it blends seamlessly into a dark presentation. Preserve the MRI's clearly long barrel, do not shorten it into a CT ring. Keep entire scanner and table visible with generous margin, no labels or lettering, no other objects, no sparkles, no dramatic environmental scenery. Professional clean friendly 3D brand illustration, square framing.

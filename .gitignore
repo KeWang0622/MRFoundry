@@ -23,3 +23,7 @@ venv/
 
 # Presentation builds belong in the website repository.
 /presentations/*.html
+
+# Manuscript writing materials are maintained outside the toolbox repository.
+/paper/
+/MRFoundry-paper*.zip

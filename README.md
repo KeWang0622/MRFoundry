@@ -10,7 +10,7 @@
 
 **MRI research guidance for your coding agent — from the question to the paper.**
 
-[![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/MRFoundry/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/MRFoundry/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](LICENSE) ![Version](https://img.shields.io/badge/version-0.14.0-1f6feb?style=flat-square&labelColor=000000) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/MRFoundry)
+[![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/MRFoundry/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/MRFoundry/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](LICENSE) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/MRFoundry)
 
 </div>
 
@@ -36,7 +36,7 @@ Start with a request in your agent:
 
 The skills guide tool selection, setup, execution and checks. Scientific applications such as PyPulseq, KomaMRI and BART are installed separately as needed; the agent is instructed to handle routine setup in an isolated environment and test an upstream example before use.
 
-**[Explore the interactive tutorial →](https://kewang0622.github.io/slides/mrfoundry/)** — agents, skills, MRI examples and the self-improvement workflow. [Presentation information](presentations/README.md). [Working paper and evidence](paper/README.md).
+**[Explore the interactive tutorial →](https://kewang0622.github.io/slides/mrfoundry/)** — agents, skills, MRI examples and the self-improvement workflow.
 
 <details>
 <summary>Install one skill, choose an agent, or update</summary>
@@ -182,18 +182,9 @@ The hub links to primary papers, courses, datasets and software across MRI. It s
 
 </details>
 
-## Does it help?
+## Evaluation
 
-The **3 November 2026 offline evaluation** in [MRI Agent Bench](https://github.com/KeWang0622/MRIAgentBench) compares the same agent, model, task inputs, tools and time budget with and without the frozen **MRFoundry 0.14.0** skills. The skills arm also receives a project-level instruction explaining how to find them. Web search is disabled. **Verified completion** means every automated task check passed.
-
-| Set | Without skills | With MRFoundry | Change in completion rate, percentage points (95% CI) |
-|---|---:|---:|---:|
-| Core (240 pairs) | 162/240 (67.5%) | 188/240 (78.3%) | +10.8 (+0.8 to +21.2) |
-| Hard (134 pairs) | 49/134 (36.6%) | 60/134 (44.8%) | +8.2 (−3.9 to +19.7) |
-
-Core covers 24 task types across ten MRI domains and ten models, with one sealed instance per task type. Hard combines two model cohorts with different task coverage; its confidence interval includes zero. Improvements are not uniform across MRI domains. This is a maintainer-run preview on one agent host; independent expert review and reliability across repeated executions remain unassessed.
-
-Browse the [public Core tasks](https://github.com/KeWang0622/MRIAgentBench/tree/main/families) and the [full results, methods and limitations](https://github.com/KeWang0622/MRIAgentBench/blob/main/docs/OFFLINE-RESULTS.md). Only aggregate Hard results are public; Hard task materials, per-task outcomes and execution traces remain private.
+[MRI Agent Bench](https://github.com/KeWang0622/MRIAgentBench) evaluates matched agents with and without MRFoundry across MRI research tasks. Its repository contains the [public Core tasks](https://github.com/KeWang0622/MRIAgentBench/tree/main/families), evaluation instructions, and [comparison results, methods and limitations](https://github.com/KeWang0622/MRIAgentBench/blob/main/docs/OFFLINE-RESULTS.md).
 
 ## Reliability and scope
 
@@ -211,14 +202,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md) an
 
 ## Updates
 
-- **On main:** agent-owned application setup and project research memory across all seven skills.
-- **[v0.14.0](CHANGELOG.md):** deliverables checked where the task expects them, a slice-gradient check at the centre of every selective RF pulse (including UTE half pulses), and in-mask phase unwrapping with a self-check for QSM field maps.
-- **[v0.13.0](CHANGELOG.md):** coverage-safe EPI and Cartesian readouts, exact sub-raster timing, block-boundary gradient continuity and acquired-line checks for exported sequences; a lean KomaMRI install and a replay check for delivered simulations; claim-ledger source checks.
-- **[v0.12.0](CHANGELOG.md):** a writing checker for results sections, reviews, proposals and study plans; ICC confidence intervals and sample-size helpers; GRAPPA from a sampling mask, noise-floor-aware T2 fits, water-fat separation, off-resonance-corrected spiral reconstruction; crusher and safety measurements of exported sequences.
-- **[v0.11.0](CHANGELOG.md):** lean skill files with route tables, a finish check, and tested helpers for QSM, MRS, ASL, DCE, SNR units, shimming and EPI.
-- **v0.8.0:** venue-specific paper writing, evidence-linked project memory, diffusion/sequence guidance and annotated references.
-- **[v0.7.0](https://github.com/KeWang0622/MRFoundry/releases/tag/v0.7.0):** updated BART upstream guidance, reconstruction caveats and upstream monitoring.
-- [Full changelog](CHANGELOG.md) · [Releases](https://github.com/KeWang0622/MRFoundry/releases)
+See the [changelog](CHANGELOG.md) for changes and [releases](https://github.com/KeWang0622/MRFoundry/releases) for published versions. Update installed skills with `npx skills update -g`.
 
 ## Star history
 
@@ -244,7 +228,6 @@ If this helps your research or tooling, please cite it (GitHub's
   author  = {Wang, Ke},
   title   = {MRFoundry: MRI research guidance for coding agents},
   year    = {2026},
-  version = {0.14.0},
   url     = {https://github.com/KeWang0622/MRFoundry}
 }
 ```
