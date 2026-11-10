@@ -1,9 +1,9 @@
 # Contributing to MRFoundry
 
-Thanks for helping keep this a high-quality entry point for the **MRI research**
-community — the whole pipeline, not just reconstruction. Contributions that add
-landmark papers, new toolboxes, corrected or updated links, additional
-vendor/format notes, or new open datasets are all welcome.
+Help make MRI research workflows easier to execute, check and reuse. We welcome
+tested workflow improvements, new skills, scientific helper fixes, primary
+references and corrections. The current skill collection is a starting point;
+contributions can extend it to new methods and research areas.
 
 ## The five-minute contribution
 
@@ -14,14 +14,38 @@ You do not need to read the rest of this file to fix one link or add one paper:
 2. Put the primary source in the PR description: the URL you opened, or the DOI.
 3. Add a line under `## Unreleased` in `CHANGELOG.md`.
 
-That's it. CI does the rest (structure, ShellCheck, link check, and a check that
-every repo/DOI/package you cited actually exists), and a maintainer reviews.
+CI checks repository structure, shell scripts, links and upstream availability;
+a maintainer reviews the content. Availability checks do not verify that a
+source supports a scientific claim.
 
-## Where things live (7 skills)
+## From a research lesson to a shared skill
+
+MRFoundry's [self-improvement workflow](docs/SELF-IMPROVEMENT.md) connects private
+project experience to reviewed public guidance. For a workflow or helper change:
+
+1. **Describe the trigger.** What task, output or assumption exposed the issue?
+   Distinguish what you observed from your explanation of it.
+2. **Propose a focused change.** Update the instruction or helper responsible
+   for that decision. State the data, methods and conditions it applies to.
+3. **Attach shareable evidence.** Provide a minimal example or source, the
+   commands and environment, and the relevant output checks. Keep private
+   `.mrfoundry/` notebooks, credentials and restricted data out of the PR.
+4. **Check the effect.** For behavioral changes, show the relevant behavior
+   before and after. Preserve a useful regression example and check another
+   case when claiming broader reuse. Report regressions and exceptions.
+5. **Submit for review.** Explain what a researcher should do differently.
+   Maintainers review the scope, evidence and checks before merging.
+
+Agents may help draft changes; contributors remain responsible for checking
+them. A local observation can justify a narrowly scoped rule without being
+presented as a general scientific conclusion. Citation or wording corrections
+only need checks appropriate to that change.
+
+## Where things live
 
 | If your change is about… | Edit |
 |---|---|
-| Orientation, routing, or any of the 11 reference files | [`skills/mri-research/`](skills/mri-research/) |
+| Orientation, routing, project memory or cross-domain references | [`skills/mri-research/`](skills/mri-research/) |
 | Running a study end-to-end, venues, manuscript mechanics | [`skills/mri-research-workflow/`](skills/mri-research-workflow/) |
 | Classical recon that *executes* (BART/SigPy, ESPIRiT, PICS, NUFFT) | [`skills/mri-reconstruction/`](skills/mri-reconstruction/) |
 | Anything **trained** (unrolled, self-supervised, diffusion priors) | [`skills/deep-learning-recon/`](skills/deep-learning-recon/) |
@@ -36,8 +60,9 @@ topic with two owners or none, that's a bug worth an issue.
 
 ## Design philosophy (please preserve it)
 
-This is a **pointer / reference skill**, not a data or textbook dump. The value
-is in accurate navigation and good judgment, so:
+MRFoundry combines **domain knowledge, executable helpers and research memory**.
+Contributions should help an agent make a better decision or produce a result
+that a researcher can inspect:
 
 - **Link and summarize; do not vendor.** Never add datasets, model weights, or
   copyrighted text (textbook chapters, paywalled paper bodies). Cite the source
@@ -46,6 +71,9 @@ is in accurate navigation and good judgment, so:
   secondary summary. Use awesome-lists as living indexes, not as the citation.
 - **Keep the "which tool for which task" framing.** The reference files are
   organized to help a researcher *decide*, not just to enumerate.
+- **Make checks explicit.** Say what artifact to inspect, what criterion to
+  apply and what the check establishes. Preserve the distinction between a
+  successful command and a scientifically useful result.
 
 ## Quality bar for additions
 
@@ -72,27 +100,30 @@ is in accurate navigation and good judgment, so:
 ## How to propose a change
 
 1. Fork and create a branch (`main` is protected; everything lands via PR).
-2. Make your edit in the appropriate `references/*.md` (or a `SKILL.md` routing
-   table if you add a new area).
+2. Edit the relevant skill, reference or helper. For a new skill, add its
+   `SKILL.md`, register it in `skills.sh.json`, and link it from the README.
 3. Add a bullet to `CHANGELOG.md` under the `## Unreleased` heading.
-4. Open a pull request describing the addition and linking the primary source
-   you verified.
+4. Open a pull request with the problem, change, evidence and validation.
 
-Run the checks locally first if you like — both are stdlib-only Python:
+Run the repository checks from the root (stdlib-only Python):
 
 ```bash
 python3 .github/scripts/validate_repo.py      # structure, versions, links-on-disk
-python3 .github/scripts/check_upstreams.py    # every repo / DOI / package resolves
+python3 .github/scripts/check_upstreams.py    # upstream availability; requires network
 ```
+
+For changes to project-memory initialization, also run
+`python3 -m unittest discover -s .github/tests`. For scientific helpers or
+workflow instructions, run the relevant task checks and report the commands
+and results in the PR; CI does not run every MRI helper test.
 
 ## Maintainer release checklist
 
-Version lives in **three** places and CI enforces that they agree: every
-`skills/*/SKILL.md` frontmatter, `CITATION.cff`, and the README badge + BibTeX
-block. To cut a release:
+CI enforces a consistent version across `skills/*/SKILL.md` frontmatter and
+`CITATION.cff`; any version fields in the README must also agree. To cut a release:
 
-1. Bump all three (all seven skills), and date the `CITATION.cff`
-   `date-released`.
+1. Update all skill versions and `CITATION.cff`, including its `date-released`.
+   Update any versioned README fields if present.
 2. Write the `CHANGELOG.md` section and move anything from `## Unreleased` into
    it.
 3. Merge via PR, tag `vX.Y.Z`, and publish the GitHub release.
