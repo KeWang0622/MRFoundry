@@ -8,19 +8,21 @@
   </picture>
 </h1>
 
-**MRI research guidance for your coding agent — from the question to the paper.**
+**AI for MRI science — from research questions to reusable expertise.**
 
 [![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/MRFoundry/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/MRFoundry/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](LICENSE) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/MRFoundry)
 
 </div>
 
 <p align="center">
-<a href="#quick-start">Quick start</a> · <a href="#how-it-works">Workflow</a> · <a href="#choose-your-skills">Skills</a> · <a href="REFERENCES.md">Papers &amp; textbooks</a> · <a href="#research-memory">Research memory</a> · <a href="https://kewang0622.github.io/slides/mrfoundry/">Interactive tutorial</a> · <a href="#contributing">Contribute</a>
+<a href="#quick-start">Quick start</a> · <a href="#how-it-works">Research loop</a> · <a href="#recursive-self-improvement">Self-improvement</a> · <a href="#choose-your-skills">Skills</a> · <a href="REFERENCES.md">References</a> · <a href="https://kewang0622.github.io/slides/mrfoundry/">Tutorial</a> · <a href="#contributing">Contribute</a>
 </p>
 
-Coding agents can write MRI code, but choosing the right signal model, data convention, tool and validation takes domain knowledge. **MRFoundry** gives your agent curated guidance and primary references across MRI physics, acquisition, reconstruction, analysis and publishing.
+**MRFoundry is an open-source skill package for research agents working across MRI physics, acquisition, reconstruction and analysis.** It connects domain knowledge with scientific tools, experiment checks and project memory, helping a coding agent carry a research question through to evidence and a reproducible report.
 
-**Seven installable skills · Established scientific tools · Project-local research memory**
+The researcher sets the question and evaluates the findings. The agent plans, executes, checks and revises the work. Lessons from that work can guide the next experiment and, after review, improve the shared skill package. This connects **AI-assisted research** with **researcher-guided recursive self-improvement (RSI)**.
+
+**Domain knowledge · Scientific tool use · Research memory · Reviewed skill improvement**
 
 ## Quick start
 
@@ -58,24 +60,27 @@ npx skills add KeWang0622/MRFoundry --list
 npx skills update -g
 ```
 
-Choose one, several or all seven skills. Browse the [skills directory](https://github.com/KeWang0622/MRFoundry/tree/main/skills). These are Markdown instructions and supporting helpers; installing them does not install every scientific application or grant access to restricted datasets.
+Choose individual skills or the full package. Browse the [skills directory](https://github.com/KeWang0622/MRFoundry/tree/main/skills). These are Markdown instructions and supporting helpers; installing them does not install every scientific application or grant access to restricted datasets.
 
 </details>
 
 ## How it works
 
-**You set the research goal. The agent uses skills as guidance and tools to take action.** A task may need several skills; the seven skills are not seven separate models.
+**You set the research goal. The agent combines skills and uses scientific tools to investigate it.** MRFoundry supplies reusable instructions, references and helper scripts that connect these steps.
 
 ```mermaid
 flowchart TB
   U["Your request<br/>Question, data, constraints"] --> A["Agent<br/>Plan and select knowledge"]
-  S["MRI skills<br/>Methods, sources, caveats"] --> A
+  S["Shared MRI skills<br/>Methods, sources, checks"] --> A
   A --> T["Scientific tools<br/>Install, test, execute"]
   T --> E["Evidence<br/>Outputs and checks"]
   E --> R["Researcher review<br/>Does it meet the goal?"]
   R -->|Revise| A
-  R --> M["Project memory<br/>Lessons and preferences"]
+  R --> M["Project memory<br/>Evidence and scoped lessons"]
   M -.->|Retrieve and recheck| A
+  M -->|Generalizable lesson| P["Proposed skill change<br/>Evidence and validation"]
+  P --> H["Maintainer review"]
+  H -->|Merge approved change| S
 ```
 
 Tools include **PyPulseq** for sequence definitions, **KomaMRI** for simulation, **BART / SigPy** for reconstruction, and **MRtrix3 / DIPY** for diffusion analysis. Data resources and papers supply inputs and evidence; skills help the agent choose and use them.
@@ -94,7 +99,7 @@ These phases are iterative. New evidence or user feedback can send the work back
 
 ## Choose your skills
 
-Start with **mri-research** for orientation, **mri-research-workflow** for a study, or a specialist for a focused task.
+Start with **mri-research** for orientation, **mri-research-workflow** for a study, or a specialist for a focused task. The current collection is a starting point: new methods, tools and research areas can enter through reviewed contributions.
 
 | Skill | Use it for | Typical tools or resources |
 |---|---|---|
@@ -125,11 +130,25 @@ Each project can keep a private **`.mrfoundry/`** notebook. The improvement loop
 └── lessons.md        # Reusable findings with evidence and limits
 ```
 
-A lesson should change a concrete decision in the next task, then be checked again. Keep user preferences separate from scientific conclusions, and retain failed or superseded findings. Project `CLAUDE.md` / `AGENTS.md` can point agents to the notebook; this is instruction-based memory, not model retraining or guaranteed automatic learning.
+A lesson should change a concrete decision in the next task, then be checked again. Keep user preferences separate from scientific conclusions, and retain failed or superseded findings. Project `CLAUDE.md` / `AGENTS.md` can point agents to the notebook. The [initializer](skills/mri-research/scripts/init_research_memory.py) creates the notebook and preserves existing notes; the researcher and agent maintain its contents during the work.
 
 Existing `.mri-research/` notebooks migrate to `.mrfoundry/` with the same initializer; existing notes are preserved. If both folders exist, reconcile them before migrating.
 
 [Set up project memory →](skills/mri-research/references/project-memory.md) · [How agents set up scientific tools →](skills/mri-research/references/tool-setup.md)
+
+## Recursive self-improvement
+
+**Research produces evidence; evidence can improve the guidance used for the next research task.** In MRFoundry, RSI operates through project knowledge and reusable skills, with people reviewing scientific conclusions and shared changes.
+
+| Loop | What changes | How it is checked |
+|---|---|---|
+| **Within a study** | The plan, parameters or implementation | Inspect outputs and revise against the research question. |
+| **Across sessions** | Project memory: environment notes, scoped lessons and open questions | Retrieve a relevant lesson, apply it to a new decision and recheck its assumptions. |
+| **Across researchers** | Shared instructions, references or helper scripts | Propose a focused PR with evidence; maintainers review it before other users adopt the update. |
+
+For example, an exported pulse sequence may miss its requested echo time even when the build script uses the intended value. A useful lesson becomes a rule to measure timing from the exported artifact, supported by a regression example. The [improvement guide](docs/SELF-IMPROVEMENT.md) follows this case from a check to a proposed skill update.
+
+These loops improve the knowledge and procedures available to an agent; they do not train its model weights. Each proposed improvement needs evidence of where it helps and where it applies.
 
 ## Write an MRI paper
 
@@ -157,7 +176,7 @@ These are example requests, not prerecorded successful runs. Results depend on t
 
 ## Reference library
 
-**[Papers and textbooks by skill →](REFERENCES.md)** — all seven skills have an
+**[Papers and textbooks by skill →](REFERENCES.md)** — the included skills have an
 annotated reading list with full citations, direct source links and the topic
 each reference supports.
 
@@ -186,6 +205,8 @@ The hub links to primary papers, courses, datasets and software across MRI. It s
 
 [MRI Agent Bench](https://github.com/KeWang0622/MRIAgentBench) evaluates matched agents with and without MRFoundry across MRI research tasks. Its repository contains the [public Core tasks](https://github.com/KeWang0622/MRIAgentBench/tree/main/families), evaluation instructions, and [comparison results, methods and limitations](https://github.com/KeWang0622/MRIAgentBench/blob/main/docs/OFFLINE-RESULTS.md).
 
+That comparison measures the effect of the skill package. Measuring improvement over repeated memory reuse or successive skill revisions requires a separate longitudinal evaluation; see the [evaluation plan](docs/SELF-IMPROVEMENT.md#evaluating-an-improvement).
+
 ## Reliability and scope
 
 - **Established implementations.** Use the scientific tool's official setup and examples; do not replace missing dependencies with an improvised simulator or solver.
@@ -196,7 +217,7 @@ The hub links to primary papers, courses, datasets and software across MRI. It s
 
 ## Contributing
 
-Bring a correction, a useful primary reference or a workflow you have tested. A strong contribution includes **the problem, supporting evidence and the proposed change**. Share reviewed, generalizable lessons; keep personal research notebooks private unless intentionally shared.
+Bring a correction, a useful primary reference, a new skill or a lesson from a research workflow. A strong contribution shows **what happened, what should change, and how the change was checked**. A local lesson becomes shared guidance through a focused PR; keep personal research notebooks private unless intentionally shared.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md) and [SECURITY.md](SECURITY.md). Contributions go through pull requests and CI.
 
@@ -226,7 +247,7 @@ If this helps your research or tooling, please cite it (GitHub's
 ```bibtex
 @software{wang_mrfoundry,
   author  = {Wang, Ke},
-  title   = {MRFoundry: MRI research guidance for coding agents},
+  title   = {MRFoundry: AI for MRI research},
   year    = {2026},
   url     = {https://github.com/KeWang0622/MRFoundry}
 }

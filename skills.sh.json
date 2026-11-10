@@ -3,15 +3,15 @@
   "notGrouped": "bottom",
   "groupings": [
     {
-      "title": "MRFoundry: MRI research hub",
-      "description": "The generalist navigator and curated reference hub across the whole MRI pipeline \u2014 physics, acquisition, reconstruction, analysis, quantitative MRI, spectroscopy, hardware, and publishing.",
+      "title": "MRFoundry: AI for MRI science",
+      "description": "Connect MRI domain knowledge, scientific tools and project memory. Navigate methods and primary sources across acquisition, reconstruction, analysis, hardware and publishing; retain scoped lessons for later work.",
       "skills": [
         "mri-research"
       ]
     },
     {
-      "title": "Research workflow (end-to-end)",
-      "description": "Connects MRI study planning, experiments and evidence-backed manuscript writing for MICCAI, MRM, JMRI, IEEE TMI and related venues.",
+      "title": "Research workflow: question to evidence",
+      "description": "Plan studies, run controlled experiments, inspect evidence and prepare reproducible reports and manuscripts. Connect research decisions to checks and reusable lessons.",
       "skills": [
         "mri-research-workflow"
       ]

@@ -1,23 +1,18 @@
 cff-version: 1.2.0
 message: "If you use this in your research or tooling, please cite it as below."
-title: "MRFoundry: MRI research guidance for coding agents"
+title: "MRFoundry: AI for MRI research"
 abstract: >-
-  A curated, verified reference hub that gives an AI coding agent fluent
-  orientation across the whole magnetic resonance imaging (MRI) research
-  pipeline: MR physics and k-space foundations; acquisition, pulse-sequence and
-  trajectory design; image reconstruction (parallel imaging, compressed
-  sensing, low-rank, deep learning, diffusion/score-based, MR fingerprinting)
-  and reconstruction toolboxes; raw and image data formats and open datasets;
-  image analysis and processing (structural, functional, and diffusion MRI,
-  segmentation, registration); quantitative MRI and spectroscopy; MRI hardware;
-  and programmatic literature access. It points to the community's primary
-  resources rather than bundling datasets or copyrighted text. Built for AI
-  agents, its aim is to make the MRI community's collective knowledge accessible
-  to everyone. It ships as a team of specialized agent skills — reconstruction
-  (actionable via BART/SigPy), diffusion MRI, pulse-sequence design,
-  deep-learning reconstruction, and hardware — alongside a generalist hub and an
-  end-to-end research-workflow assistant that takes a study from idea to a
-  published paper (CVPR, MICCAI, MRM).
+  MRFoundry is an open-source skill package for AI-assisted magnetic resonance
+  imaging (MRI) research. It connects domain knowledge, established scientific
+  tools, experiment checks and project memory across physics, acquisition,
+  reconstruction, analysis and scientific writing. Researchers set the goals
+  and review the evidence; agents use composable instructions, references and
+  helper scripts to plan, execute and revise the work. Scoped project lessons
+  can guide subsequent tasks, while generalizable improvements enter shared
+  skills through reviewed contributions. This researcher-guided
+  self-improvement workflow updates reusable knowledge and procedures rather
+  than model weights. The skill collection can grow as researchers contribute
+  new methods, tools and checked workflows.
 type: software
 authors:
   - family-names: Wang
@@ -41,3 +36,7 @@ keywords:
   - ISMRMRD
   - BIDS
   - agent skill
+  - AI for science
+  - research agents
+  - research memory
+  - recursive self-improvement
