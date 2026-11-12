@@ -8,19 +8,21 @@
   </picture>
 </h1>
 
-**AI for MRI science — from research questions to reusable expertise.**
+**AI for MRI science — from research questions to new knowledge.**
 
 [![CI](https://img.shields.io/github/actions/workflow/status/KeWang0622/MRFoundry/validate.yml?branch=main&style=flat-square&labelColor=000000&label=CI)](https://github.com/KeWang0622/MRFoundry/actions/workflows/validate.yml) [![License: MIT](https://img.shields.io/github/license/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](LICENSE) ![Install](https://img.shields.io/badge/install-npx%20skills%20add-000000?style=flat-square) [![Stars](https://img.shields.io/github/stars/KeWang0622/MRFoundry?style=flat-square&labelColor=000000)](https://github.com/KeWang0622/MRFoundry)
 
 </div>
 
 <p align="center">
-<a href="#quick-start">Quick start</a> · <a href="#how-it-works">Research loop</a> · <a href="#recursive-self-improvement">Self-improvement</a> · <a href="#choose-your-skills">Skills</a> · <a href="REFERENCES.md">References</a> · <a href="https://kewang0622.github.io/slides/mrfoundry/">Tutorial</a> · <a href="#contributing">Contribute</a>
+<a href="#quick-start">Quick start</a> · <a href="#toward-new-mri-discoveries">Scientific discovery</a> · <a href="#recursive-self-improvement">Self-improvement</a> · <a href="#choose-your-skills">Skills</a> · <a href="REFERENCES.md">References</a> · <a href="https://kewang0622.github.io/slides/mrfoundry/">Tutorial</a> · <a href="#contributing">Contribute</a>
 </p>
 
 **MRFoundry is an open-source skill package for research agents working across MRI physics, acquisition, reconstruction and analysis.** It connects domain knowledge with scientific tools, experiment checks and project memory, helping a coding agent carry a research question through to evidence and a reproducible report.
 
 The researcher sets the question and evaluates the findings. The agent plans, executes, checks and revises the work. Lessons from that work can guide the next experiment and, after review, improve the shared skill package. This connects **AI-assisted research** with **researcher-guided recursive self-improvement (RSI)**.
+
+Our long-term goal is to **expand what MRI research can discover**: help researchers formulate new hypotheses, develop methods and test ideas that connect acquisition, reconstruction and analysis. Reliable scientific execution supplies the experimental foundation for that work.
 
 **Domain knowledge · Scientific tool use · Research memory · Reviewed skill improvement**
 
@@ -96,6 +98,20 @@ Tools include **PyPulseq** for sequence definitions, **KomaMRI** for simulation,
 | **5 · Write and improve** | Draft figures and methods; record scoped lessons for the next task. | Traceable claims, limitations and reusable project knowledge. |
 
 These phases are iterative. New evidence or user feedback can send the work back to an earlier decision. The [research-workflow skill](skills/mri-research-workflow/SKILL.md) connects the phases; specialist skills supply the domain guidance.
+
+## Toward new MRI discoveries
+
+**A useful research agent should help decide what to investigate next.** MRFoundry's discovery direction connects literature and project evidence to competing hypotheses, experiments that distinguish them, and methods that can be independently checked.
+
+| Research objective | Evidence to seek |
+|---|---|
+| **Execute an established method** | Correct, reproducible artifacts and task-specific checks. |
+| **Improve a method** | A meaningful gain over strong baselines under declared constraints, confirmed on held-out cases. |
+| **Establish new knowledge** | A finding or method assessed against prior work, supported by discriminating experiments and independent validation. |
+
+For example, a researcher could investigate which acquisition and reconstruction choices improve quantitative estimates at a fixed scan time, or which experiment best distinguishes two explanations of a measurement bias. These are starting questions for a study; their originality and value need a literature review and experimental evidence.
+
+The current benchmark evaluates executable tasks. Method improvement and discovery are the next evaluation directions, with their own evidence requirements. See the **[AI-for-science research agenda](docs/AI-FOR-SCIENCE.md)** and start a project with the **[research brief](docs/templates/research-brief.md)**.
 
 ## Choose your skills
 
