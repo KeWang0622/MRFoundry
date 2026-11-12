@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Add a scientific-discovery research agenda and an editable research brief, connecting MRI hypotheses, controlled experiments, independent validation and reviewed self-improvement; distinguish current task evaluation from proposed method-improvement and discovery studies.
 - Present MRFoundry as an extensible AI-for-MRI research package; document researcher-guided self-improvement through project memory and reviewed skill contributions, with a sequence-timing example and evidence-oriented PR guidance.
 - Simplify public documentation around installation, skills, tutorials and contributions; consolidate release history in this changelog.
 - Add the blue-and-ivory MRI mascot to repository logos and icons.

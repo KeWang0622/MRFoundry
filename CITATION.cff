@@ -13,6 +13,8 @@ abstract: >-
   self-improvement workflow updates reusable knowledge and procedures rather
   than model weights. The skill collection can grow as researchers contribute
   new methods, tools and checked workflows.
+  Its long-term research goal is to help researchers formulate and test new MRI
+  ideas, develop better methods and establish independently validated knowledge.
 type: software
 authors:
   - family-names: Wang
@@ -37,6 +39,7 @@ keywords:
   - BIDS
   - agent skill
   - AI for science
+  - scientific discovery
   - research agents
   - research memory
   - recursive self-improvement

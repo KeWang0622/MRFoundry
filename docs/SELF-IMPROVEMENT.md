@@ -4,6 +4,8 @@ MRFoundry connects two activities: using an agent to investigate an MRI question
 
 The package provides memory templates, instructions and scientific helpers. The researcher and agent carry out the loop; there is no background service that automatically collects experiments, rewrites skills or trains model weights.
 
+This loop can support a broader [scientific-discovery agenda](AI-FOR-SCIENCE.md): use better guidance to formulate and test new MRI ideas. A guidance improvement and a scientific discovery are separate outcomes. The first needs evidence of better research behavior; the second needs a contribution assessed against prior work and independently validated.
+
 ## Keep local experience useful
 
 Use the [project-memory guide](../skills/mri-research/references/project-memory.md) to initialize a private `.mrfoundry/` notebook. The initializer preserves existing notes and excludes the notebook from Git by default.
