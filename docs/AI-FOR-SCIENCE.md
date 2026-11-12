@@ -48,7 +48,7 @@ Public benchmark tasks can help develop execution skills. A discovery evaluation
 
 ## What to measure next
 
-The current [MRI Agent Bench comparison](https://github.com/KeWang0622/MRIAgentBench/blob/main/docs/RESULTS.md) measures task completion with and without MRFoundry. The proposed next stages ask whether agents improve a method under a fixed budget and whether they contribute independently validated new knowledge. Review **validity, novelty, scientific importance, generalization, reproducibility and research cost** separately. A persuasive explanation or a single aggregate score cannot settle all of them.
+The current [MRI Agent Bench comparison](https://github.com/KeWang0622/MRIAgentBench/blob/main/docs/RESULTS.md) measures task completion with and without MRFoundry. Its proposed [research evaluation](https://github.com/KeWang0622/MRIAgentBench/blob/main/docs/RESEARCH-DISCOVERY.md) asks whether agents improve a method under a fixed budget and whether they contribute independently validated new knowledge. Review **validity, novelty, scientific importance, generalization, reproducibility and research cost** separately. A persuasive explanation or a single aggregate score cannot settle all of them.
 
 For MRFoundry, compare the same model and tools with and without the package. To test RSI, separately compare fresh memory with permitted prior lessons, and frozen guidance with reviewed revisions. Declare the information available to every arm. The [self-improvement guide](SELF-IMPROVEMENT.md#evaluating-an-improvement) describes these controls.
 
@@ -57,7 +57,7 @@ For MRFoundry, compare the same model and tools with and without the package. To
 These sources inform the agenda; the proposed MRI study design above is our synthesis.
 
 - **Novikov A, et al. “AlphaEvolve: A coding agent for scientific and algorithmic discovery.” arXiv:2506.13131 (2025).** [Paper](https://arxiv.org/abs/2506.13131). Its code-search loop uses evaluator feedback to refine candidates. For MRI, the evaluator must test the scientific objective and relevant physical constraints.
-- **Gottweis J, et al. “Accelerating scientific discovery with Co-Scientist.” Nature 2026;655:487–496. doi:10.1038/s41586-026-10644-y.** [Paper](https://www.nature.com/articles/s41586-026-10644-y). Hypothesis generation and refinement are paired with experimental validation. This motivates checking proposed explanations with new evidence beyond agent critique.
+- **Gottweis J, et al. “Accelerating scientific discovery with Co-Scientist.” Nature 2026;655:487–496.** [doi:10.1038/s41586-026-10644-y](https://doi.org/10.1038/s41586-026-10644-y). Hypothesis generation and refinement are paired with experimental validation. This motivates checking proposed explanations with new evidence beyond agent critique.
 - **Starace G, et al. “PaperBench: Evaluating AI's Ability to Replicate AI Research.” arXiv:2504.01848 (2025).** [Paper](https://arxiv.org/abs/2504.01848). Expert-developed rubrics make research replication assessable. Replication is a valuable foundation; discovery additionally requires a prior-art and scientific-contribution assessment.
 
 Primary records checked 12 November 2026.
